@@ -65,27 +65,27 @@ void TestChoicesAndText() {
     in.device = "Headset Microphone (PlayStation VR2)";
     in.model = "tiny streaming";
     std::string const ready = ms::VoiceStatusText(in);
-    CHECK(ready.starts_with("Ready") && ready.find("PlayStation VR2") != std::string::npos && ready.find("tiny streaming") != std::string::npos);
+    CHECK(ready.starts_with("Готов") && ready.find("PlayStation VR2") != std::string::npos && ready.find("tiny streaming") != std::string::npos);
     in.listening = true;
-    CHECK(ms::VoiceStatusText(in).starts_with("Listening"));
+    CHECK(ms::VoiceStatusText(in).starts_with("Слушаю"));
     in.restarting = true;
-    CHECK(ms::VoiceStatusText(in).starts_with("Restarting"));  // the restart wins over the old state
+    CHECK(ms::VoiceStatusText(in).starts_with("Перезапускаю"));  // the restart wins over the old state
     in = {};
     in.enabled = false;
-    CHECK(ms::VoiceStatusText(in) == "Voice orders are off.");
+    CHECK(ms::VoiceStatusText(in) == "Голосовые приказы выключены.");
     in = {};
     in.error = "no ...\\voice\\MEVR-Voice.dll (tools/deploy-asi.ps1 -Voice puts it there)";
-    CHECK(ms::VoiceStatusText(in).starts_with("Not installed"));
+    CHECK(ms::VoiceStatusText(in).starts_with("Не установлено"));
     in.error = "no tiny models in ...";
-    CHECK(ms::VoiceStatusText(in).starts_with("Not installed"));
+    CHECK(ms::VoiceStatusText(in).starts_with("Не установлено"));
     in.status = 3;
     in.error = "the models didn't load";
-    CHECK(ms::VoiceStatusText(in).starts_with("The recognizer failed: the models didn't load"));
+    CHECK(ms::VoiceStatusText(in).starts_with("Распознаватель не работает: the models didn't load"));
     in = {};
     in.status = 1;
-    CHECK(ms::VoiceStatusText(in).starts_with("Loading"));
+    CHECK(ms::VoiceStatusText(in).starts_with("Загрузка"));
     in.status = 2;
-    CHECK(ms::VoiceStatusText(in).find("no microphone opened") != std::string::npos);
+    CHECK(ms::VoiceStatusText(in).find("микрофон не открыт") != std::string::npos);
 }
 
 void TestKey() {

@@ -42,7 +42,7 @@ ULONGLONG gNextOffer = 0;
 
 void Request(bool snapshot, bool perf, std::string& message) {
     if (gStarting.exchange(true)) {
-        message = "A report is already being started.";
+        message = "Отчёт уже формируется.";
         return;
     }
     fs::path const setup = AsiDir() / L"MEVR-Setup.exe";
@@ -52,8 +52,8 @@ void Request(bool snapshot, bool perf, std::string& message) {
         std::lock_guard const lock(gMutex);
         gRequestedAt = marks::Time::clock::now();
         gWaiting = haveSetup;
-        gStatus = haveSetup ? "Writing the report in the background..."
-                            : "MEVR Setup isn't in the game's ASI folder: after the game, run MEVR Setup and it opens on Report a problem.";
+        gStatus = haveSetup ? "Пишу отчёт в фоне..."
+                            : "MEVR Setup нет в папке ASI игры: после игры запустите MEVR Setup, он откроется на «Сообщить о проблеме».";
         message = gStatus;
     }
     // The file and the process start off the render thread: a few milliseconds, but never in a frame.
@@ -87,7 +87,7 @@ void Request(bool snapshot, bool perf, std::string& message) {
                 log::Warn("report: couldn't start MEVR Setup (error {}); the request waits for its next start", error);
                 std::lock_guard const lock(gMutex);
                 gWaiting = false;
-                gStatus = "Couldn't start MEVR Setup: after the game, run it and it opens on Report a problem.";
+                gStatus = "Не удалось запустить MEVR Setup: после игры запустите его, он откроется на «Сообщить о проблеме».";
             }
         } else {
             log::Info("report: requested; no MEVR Setup in the ASI folder, so it waits for the setup's next start");
@@ -117,11 +117,11 @@ std::string StatusText() {
     }
     gWaiting = false;
     if (result->Bool("ok")) {
-        gStatus = "Saved to " + (result->String("folder") == "Desktop" ? std::string("the Desktop") : result->String("folder")) + ": " +
-                  result->String("name") + ". Open it after the game: nothing was sent.";
+        gStatus = "Сохранено в " + (result->String("folder") == "Desktop" ? std::string("рабочий стол") : result->String("folder")) + ": файл " +
+                  result->String("name") + ". Откройте его после игры: ничего не отправлено.";
         gOffer = false;
     } else {
-        gStatus = "The report wasn't saved: " + result->String("error", "unknown error") + ". MEVR Setup > Report a problem can try again.";
+        gStatus = "Отчёт не сохранён: " + result->String("error", "неизвестная ошибка") + ". В MEVR Setup > «Сообщить о проблеме» можно повторить.";
     }
     log::Info("report: {}", gStatus);
     return gStatus;

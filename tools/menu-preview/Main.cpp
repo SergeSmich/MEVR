@@ -78,19 +78,19 @@ public:
             v.texts["chip_headset"] = "PlayStation VR2 \xC2\xB7 SteamVR";
             v.numbers["steamvr_runtime"] = 1;
             v.texts["chip_controllers"] = "Sense controllers";
-            v.texts["chip_calibrated"] = "Calibrated";
+            v.texts["chip_calibrated"] = "Откалибровано";
             v.numbers["calibrated"] = 1;
-            v.texts["cal_status"] = "Calibrated 22 Oct \xC2\xB7 PlayStation VR2 \xC2\xB7 Sense controllers";
-            v.texts["cal_action"] = "Calibrate again";
+            v.texts["cal_status"] = "Откалибровано 2026-10-22 12:34 \xC2\xB7 PlayStation VR2 \xC2\xB7 Sense controllers";
+            v.texts["cal_action"] = "Калибровать снова";
             v.numbers["position_known"] = 1;
             v.texts["t_stand"] = "1.64";
             v.texts["t_crouch"] = "1.02";
             v.texts["t_arm"] = "0.72";
-            v.texts["t_eye"] = "Right";
+            v.texts["t_eye"] = "Правый";
             v.texts["t_pistol"] = "1.1";
             v.texts["t_rifle"] = "1.4";
             v.texts["profile"] = "auto";
-            v.texts["profile_info"] = "Detected PlayStation VR2 (OLED): no correction is needed, the game's colours exactly as rendered.";
+            v.texts["profile_info"] = "Определён PlayStation VR2 (OLED): коррекция не нужна, цвета игры точно как отрисованы.";
             v.numbers["c_brightness"] = -2;
             v.numbers["c_contrast"] = 8;
             v.numbers["c_saturation"] = 12;
@@ -114,7 +114,7 @@ public:
             v.texts["mic1"] = "Microphone (Realtek(R) Audio)";
             v.texts["mic2"] = "Headset Microphone (Oculus Virtual Audio Device)";
             v.texts["mic"] = "0";
-            v.texts["mic_default"] = "Windows' default communications microphone: Microphone (Realtek(R) Audio)";
+            v.texts["mic_default"] = "Микрофон связи Windows по умолчанию: Microphone (Realtek(R) Audio)";
             {
                 ms::VoiceStatusInput status;
                 status.status = 2;
@@ -123,7 +123,7 @@ public:
                 v.texts["voice_status"] = ms::VoiceStatusText(status);
             }
             v.numbers["voice_ready"] = 1;
-            v.texts["voice_key"] = "None";
+            v.texts["voice_key"] = "Нет";
             Guide(v, ms::GuideInput{});  // the controller guide with the shipped settings
             v.texts["about_build"] = ms::AboutBuild(MEVR_VERSION, MEVR_GIT_COMMIT, false);  // this build's, as a players' build shows it
         }
@@ -581,7 +581,7 @@ int main(int argc, char** argv) {
         status.error = "no tiny models in C:\\Games\\Mass Effect Legendary Edition\\Game\\ME1\\Binaries\\Win64\\ASI\\voice\\models\\tiny-streaming-en";
         model.SetText("voice_status", ms::VoiceStatusText(status));
         model.SetText("mic", "default");
-        model.SetText("voice_key", "Press a key\xE2\x80\xA6");
+        model.SetText("voice_key", "Нажмите клавишу\xE2\x80\xA6");
         model.SetNumber("voice_key_wait", 1.0f);
         frames(20);
         save("section-voice-not-installed");
@@ -592,7 +592,7 @@ int main(int argc, char** argv) {
         model.SetText("voice_status", ms::VoiceStatusText(status));
         model.SetNumber("voice_ready", 1.0f);
         model.SetText("mic", "0");
-        model.SetText("voice_key", "None");
+        model.SetText("voice_key", "Нет");
         model.SetNumber("voice_key_wait", 0.0f);
     }
     // The controller guide as a new player first sees it (MainMenu's first run: the welcome line), and with other settings:
@@ -650,7 +650,7 @@ int main(int argc, char** argv) {
         content->SetScrollTop(0.0f);
     }
     // A read-only ASI folder: the rail's status line (2026-10-26).
-    model.SetText("save_msg", "Can't save settings: the game's ASI folder is read-only");
+    model.SetText("save_msg", "Не удаётся сохранить настройки: папка ASI игры только для чтения");
     frames(10);
     save("state-save-failed");
     model.SetText("save_msg", "");
@@ -668,10 +668,10 @@ int main(int argc, char** argv) {
         frames(10);
         save("section-display-smoothing-default");
         model.SetText("steamvr_smoothing", "off");
-        model.SetText("steamvr_smoothing_note", "Off for this game. SteamVR has the change.");
+        model.SetText("steamvr_smoothing_note", "Выключено для этой игры. SteamVR уже применил изменение.");
         frames(10);
         save("section-display-smoothing-off");
-        model.SetText("steamvr_smoothing_note", "Couldn't change it in SteamVR. Try again; the log says why.");
+        model.SetText("steamvr_smoothing_note", "Не удалось изменить в SteamVR. Повторите; причина в логе.");
         frames(10);
         save("section-display-smoothing-error");
         model.SetNumber("steamvr_runtime", 0);
@@ -742,7 +742,7 @@ int main(int argc, char** argv) {
     }
     model.SetText("advtab", "diag");
     // Report a problem (research/33 section 8): the request answered, then the crash offer over the first section.
-    model.SetText("report_msg", "Saved to the Desktop: MEVR-report-2026-10-26-0143.zip. Open it after the game: nothing was sent.");
+    model.SetText("report_msg", "Сохранено на Рабочий стол: MEVR-report-2026-10-26-0143.zip. Откройте после игры: ничего не отправлено.");
     model.SetNumber("report_snapshot", 1.0f);
     frames(30);
     save("advanced-diag-report");

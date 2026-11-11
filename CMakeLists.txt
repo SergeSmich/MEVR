@@ -794,6 +794,7 @@ set(MEVR_HALCYON_HOST_SOURCES
     src/plugin/Colour.hpp
     src/plugin/CalibrationDraw.cpp
     src/plugin/CalibrationDraw.hpp
+    src/plugin/CyrillicText.hpp
     src/plugin/DrawReplay.cpp
     src/plugin/DrawReplay.hpp
     src/core/d3d11/ShaderReflect.cpp

@@ -7,6 +7,7 @@
 #include "plugin/SquadPanelDraw.hpp"
 
 #include "core/vr/SquadMenu.hpp"
+#include "plugin/CyrillicText.hpp"
 
 #include <Windows.h>
 
@@ -165,11 +166,11 @@ void Weapon(ImDrawList* dl, int type, ImVec2 centre, float scale, ImU32 colour) 
 
 char const* WeaponLabel(int type) {
     switch (type) {
-    case 0: return "PISTOL";
-    case 1: return "SHOTGUN";
-    case 2: return "ASSAULT RIFLE";
-    case 3: return "SNIPER RIFLE";
-    default: return "UNARMED";
+    case 0: return "ПИСТОЛЕТ";
+    case 1: return "ДРОБОВИК";
+    case 2: return "ВИНТОВКА";
+    case 3: return "СНАЙПЕРКА";
+    default: return "БЕЗ ОРУЖИЯ";
     }
 }
 
@@ -216,11 +217,12 @@ void Card(ImDrawList* dl, ImFont* font, menu::MemberView const& m, float x0, flo
     // Name and class.
     float const textX = x0 + 98.0f;
     float const textWidth = x1 - 16.0f - textX;
-    FitText(dl, font, 32.0f, {textX, 98.0f}, kText, m.name[0] != '\0' ? m.name : "SQUADMATE", textWidth);
-    dl->AddNgonFilled({textX + 6.0f, 151.0f}, 5.0f, badge, 6);
-    FitText(dl, font, 18.0f, {textX + 16.0f, 140.0f}, kTextDim, m.role, textWidth - 16.0f);
+    FitText(dl, font, 32.0f, {textX, 98.0f}, kText, m.name[0] != '\0' ? m.name : "ОТРЯДНИК", textWidth);
+    // The class, on its own line across the card: Russian class names run long ("Турианский агент").
+    dl->AddNgonFilled({x0 + 22.0f, 178.0f}, 5.0f, badge, 6);
+    FitText(dl, font, 16.0f, {x0 + 32.0f, 170.0f}, kTextDim, m.role, x1 - x0 - 48.0f);
     // Health: ten segments.
-    Text(dl, font, 18.0f, {x0 + 18.0f, 190.0f}, kTextDim, "HEALTH");
+    Text(dl, font, 18.0f, {x0 + 18.0f, 190.0f}, kTextDim, "ЗДОРОВЬЕ");
     float const bx0 = x0 + 18.0f;
     float const bx1 = x1 - 18.0f;
     float const segment = (bx1 - bx0 + 4.0f) / 10.0f;
@@ -233,11 +235,11 @@ void Card(ImDrawList* dl, ImFont* font, menu::MemberView const& m, float x0, flo
         dl->AddRectFilled(a, b, fill);
     }
     if (health < 0.0f) {
-        Text(dl, font, 16.0f, {(bx0 + bx1) * 0.5f, 236.0f}, kTextDim, "unknown", 0.5f);
+        Text(dl, font, 16.0f, {(bx0 + bx1) * 0.5f, 236.0f}, kTextDim, "неизвестно", 0.5f);
     }
     dl->AddLine({x0 + 18.0f, 262.0f}, {x1 - 18.0f, 262.0f}, kCyanFaint, 2.0f);
     // The weapon in hand.
-    Text(dl, font, 16.0f, {(x0 + x1) * 0.5f, 272.0f}, kTextDim, "IN HAND", 0.5f);
+    Text(dl, font, 16.0f, {(x0 + x1) * 0.5f, 272.0f}, kTextDim, "В РУКЕ", 0.5f);
     float const cx = (x0 + x1) * 0.5f;
     if (m.current >= 0) {
         Weapon(dl, m.current, {cx, 340.0f}, 1.6f, selected ? kAmber : kCyan);
@@ -255,7 +257,7 @@ void Tile(ImDrawList* dl, ImFont* font, int weapon, ImVec2 c, float w, float h, 
     Hex(dl, c, w, h, highlighted ? kAmberFill : kTile, highlighted ? kAmber : kCyan, highlighted ? 3.5f : 2.5f);
     ImU32 const ink = highlighted ? kTextOnAmber : kText;
     if (inHand) {
-        Text(dl, font, 14.0f, {c.x, c.y - h * 0.5f + 5.0f}, highlighted ? kTextOnAmber : kCyan, "IN HAND", 0.5f);
+        Text(dl, font, 14.0f, {c.x, c.y - h * 0.5f + 5.0f}, highlighted ? kTextOnAmber : kCyan, "В РУКЕ", 0.5f);
     }
     Weapon(dl, weapon, {c.x, c.y - 2.0f}, 0.95f, highlighted ? kTextOnAmber : kCyan);
     // The label sits where the hexagon narrows: fit it to the width there.
@@ -275,9 +277,9 @@ void Draw(ImDrawList* dl, ImFont* font, menu::View const& view) {
     Bevel(dl, {4.0f, 4.0f}, {W - 4.0f, H - 4.0f}, 28.0f, kBackdrop, kCyanFaint, 2.0f);
     // Title.
     Bevel(dl, {352.0f, 12.0f}, {672.0f, 56.0f}, 12.0f, kPanel, kCyanDim, 2.0f);
-    Text(dl, font, 30.0f, {W * 0.5f, 18.0f}, kText, "SQUAD WEAPONS", 0.5f);
+    Text(dl, font, 30.0f, {W * 0.5f, 18.0f}, kText, "ОРУЖИЕ ОТРЯДА", 0.5f);
     Text(dl, font, 17.0f, {W * 0.5f, 62.0f}, kTextDim,
-        view.confirmOnRelease ? "release the grip to confirm" : "A confirms, B cancels", 0.5f);
+        view.confirmOnRelease ? "отпустите хват, чтобы подтвердить" : "A — подтвердить, B — отмена", 0.5f);
 
     int const count = std::clamp<int>(view.count, 0, menu::kMaxMembers);
     int const selected = std::clamp<int>(view.selected, 0, std::max(count - 1, 0));
@@ -337,18 +339,18 @@ void Draw(ImDrawList* dl, ImFont* font, menu::View const& view) {
     // How to use it.
     if (count > 1) {  // one squadmate: nothing to choose
         Stick(dl, font, {66.0f, 528.0f}, "L", true);
-        Text(dl, font, 20.0f, {112.0f, 506.0f}, kText, "SELECT SQUADMATE");
-        Text(dl, font, 16.0f, {112.0f, 530.0f}, kTextDim, "(left stick)");
+        Text(dl, font, 20.0f, {112.0f, 506.0f}, kText, "ВЫБРАТЬ ОТРЯДНИКА");
+        Text(dl, font, 16.0f, {112.0f, 530.0f}, kTextDim, "(левый стик)");
     }
     Stick(dl, font, {958.0f, 528.0f}, "R", false);
-    Text(dl, font, 20.0f, {910.0f, 506.0f}, kText, "SELECT WEAPON", 1.0f);
-    Text(dl, font, 16.0f, {910.0f, 530.0f}, kTextDim, "(right stick)", 1.0f);
+    Text(dl, font, 20.0f, {910.0f, 506.0f}, kText, "ВЫБРАТЬ ОРУЖИЕ", 1.0f);
+    Text(dl, font, 16.0f, {910.0f, 530.0f}, kTextDim, "(правый стик)", 1.0f);
     Bevel(dl, {330.0f, 540.0f}, {694.0f, 590.0f}, 12.0f, kPanel, kCyanDim, 2.0f);
     Button(dl, font, {372.0f, 565.0f}, "A", Rgba(96, 220, 120));
-    Text(dl, font, 22.0f, {398.0f, 552.0f}, kText, "CONFIRM");
+    Text(dl, font, 22.0f, {398.0f, 552.0f}, kText, "ГОТОВО");
     dl->AddLine({W * 0.5f + 2.0f, 548.0f}, {W * 0.5f + 2.0f, 582.0f}, kCyanFaint, 2.0f);
     Button(dl, font, {550.0f, 565.0f}, "B", Rgba(255, 96, 84));
-    Text(dl, font, 22.0f, {576.0f, 552.0f}, kText, "CANCEL");
+    Text(dl, font, 22.0f, {576.0f, 552.0f}, kText, "ОТМЕНА");
 }
 
 namespace {
@@ -371,7 +373,7 @@ ImFont* LoadFont(ImGuiIO& io, std::string& chosen) {
         std::filesystem::path const path = std::filesystem::path(windows) / L"Fonts" / name;
         std::error_code ec;
         if (std::filesystem::exists(path, ec)) {
-            if (ImFont* font = io.Fonts->AddFontFromFileTTF(Utf8(path.wstring()).c_str(), 32.0f)) {
+            if (ImFont* font = cyr::AddFace(io, path, 32.0f)) {
                 chosen = Utf8(path.filename().wstring());
                 return font;
             }

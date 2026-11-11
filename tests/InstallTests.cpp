@@ -573,6 +573,32 @@ void TestDetect() {
     ICHECK(d::EyeSizeFromHalcyonLog(log) == std::optional<d::EyeSize>(d::EyeSize{2824, 2880}));
     ICHECK(!d::EyeSizeFromHalcyonLog("nothing here"));
     ICHECK(!d::EyeSizeFromHalcyonLog("recommended eye image 0x0"));
+    // The game root: the Steam / EA app layout under Game, and a copy (a repack) with ME1 directly under its root. The
+    // paths stay spelled "Game/..." either way, so manifests and the code's own paths look the same.
+    {
+        namespace fs = std::filesystem;
+        std::error_code ec;
+        fs::path const temp = mevr::tests::TempRoot() / L"mevr-detect-test";
+        fs::remove_all(temp, ec);
+        fs::path const steam = temp / L"Steam" / L"Mass Effect Legendary Edition";
+        fs::path const flat = temp / L"Repack" / L"Mass Effect Legendary Mod Edition";
+        Write(steam / L"Game" / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe", "exe");
+        Write(flat / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe", "exe");
+        ICHECK(d::IsGameRoot(steam) && d::IsGameRoot(flat));
+        ICHECK(!d::IsGameRoot(temp / L"Repack"));
+        ICHECK(d::RootFromPicked(steam / L"Game" / L"ME1" / L"Binaries" / L"Win64") == std::optional<fs::path>(steam));
+        ICHECK(d::RootFromPicked(flat / L"ME1" / L"Binaries" / L"Win64" / L"ASI") == std::optional<fs::path>(flat));
+        mevr::install::Layout const normal{steam};
+        mevr::install::Layout const packed{flat};
+        ICHECK(!normal.flat && packed.flat);
+        ICHECK(normal.Win64() == steam / L"Game" / L"ME1" / L"Binaries" / L"Win64");
+        ICHECK(packed.Win64() == flat / L"ME1" / L"Binaries" / L"Win64");
+        ICHECK(normal.Full("Game/ME1/Binaries/Win64/ASI/LE1MEVR.asi") == normal.Asi() / L"LE1MEVR.asi");
+        ICHECK(packed.Full("Game\\ME1\\Binaries\\Win64\\ASI\\LE1MEVR.asi") == packed.Asi() / L"LE1MEVR.asi");
+        ICHECK(packed.Relative(packed.Asi() / L"LE1MEVR.asi") == "Game/ME1/Binaries/Win64/ASI/LE1MEVR.asi");
+        ICHECK(packed.Full(packed.Relative(packed.Win64() / L"MassEffect1.exe")) == packed.Win64() / L"MassEffect1.exe");
+        fs::remove_all(temp, ec);
+    }
 }
 
 void TestLaunch() {

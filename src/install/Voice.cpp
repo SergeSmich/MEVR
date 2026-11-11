@@ -150,7 +150,7 @@ std::vector<Part> const& Catalogue() {
         std::vector<Part> parts;
         Part recognizer;
         recognizer.id = "recognizer";
-        recognizer.name = "Speech recognizer runtime";
+        recognizer.name = "Среда выполнения распознавателя речи";
         recognizer.description = "ONNX Runtime, which Moonshine Voice's recognizer runs on (taken out of Moonshine Voice's Windows release)";
         recognizer.origin = "GitHub (moonshine-ai/moonshine, release v0.1.5)";
         recognizer.licence = "MIT (Moonshine AI; ONNX Runtime: Microsoft)";
@@ -163,15 +163,15 @@ std::vector<Part> const& Catalogue() {
             "dec964ab1ee36cc9b0ae247d13b376627992fc57dec0454354017ab8fd84f1ea"});
         recognizer.sources.push_back(std::move(moonshine));
         parts.push_back(std::move(recognizer));
-        parts.push_back(ModelsPart("tiny", kTiny, "Recognizer model (tiny)",
+        parts.push_back(ModelsPart("tiny", kTiny, "Модель распознавателя (tiny)",
             "Moonshine's tiny streaming English model: the one the mod uses ([Voice] model = tiny), the fastest beside the game"));
-        parts.push_back(ModelsPart("small", kSmall, "Recognizer model (small)",
+        parts.push_back(ModelsPart("small", kSmall, "Модель распознавателя (small)",
             "More accurate, slower partials beside the game; used with [Voice] model = small in LE1MEVR.ini"));
-        parts.push_back(ModelsPart("medium", kMedium, "Recognizer model (medium)",
+        parts.push_back(ModelsPart("medium", kMedium, "Модель распознавателя (medium)",
             "The most accurate, the slowest; used with [Voice] model = medium in LE1MEVR.ini"));
         Part runtime;
         runtime.id = "llm-runtime";
-        runtime.name = "Model tier runtime";
+        runtime.name = "Среда выполнения модели приказов";
         runtime.description = "llama.cpp's CPU build, which runs the fine-tuned model";
         runtime.origin = "GitHub (ggml-org/llama.cpp, release b12128)";
         runtime.licence = "MIT (the ggml authors; LLVM OpenMP: Apache-2.0 with LLVM exceptions)";
@@ -187,7 +187,7 @@ std::vector<Part> const& Catalogue() {
         parts.push_back(std::move(runtime));
         Part model;
         model.id = "llm-model";
-        model.name = "Fine-tuned order model";
+        model.name = "Дообученная модель приказов";
         model.description = "Qwen3-0.6B fine-tuned on squad orders: it reads the wordings the rules aren't sure of";
         model.origin = "GitHub (this mod's release " + std::string(kModelTag) + ")";
         model.licence = "Apache-2.0 (Qwen3-0.6B by the Qwen team; our fine-tune under the same terms)";

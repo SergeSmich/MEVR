@@ -15,6 +15,7 @@
 
 #include "core/gfx/Swf.hpp"
 #include "core/gfx/SwfFont.hpp"
+#include "plugin/CyrillicText.hpp"
 
 namespace mevr::host::power_wheel_draw {
 namespace {
@@ -152,33 +153,56 @@ void DashedCircle(ImDrawList* dl, ImVec2 c, float r, ImU32 colour, float thickne
 }
 
 // ---- Text --------------------------------------------------------------------------------------------------------------
+// The game's capitals, Cyrillic too (its power names come in its own language).
 std::string Upper(std::string text) {
-    for (char& c : text) {
-        if (c >= 'a' && c <= 'z') {
-            c = static_cast<char>(c - 'a' + 'A');
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        auto& lead = reinterpret_cast<unsigned char&>(text[i]);
+        if (lead >= 'a' && lead <= 'z') {
+            lead = static_cast<unsigned char>(lead - 'a' + 'A');
+        } else if (i + 1 < text.size()) {
+            auto& next = reinterpret_cast<unsigned char&>(text[i + 1]);
+            if (lead == 0xD0 && next >= 0xB0 && next <= 0xBF) {  // U+0430..U+043F: а..п
+                next = static_cast<unsigned char>(next - 0x20);
+                ++i;
+            } else if (lead == 0xD1 && next >= 0x80 && next <= 0x8F) {  // U+0440..U+044F: р..я
+                lead = 0xD0;
+                next = static_cast<unsigned char>(next + 0x20);
+                ++i;
+            } else if (lead == 0xD1 && next == 0x91) {  // ё
+                lead = 0xD0;
+                next = 0x81;
+                ++i;
+            }
         }
     }
     return text;
 }
-float GlyphWidth(ImFont* font, float size, char c) {
-    char const glyph[2] = {c, 0};
+// A character's length in bytes of UTF-8 (a Cyrillic letter takes two).
+std::size_t CharBytes(unsigned char lead) {
+    return (lead & 0xC0) != 0xC0 ? 1 : (lead & 0xF0) == 0xE0 ? 3 : (lead & 0xF8) == 0xF0 ? 4 : 2;
+}
+// The width of one character: a Cyrillic letter is drawn as one glyph rather than as two '?'
+float GlyphWidth(ImFont* font, float size, char const* glyph) {
     return font->CalcTextSizeA(size, FLT_MAX, 0.0f, glyph).x;
 }
 float TrackedWidth(ImFont* font, float size, std::string const& text, float tracking) {
     float width = 0.0f;
-    for (char c : text) {
-        width += GlyphWidth(font, size, c) + tracking;
+    for (std::size_t i = 0; i < text.size();) {
+        std::size_t const bytes = std::min(CharBytes(static_cast<unsigned char>(text[i])), text.size() - i);
+        width += GlyphWidth(font, size, text.substr(i, bytes).c_str()) + tracking;
+        i += bytes;
     }
     return text.empty() ? 0.0f : width - tracking;
 }
 // Letter-spaced, centred on `centreX`, its top at `top`.
 void TrackedCentred(ImDrawList* dl, ImFont* font, float size, float centreX, float top, ImU32 colour, std::string const& text, float tracking) {
     float x = centreX - TrackedWidth(font, size, text, tracking) * 0.5f;
-    char glyph[2] = {0, 0};
-    for (char c : text) {
-        glyph[0] = c;
-        dl->AddText(font, size, {std::floor(x), std::floor(top)}, colour, glyph);
-        x += GlyphWidth(font, size, c) + tracking;
+    for (std::size_t i = 0; i < text.size();) {
+        std::size_t const bytes = std::min(CharBytes(static_cast<unsigned char>(text[i])), text.size() - i);
+        std::string const glyph = text.substr(i, bytes);
+        dl->AddText(font, size, {std::floor(x), std::floor(top)}, colour, glyph.c_str());
+        x += GlyphWidth(font, size, glyph.c_str()) + tracking;
+        i += bytes;
     }
 }
 
@@ -338,17 +362,14 @@ void DrawTile(ImDrawList* dl, Fonts const& fonts, WheelView const& view, Entry c
     }
     bool const upper = view.upperCase || fonts.gameFont;  // the game's Biomass, as the game sets it: capitals
     std::string const text = upper ? Upper(entry.label) : entry.label;
+    float const tracking = fonts.gameFont ? 1.2f : upper ? 2.4f : 0.8f;
     float left = 0.0f;
     float right = 0.0f;
-    float centreX = c.x;
     float room = 240.0f;
     if (SpanAt(outline, labelTop + labelSize * 0.5f, left, right)) {
-        centreX = (left + right) * 0.5f;
         room = right - left - 26.0f;
     }
     float size = labelSize;
-    float const tracking = fonts.gameFont ? 1.2f : upper ? 2.4f : 0.8f;
-    float const width = TrackedWidth(fonts.label, size, text, tracking);
     ImU32 const colour = WithAlpha(theme.label, alpha * dim);
     // A long name on a narrow tile goes on two lines (split at the space nearest its middle) rather than shrinking far.
     std::size_t const space = [&] {
@@ -362,23 +383,62 @@ void DrawTile(ImDrawList* dl, Fonts const& fonts, WheelView const& view, Entry c
         }
         return best;
     }();
-    if (width > room * 1.25f && space != std::string::npos) {
-        std::string const first = text.substr(0, space);
-        std::string const second = text.substr(space + 1);
-        size = labelSize * 0.82f;
-        float const longest = std::max(TrackedWidth(fonts.label, size, first, tracking), TrackedWidth(fonts.label, size, second, tracking));
-        if (longest > room && longest > 0.0f) {
-            size = std::max(size * room / longest, labelSize * 0.55f);
+    bool const twoLines = space != std::string::npos && TrackedWidth(fonts.label, size, text, tracking) > room * 1.25f;
+    std::string const first = twoLines ? text.substr(0, space) : text;
+    std::string const second = twoLines ? text.substr(space + 1) : std::string();
+    // The tile is a taper: a line's room is the narrowest chord across the glyphs' band, and the name shrinks until
+    // it fits (the Russian names are longer than the English ones the layout was drawn for).
+    auto const roomAt = [&](float midY, float lineSize, float& centre) {
+        float best = 240.0f;
+        centre = c.x;
+        for (int i = -1; i <= 1; ++i) {
+            float lo = 0.0f;
+            float hi = 0.0f;
+            if (SpanAt(outline, midY + static_cast<float>(i) * 0.5f * lineSize, lo, hi)) {
+                best = std::min(best, hi - lo - 8.0f);
+                if (i == 0) {
+                    centre = (lo + hi) * 0.5f;
+                }
+            }
         }
-        float const top = labelTop + labelSize * 0.5f - size * 0.95f;
-        TrackedCentred(dl, fonts.label, size, centreX, top, colour, first, tracking);
-        TrackedCentred(dl, fonts.label, size, centreX, top + size * 0.92f, colour, second, tracking);
+        return best;
+    };
+    // The block's middle stays where a single line's middle was, so the icon and the name keep their spacing.
+    float const middleY = labelTop + labelSize * 0.5f;
+    auto const topFor = [&](float lineSize, bool lines) { return lines ? middleY - lineSize : labelTop + (labelSize - lineSize) * 0.5f; };
+    if (twoLines) {
+        size = labelSize * 0.82f;
+    }
+    for (int pass = 0; pass < 4; ++pass) {
+        float const track = tracking * size / labelSize;
+        float const top = topFor(size, twoLines);
+        float fit = 1.0f;
+        for (int line = 0; line < (twoLines ? 2 : 1); ++line) {
+            float centre = 0.0f;
+            float const here = roomAt(top + (static_cast<float>(line) + 0.5f) * size, size, centre);
+            float const lineWidth = TrackedWidth(fonts.label, size, line == 0 ? first : second, track);
+            if (lineWidth > here && lineWidth > 0.0f) {
+                fit = std::min(fit, here / lineWidth);
+            }
+        }
+        if (fit >= 0.999f) {
+            break;
+        }
+        size = std::max(size * fit, labelSize * 0.42f);
+    }
+    float const track = tracking * size / labelSize;
+    if (!twoLines) {
+        float centre = 0.0f;
+        roomAt(middleY, size, centre);
+        TrackedCentred(dl, fonts.label, size, centre, topFor(size, false), colour, text, track);
         return;
     }
-    if (width > room && width > 0.0f) {
-        size = std::max(size * room / width, size * 0.6f);
+    float const top = topFor(size, true);
+    for (int line = 0; line < 2; ++line) {
+        float centre = 0.0f;
+        roomAt(top + (static_cast<float>(line) + 0.5f) * size, size, centre);
+        TrackedCentred(dl, fonts.label, size, centre, top + static_cast<float>(line) * size, colour, line == 0 ? first : second, track);
     }
-    TrackedCentred(dl, fonts.label, size, centreX, labelTop + (labelSize - size) * 0.5f, colour, text, tracking);
 }
 
 // An open left hand's outline, palm toward the viewer, fingers up: four rounded fingers, the palm, the thumb out to the left.
@@ -714,7 +774,7 @@ void DrawCoach(ImDrawList* dl, Fonts const& fonts, CoachView const& view) {
     std::string const name = Upper(view.name);
     dl->AddText(fonts.title, 40.0f, {x, m + 14.0f}, WithAlpha(Rgba(255, 157, 90), alpha), name.c_str());
     float const nameWidth = fonts.title->CalcTextSizeA(40.0f, FLT_MAX, 0.0f, name.c_str()).x;
-    dl->AddText(fonts.body, 26.0f, {x + nameWidth + 16.0f, m + 24.0f}, WithAlpha(kLightChosen, alpha), "equipped");
+    dl->AddText(fonts.body, 26.0f, {x + nameWidth + 16.0f, m + 24.0f}, WithAlpha(kLightChosen, alpha), "выбрано");
     pw::CoachText const how = pw::CoachLines(view.coach);
     dl->AddText(fonts.body, 31.0f, {x, m + 70.0f}, WithAlpha(Rgba(226, 238, 244), alpha), how.line1);
     dl->AddText(fonts.body, 31.0f, {x, m + 108.0f}, WithAlpha(Rgba(226, 238, 244), alpha), how.line2);
@@ -768,7 +828,7 @@ void DrawConfirmation(ImDrawList* dl, Fonts const& fonts, pw::SelfView const& vi
     float const measured = fonts.label->CalcTextSizeA(48.0f, FLT_MAX, 0.0f, name.c_str()).x;
     float const size = measured > 820.0f ? 48.0f * 820.0f / measured : 48.0f;
     dl->AddText(fonts.label, size, {42.0f, 38.0f}, colour, name.c_str());
-    dl->AddText(fonts.body, 38.0f, {42.0f, 116.0f}, colour, ok ? "Activated" : view.reason);
+    dl->AddText(fonts.body, 38.0f, {42.0f, 116.0f}, colour, ok ? "Активировано" : view.reason);
 }
 
 void DrawLock(ImDrawList* dl, LockDrawView const& view) {
@@ -851,7 +911,7 @@ ImFont* FirstFont(ImGuiIO& io, std::vector<std::filesystem::path> const& paths, 
     for (std::filesystem::path const& path : paths) {
         std::error_code ec;
         if (std::filesystem::exists(path, ec)) {
-            if (ImFont* font = io.Fonts->AddFontFromFileTTF(Utf8(path.wstring()).c_str(), 48.0f)) {
+            if (ImFont* font = cyr::AddFace(io, path, 48.0f)) {
                 name = Utf8(path.filename().wstring());
                 return font;
             }
@@ -894,7 +954,7 @@ Fonts LoadFonts(ImGuiIO& io, std::vector<std::filesystem::path> const& folders, 
                     if (auto const movie = gfx::Movie::Parse(bytes)) {
                         for (gfx::FontInfo const& info : gfx::Fonts(*movie)) {
                             if (info.name.starts_with("Biomass")) {
-                                if (auto ttf = gfx::FontAsTtf(*movie, info.id, "ME1 Biomass")) {
+                                if (auto ttf = gfx::FontAsTtf(*movie, info.id, "ME1 Biomass", {.cyrillic = true})) {
                                     biomass = std::move(*ttf);
                                 }
                                 break;
@@ -907,10 +967,18 @@ Fonts LoadFonts(ImGuiIO& io, std::vector<std::filesystem::path> const& folders, 
         if (!biomass.empty()) {
             ImFontConfig config;
             config.FontDataOwnedByAtlas = false;
+            config.GlyphRanges = cyr::LatinCyrillic(io);
             fonts.label = io.Fonts->AddFontFromMemoryTTF(biomass.data(), static_cast<int>(biomass.size()), 48.0f, &config);
             if (fonts.label != nullptr) {
                 fonts.gameFont = true;
                 labelName = "the game's Biomass";
+                // The dumped movie's Biomass can have no Cyrillic letters (a cache from a Latin build): Exo 2 fills
+                // them in, the same as for the Latin faces below.
+                for (std::filesystem::path const& folder : folders) {
+                    if (cyr::MergeCyrillicFace(io, folder / L"Exo2-Bold.ttf", 48.0f)) {
+                        break;
+                    }
+                }
             }
         }
     }

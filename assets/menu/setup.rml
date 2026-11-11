@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: MIT -->
+<!-- SPDX-License-Identifier: MIT --->
 <rml>
 <head>
 	<title>MEVR Setup</title>
@@ -8,50 +8,50 @@
 <!--
 	MEVR-Setup.exe (tools/setup, research/33): the installer's window in the in-game menu's glass style. Bound to the data
 	model "setup" (tools/setup/SetupApp.cpp): values by name, act('name'[, 'arg']) for the buttons.
--->
+--->
 <body data-model="setup">
 
 <div class="top">
 	<div class="brand">
 		<div class="logo"/>
-		<div><div class="brandName">MEVR</div><div class="brandSub">Setup</div></div>
+		<div><div class="brandName">MEVR</div><div class="brandSub">Установка</div></div>
 	</div>
 	<div class="chips">
 		<div class="chip" data-class-ok="game_ok" data-class-bad="!game_ok"><div class="ico i-folder"/><span>{{chip_game}}</span></div>
 		<div class="chip" data-class-ok="xr_ok" data-class-bad="!xr_ok"><div class="ico i-headset"/><span>{{chip_xr}}</span></div>
 		<div class="chip" data-class-ok="installed"><div class="ico i-check" data-if="installed"/><div class="ico i-info" data-if="!installed"/><span>{{chip_installed}}</span></div>
 	</div>
-	<button class="btn primary" id="launch-top" data-class-disabled="!game_ok || busy || waiting" data-event-click="act('launch')"><div class="sweep"/><div class="bi i-play"/><span>Launch</span></button>
+	<button class="btn primary" id="launch-top" data-class-disabled="!game_ok || busy || waiting" data-event-click="act('launch')"><div class="sweep"/><div class="bi i-play"/><span>Запустить</span></button>
 </div>
 
 <div class="main">
 	<div class="rail">
-		<button class="navb" data-class-on="page == 'welcome'" data-event-click="page = 'welcome'"><div class="nico i-home"/><div><div class="navl">Welcome</div><div class="navs">Status</div></div></button>
-		<button class="navb" data-class-on="page == 'install'" data-event-click="page = 'install'"><div class="nico i-download"/><div><div class="navl">Install</div><div class="navs">The mod and its loader</div></div></button>
-		<button class="navb" data-class-on="page == 'content'" data-event-click="page = 'content'"><div class="nico i-layers"/><div><div class="navl">Optional content</div><div class="navs">Voice orders, texture packs</div></div></button>
-		<button class="navb" data-class-on="page == 'settings'" data-event-click="page = 'settings'"><div class="nico i-sliders"/><div><div class="navl">Settings</div><div class="navs">VR game settings</div></div></button>
-		<button class="navb" data-class-on="page == 'repair'" data-event-click="page = 'repair'"><div class="nico i-wrench"/><div><div class="navl">Repair</div><div class="navs">Check the files</div></div></button>
-		<button class="navb" data-class-on="page == 'uninstall'" data-event-click="page = 'uninstall'"><div class="nico i-trash"/><div><div class="navl">Uninstall</div><div class="navs">Put the game back</div></div></button>
-		<button class="navb" data-class-on="page == 'launch'" data-event-click="page = 'launch'"><div class="nico i-play"/><div><div class="navl">Launch</div><div class="navs">Straight into ME1</div></div></button>
-		<button class="navb" data-class-on="page == 'report'" data-event-click="page = 'report'"><div class="nico i-report"/><div><div class="navl">Report a problem</div><div class="navs">A zip for an issue</div></div></button>
+		<button class="navb" data-class-on="page == 'welcome'" data-event-click="page = 'welcome'"><div class="nico i-home"/><div><div class="navl">Добро пожаловать</div><div class="navs">Состояние</div></div></button>
+		<button class="navb" data-class-on="page == 'install'" data-event-click="page = 'install'"><div class="nico i-download"/><div><div class="navl">Установить</div><div class="navs">Мод и его загрузчик</div></div></button>
+		<button class="navb" data-class-on="page == 'content'" data-event-click="page = 'content'"><div class="nico i-layers"/><div><div class="navl">Дополнительное содержимое</div><div class="navs">Голосовые приказы, наборы текстур</div></div></button>
+		<button class="navb" data-class-on="page == 'settings'" data-event-click="page = 'settings'"><div class="nico i-sliders"/><div><div class="navl">Настройки</div><div class="navs">VR-настройки игры</div></div></button>
+		<button class="navb" data-class-on="page == 'repair'" data-event-click="page = 'repair'"><div class="nico i-wrench"/><div><div class="navl">Исправить</div><div class="navs">Проверить файлы</div></div></button>
+		<button class="navb" data-class-on="page == 'uninstall'" data-event-click="page = 'uninstall'"><div class="nico i-trash"/><div><div class="navl">Удалить</div><div class="navs">Вернуть игру</div></div></button>
+		<button class="navb" data-class-on="page == 'launch'" data-event-click="page = 'launch'"><div class="nico i-play"/><div><div class="navl">Запустить</div><div class="navs">Сразу в ME1</div></div></button>
+		<button class="navb" data-class-on="page == 'report'" data-event-click="page = 'report'"><div class="nico i-report"/><div><div class="navl">Сообщить о проблеме</div><div class="navs">Архив для обращения</div></div></button>
 	</div>
 
 	<div class="content" id="content">
 
-	<!-- Shared: a job's progress and the log, on every page while something runs or after it ran. -->
+	<!-- Shared: a job's progress and the log, on every page while something runs or after it ran. --->
 	<div data-if="busy" class="row"><div class="lead i-timer"/><div class="rl"><div class="rlab">{{progress_text}}</div>
 		<div class="progress"><div class="fill" data-style-width="progress + '%'"/></div></div>
 		<button class="btn" data-if="can_cancel" data-event-click="act('stop_waiting')"><div class="sweep"/><span>{{cancel_text}}</span><div class="tick"/></button></div>
-	<div data-if="waiting" class="row warnrow"><div class="lead i-timer"/><div class="rl"><div class="rlab">Waiting to continue</div><div class="rdesc">{{wait_text}}</div></div></div>
+	<div data-if="waiting" class="row warnrow"><div class="lead i-timer"/><div class="rl"><div class="rlab">Ожидание продолжения</div><div class="rdesc">{{wait_text}}</div></div></div>
 
-	<!-- ===================================================================================== Welcome -->
+	<!-- ===================================================================================== Welcome --->
 	<div data-if="page == 'welcome'">
 		<div class="stitle">Mass Effect VR</div>
-		<div class="sdesc">VR for Mass Effect 1, Legendary Edition: install, tune and launch it from here.</div>
-		<div data-if="crash_offer" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">The game crashed last session</div><div class="rdesc">Create a report? It gathers the logs and the crash details into a zip on your Desktop. Nothing is sent: you look at it first.</div></div>
+		<div class="sdesc">VR для Mass Effect 1, Legendary Edition: установка, настройка и запуск отсюда.</div>
+		<div data-if="crash_offer" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Игра завершилась сбоем в прошлой сессии</div><div class="rdesc">Создать отчёт? Он соберёт журналы и сведения о сбое в архив на рабочем столе. Ничего не отправляется: вы сначала его просмотрите.</div></div>
 			<div class="actions">
-				<button class="btn" data-class-disabled="busy" data-event-click="act('crash_dismiss')"><div class="sweep"/><span>No thanks</span><div class="tick"/></button>
-				<button class="btn primary" data-class-disabled="busy" data-event-click="act('crash_report')"><div class="sweep"/><div class="bi i-report"/><span>Create a report</span></button>
+				<button class="btn" data-class-disabled="busy" data-event-click="act('crash_dismiss')"><div class="sweep"/><span>Нет, спасибо</span><div class="tick"/></button>
+				<button class="btn primary" data-class-disabled="busy" data-event-click="act('crash_report')"><div class="sweep"/><div class="bi i-report"/><span>Создать отчёт</span></button>
 			</div></div>
 		<div class="hero" data-class-warn="!ready">
 			<div class="big state"/>
@@ -60,254 +60,254 @@
 				<div class="herop">{{hero_text}}</div>
 			</div>
 			<!-- One button: what matters most now (SetupApp::UpdateHero): install (at once, with the Install page's defaults), launch, repair, start
-			     the game once, apply the waiting settings. Before an install, Options opens the Install page to choose first. -->
-			<button class="btn" data-if="hero_action == 'install'" data-class-disabled="busy || waiting" data-event-click="act('goto_install')"><div class="sweep"/><div class="bi i-sliders"/><span>Options</span><div class="tick"/></button>
+			     the game once, apply the waiting settings. Before an install, Options opens the Install page to choose first. --->
+			<button class="btn" data-if="hero_action == 'install'" data-class-disabled="busy || waiting" data-event-click="act('goto_install')"><div class="sweep"/><div class="bi i-sliders"/><span>Параметры</span><div class="tick"/></button>
 			<button class="btn primary" data-if="hero_action != ''" data-class-disabled="!hero_enabled || busy || waiting" data-event-click="act(hero_action)"><div class="sweep"/>
 				<div class="bi i-download" data-if="hero_action == 'goto_install' || hero_action == 'install'"/><div class="bi i-play" data-if="hero_action == 'launch' || hero_action == 'first_start'"/>
 				<div class="bi i-wrench" data-if="hero_action == 'repair'"/><div class="bi i-sliders" data-if="hero_action == 'apply_pending'"/><span>{{hero_button}}</span></button>
 		</div>
 		<div class="tiles">
-			<div class="tile" data-class-good="game_ok" data-class-bad="!game_ok"><div class="tl">Game</div><div class="tv small">{{game_title}}</div><div class="ts">{{game_text}}</div></div>
-			<div class="tile" data-class-good="version_ok" data-class-bad="!version_ok"><div class="tl">Game version</div><div class="tv small">{{version_title}}</div><div class="ts">{{version_text}}</div></div>
+			<div class="tile" data-class-good="game_ok" data-class-bad="!game_ok"><div class="tl">Игра</div><div class="tv small">{{game_title}}</div><div class="ts">{{game_text}}</div></div>
+			<div class="tile" data-class-good="version_ok" data-class-bad="!version_ok"><div class="tl">Версия игры</div><div class="tv small">{{version_title}}</div><div class="ts">{{version_text}}</div></div>
 		</div>
 		<div class="tiles last">
-			<div class="tile" data-class-good="xr_ok" data-class-bad="!xr_ok"><div class="tl">VR runtime</div><div class="tv small">{{xr_title}}</div><div class="ts">{{xr_text}}</div></div>
-			<div class="tile" data-class-good="loader_ok" data-class-bad="!loader_ok"><div class="tl">ASI loader</div><div class="tv small">{{loader_title}}</div><div class="ts">{{loader_text}}</div></div>
+			<div class="tile" data-class-good="xr_ok" data-class-bad="!xr_ok"><div class="tl">Среда VR</div><div class="tv small">{{xr_title}}</div><div class="ts">{{xr_text}}</div></div>
+			<div class="tile" data-class-good="loader_ok" data-class-bad="!loader_ok"><div class="tl">Загрузчик ASI</div><div class="tv small">{{loader_title}}</div><div class="ts">{{loader_text}}</div></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Game folder</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">{{root_text}}</div><div class="rdesc">Found through {{source_text}}. Pick another folder if you have more than one copy.</div></div>
-				<button class="btn" data-class-disabled="busy" data-event-click="act('browse')"><div class="sweep"/><div class="bi i-folder"/><span>Change</span><div class="tick"/></button></div>
+			<div class="gtitle"><span>Папка игры</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">{{root_text}}</div><div class="rdesc" data-if="game_ok">Найдено через {{source_text}}. Выберите другую папку, если у вас несколько копий.</div><div class="rdesc" data-if="!game_ok">Выберите папку игры: ту, где лежит Game\ME1 (или ME1\Binaries\Win64).</div></div>
+				<button class="btn" data-class-disabled="busy" data-event-click="act('browse')"><div class="sweep"/><div class="bi i-folder"/><span>Изменить</span><div class="tick"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Updates</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Version {{version}}</div><div class="rdesc">{{update_text}}</div></div>
-				<button class="btn" data-class-disabled="busy || !update_enabled" data-event-click="act('check_update')"><div class="sweep"/><span>Check</span><div class="tick"/></button>
-				<button class="btn primary" data-if="update_available" data-class-disabled="busy || !game_ok || !installed" data-event-click="act('install_update')"><div class="sweep"/><div class="bi i-download"/><span>Download and install</span><div class="tick"/></button></div>
+			<div class="gtitle"><span>Обновления</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Версия {{version}}</div><div class="rdesc">{{update_text}}</div></div>
+				<button class="btn" data-class-disabled="busy || !update_enabled" data-event-click="act('check_update')"><div class="sweep"/><span>Проверить</span><div class="tick"/></button>
+				<button class="btn primary" data-if="update_available" data-class-disabled="busy || !game_ok || !installed" data-event-click="act('install_update')"><div class="sweep"/><div class="bi i-download"/><span>Скачать и установить</span><div class="tick"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Something wrong?</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Report a problem</div><div class="rdesc">Logs, settings and a summary your AI assistant can read, in one zip. You see what's in it; nothing is sent.</div></div>
-				<button class="btn" data-class-disabled="busy" data-event-click="page = 'report'"><div class="sweep"/><div class="bi i-report"/><span>Report</span><div class="tick"/></button></div>
+			<div class="gtitle"><span>Что-то не так?</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Сообщить о проблеме</div><div class="rdesc">Журналы, настройки и сводка, понятная вашему ИИ-помощнику, в одном архиве. Вы видите, что внутри; ничего не отправляется.</div></div>
+				<button class="btn" data-class-disabled="busy" data-event-click="page = 'report'"><div class="sweep"/><div class="bi i-report"/><span>Отчёт</span><div class="tick"/></button></div>
 		</div>
-		<div class="hint">Fan project, not affiliated with EA or BioWare. © 2026 ME VR Attempt contributors · GPL-3.0, no warranty · source: github.com/dnehring/MEVR</div>
+		<div class="hint">Фанатский проект, не связан с EA или BioWare. © 2026 участники ME VR Attempt · GPL-3.0, без гарантий · исходники: github.com/dnehring/MEVR</div>
 	</div>
 
-	<!-- ===================================================================================== Install -->
+	<!-- ===================================================================================== Install --->
 	<div data-if="page == 'install'">
-		<div class="stitle">Install</div>
-		<div class="sdesc">Everything goes into the game's own folder and is recorded, so Uninstall puts the game back exactly.</div>
-		<div data-if="!version_ok &amp;&amp; game_ok" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">This game version isn't supported</div><div class="rdesc">{{version_text}}</div></div></div>
-		<div data-if="admin_needed" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">The game's folder is protected</div><div class="rdesc">Windows doesn't let this setup write there. Restart it as administrator.</div></div>
-			<button class="btn" data-event-click="act('admin')"><div class="sweep"/><span>Restart as admin</span><div class="tick"/></button></div>
-		<div data-if="upstream_found" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Halcyon's MELE-VR is installed</div><div class="rdesc">{{upstream_text}}</div></div></div>
-		<div data-if="!has_payload" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">No install files in this copy</div><div class="rdesc">To update an existing installation, use Updates on Welcome. A fresh install or repair needs the downloaded release's files.</div></div></div>
-		<div data-if="game_ok &amp;&amp; !has_gamer_settings" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Mass Effect 1 hasn't been started on this PC yet</div><div class="rdesc">{{first_start_text}}</div></div>
-			<button class="btn" data-class-disabled="busy || waiting" data-event-click="act('first_start')"><div class="sweep"/><div class="bi i-play"/><span>Start the game once</span><div class="tick"/></button></div>
+		<div class="stitle">Установить</div>
+		<div class="sdesc">Всё ставится в папку игры и записывается, поэтому удаление вернёт игру точно как было.</div>
+		<div data-if="!version_ok &amp;&amp; game_ok" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Эта версия игры не поддерживается</div><div class="rdesc">{{version_text}}</div></div></div>
+		<div data-if="admin_needed" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Папка игры защищена</div><div class="rdesc">Windows не даёт программе установки писать туда. Перезапустите её от имени администратора.</div></div>
+			<button class="btn" data-event-click="act('admin')"><div class="sweep"/><span>Перезапустить от администратора</span><div class="tick"/></button></div>
+		<div data-if="upstream_found" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Установлен MELE-VR от Halcyon</div><div class="rdesc">{{upstream_text}}</div></div></div>
+		<div data-if="!has_payload" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">В этой копии нет файлов установки</div><div class="rdesc">Чтобы обновить существующую установку, используйте «Обновления» на странице приветствия. Для чистой установки или исправления нужны файлы скачанного выпуска.</div></div></div>
+		<div data-if="game_ok &amp;&amp; !has_gamer_settings" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Mass Effect 1 ещё не запускалась на этом ПК</div><div class="rdesc">{{first_start_text}}</div></div>
+			<button class="btn" data-class-disabled="busy || waiting" data-event-click="act('first_start')"><div class="sweep"/><div class="bi i-play"/><span>Запустите игру один раз</span><div class="tick"/></button></div>
 		<div class="group">
-			<div class="gtitle"><span>What goes in</span><div class="gline"/></div>
-			<div class="row"><div class="lead i-check"/><div class="rl"><div class="rlab">The VR mod</div><div class="rdesc">LE1MEVR.asi, its menu and fonts, in Binaries\Win64\ASI</div></div></div>
-			<div class="row"><div class="lead i-check"/><div class="rl"><div class="rlab">ASI loader</div><div class="rdesc">{{loader_plan}}</div></div></div>
-			<div class="row"><div class="lead i-check"/><div class="rl"><div class="rlab">Renderer settings</div><div class="rdesc">Halcyon's MELEVR.ini, only if there's none yet. An existing one keeps your profiles: only the menu key, head aim and its welcome are set, and profiles from Halcyon's own MELE-VR also get this mod's VR mode, first person and mirror rate (recorded: an uninstall that keeps your VR settings puts them back).</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab">VR game settings</div><div class="rdesc">Borderless window at the VR resolution, VSync, motion blur and film grain off, HDR off. Your values are kept for Restore.</div></div>
+			<div class="gtitle"><span>Что внутри</span><div class="gline"/></div>
+			<div class="row"><div class="lead i-check"/><div class="rl"><div class="rlab">VR-мод</div><div class="rdesc">LE1MEVR.asi, его меню и шрифты, в Binaries\Win64\ASI</div></div></div>
+			<div class="row"><div class="lead i-check"/><div class="rl"><div class="rlab">Загрузчик ASI</div><div class="rdesc">{{loader_plan}}</div></div></div>
+			<div class="row"><div class="lead i-check"/><div class="rl"><div class="rlab">Настройки рендера</div><div class="rdesc">MELEVR.ini от Halcyon, только если его ещё нет. Существующий сохраняет ваши профили: задаются лишь клавиша меню, прицеливание головой и его приветствие, а профили из собственного MELE-VR от Halcyon получают ещё VR-режим этого мода, вид от первого лица и частоту зеркала (записывается: удаление с сохранением VR-настроек вернёт их).</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab">VR-настройки игры</div><div class="rdesc">Окно без рамки в VR-разрешении, VSync, смазывание движения и зерно плёнки выключены, HDR выключен. Ваши значения сохраняются для восстановления.</div></div>
 				<button class="tog" data-class-on="opt_settings" data-event-click="opt_settings = !opt_settings"><div class="knob"/></button></div>
-			<div class="row resolution-row" data-class-disabled="!opt_settings"><div class="rl"><div class="rlab">Render resolution</div><div class="rdesc">{{quality_text}}</div></div>
-				<div class="seg"><button class="segb" data-class-on="quality == 'auto'" data-event-click="quality = 'auto'">Automatic</button><button class="segb" data-if="headset_known" data-class-on="quality == 'headset'" data-event-click="quality = 'headset'">Headset</button><button class="segb" data-class-on="quality == 'performance'" data-event-click="quality = 'performance'">Performance</button><button class="segb" data-class-on="quality == 'balanced'" data-event-click="quality = 'balanced'">Balanced</button><button class="segb" data-class-on="quality == 'keep'" data-event-click="quality = 'keep'">Keep</button></div></div>
+			<div class="row resolution-row" data-class-disabled="!opt_settings"><div class="rl"><div class="rlab">Разрешение рендера</div><div class="rdesc">{{quality_text}}</div></div>
+				<div class="seg"><button class="segb" data-class-on="quality == 'auto'" data-event-click="quality = 'auto'">Автоматически</button><button class="segb" data-if="headset_known" data-class-on="quality == 'headset'" data-event-click="quality = 'headset'">Шлем</button><button class="segb" data-class-on="quality == 'performance'" data-event-click="quality = 'performance'">Производительность</button><button class="segb" data-class-on="quality == 'balanced'" data-event-click="quality = 'balanced'">Сбалансированный</button><button class="segb" data-class-on="quality == 'keep'" data-event-click="quality = 'keep'">Сохранить</button></div></div>
 		</div>
 		<div class="group">
-			<div class="row"><div class="rl"><div class="rlab">{{install_title}}</div><div class="rdesc">Close the game first. Takes a few seconds.</div></div>
+			<div class="row"><div class="rl"><div class="rlab">{{install_title}}</div><div class="rdesc">Сначала закройте игру. Займёт несколько секунд.</div></div>
 				<button class="btn primary" data-class-disabled="!can_install || busy || waiting" data-event-click="act('install')"><div class="sweep"/><div class="bi i-download"/><span>{{install_button}}</span></button></div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Optional content -->
+	<!-- ===================================================================================== Optional content --->
 	<div data-if="page == 'content'">
-		<div class="stitle">Optional content</div>
-		<div class="sdesc">Extras that aren't in the download: the voice orders' recognizer and models, and texture packs made by others, each from where it officially lives, under its own terms.</div>
-		<div class="row" data-if="request_text != ''"><div class="lead i-info"/><div class="rl"><div class="rlab">Asked for from the game</div><div class="rdesc">{{request_text}}</div></div></div>
+		<div class="stitle">Дополнительное содержимое</div>
+		<div class="sdesc">Дополнения, которых нет в загрузке: распознаватель и модели голосовых приказов, а также наборы текстур от других авторов — каждый из официального источника и на своих условиях.</div>
+		<div class="row" data-if="request_text != ''"><div class="lead i-info"/><div class="rl"><div class="rlab">Запрошено у игры</div><div class="rdesc">{{request_text}}</div></div></div>
 		<div class="group">
-			<div class="gtitle"><span>Voice orders</span><div class="gline"/></div>
+			<div class="gtitle"><span>Голосовые приказы</span><div class="gline"/></div>
 			<div class="card" data-class-installed="voice_installed">
-				<div class="ch"><div class="cn">Voice orders</div><span class="badge cyan" data-if="voice_installed">Installed</span></div>
-				<div class="ca">Moonshine Voice, llama.cpp and our fine-tuned order model</div>
-				<div class="cd">Give the squad orders by voice: hold the left grip at your left ear (the radio), speak, let go. The speech recognizer and the model run on your PC; nothing is sent anywhere.</div>
-				<div class="cm"><span><span class="k">Size</span>{{voice_size}}</span></div>
-				<div class="cm"><span><span class="k">From</span>{{voice_sources}}</span></div>
-				<div class="cm"><span><span class="k">Terms</span>{{voice_licences}}</span></div>
+				<div class="ch"><div class="cn">Голосовые приказы</div><span class="badge cyan" data-if="voice_installed">Установлено</span></div>
+				<div class="ca">Moonshine Voice, llama.cpp и наша дообученная модель приказов</div>
+				<div class="cd">Отдавайте отряду приказы голосом: удерживайте левый захват у левого уха (рация), говорите, отпустите. Распознавание речи и модель работают на вашем ПК; ничего никуда не отправляется.</div>
+				<div class="cm"><span><span class="k">Размер</span>{{voice_size}}</span></div>
+				<div class="cm"><span><span class="k">Откуда</span>{{voice_sources}}</span></div>
+				<div class="cm"><span><span class="k">Условия</span>{{voice_licences}}</span></div>
 				<div class="cs" data-class-warn="voice_warn">{{voice_state}}</div>
 				<div class="cb">
 					<button class="btn small" data-class-disabled="busy || waiting || !voice_ready || voice_up_to_date" data-event-click="act('voice_install')"><div class="sweep"/><div class="bi i-download"/><span>{{voice_button}}</span></button>
-					<button class="btn small" data-if="voice_installed" data-class-disabled="busy" data-event-click="act('voice_check')"><div class="sweep"/><div class="bi i-check"/><span>Check</span></button>
-					<button class="btn small" data-if="voice_installed" data-class-disabled="busy || waiting" data-event-click="act('voice_remove')"><div class="sweep"/><span>Remove</span></button>
+					<button class="btn small" data-if="voice_installed" data-class-disabled="busy" data-event-click="act('voice_check')"><div class="sweep"/><div class="bi i-check"/><span>Проверить</span></button>
+					<button class="btn small" data-if="voice_installed" data-class-disabled="busy || waiting" data-event-click="act('voice_remove')"><div class="sweep"/><span>Удалить</span></button>
 				</div>
 			</div>
-			<div class="row"><div class="rl"><div class="rlab">The model tier</div><div class="rdesc">{{voice_model_text}}</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Класс модели</div><div class="rdesc">{{voice_model_text}}</div></div>
 				<button class="tog" data-class-disabled="busy" data-class-on="voice_llm" data-event-click="act('voice_toggle','llm')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Small recognizer too</div><div class="rdesc">More accurate, slower beside the game (about 140 MB). Used with [Voice] model = small in LE1MEVR.ini.</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Распознаватель small тоже</div><div class="rdesc">Точнее и медленнее рядом с запущенной игрой (около 140 МБ). Используется при [Voice] model = small в LE1MEVR.ini.</div></div>
 				<button class="tog" data-class-disabled="busy" data-class-on="voice_small" data-event-click="act('voice_toggle','small')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Medium recognizer too</div><div class="rdesc">The most accurate and the slowest (about 270 MB). Used with [Voice] model = medium.</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Распознаватель medium тоже</div><div class="rdesc">Самый точный и самый медленный (около 270 МБ). Используется при [Voice] model = medium.</div></div>
 				<button class="tog" data-class-disabled="busy" data-class-on="voice_medium" data-event-click="act('voice_toggle','medium')"><div class="knob"/></button></div>
 		</div>
-		<div class="gtitle"><span>Texture packs</span><div class="gline"/></div>
-		<div class="info"><div class="ico i-info"/><div>Texture packs change the game's files for good: they go on after every other content mod, and only a full restore of the game (or a reinstall) takes them out. Uninstalling the VR mod leaves them in place. Your VR game settings are applied again afterwards.</div></div>
+		<div class="gtitle"><span>Наборы текстур</span><div class="gline"/></div>
+		<div class="info"><div class="ico i-info"/><div>Наборы текстур навсегда меняют файлы игры: они ставятся после всех остальных модов содержимого, и убрать их можно только полным восстановлением игры (или переустановкой). Удаление VR-мода оставляет их на месте. Ваши VR-настройки игры применяются снова после этого.</div></div>
 		<div class="row"><div class="lead i-wrench" data-class-off="!mem_ready"/><div class="rl"><div class="rlab">Mass Effect Modder</div><div class="rdesc">{{mem_text}}</div></div>
 			<div class="actions">
-				<button class="btn small" data-if="!mem_ready" data-class-disabled="busy" data-event-click="act('mem_download')"><div class="sweep"/><div class="bi i-download"/><span>Download</span></button>
-				<button class="btn small" data-event-click="act('mem_page')"><div class="sweep"/><div class="bi i-link"/><span>Page</span></button>
+				<button class="btn small" data-if="!mem_ready" data-class-disabled="busy" data-event-click="act('mem_download')"><div class="sweep"/><div class="bi i-download"/><span>Скачать</span></button>
+				<button class="btn small" data-event-click="act('mem_page')"><div class="sweep"/><div class="bi i-link"/><span>Страница</span></button>
 			</div></div>
 		<div data-for="p : packs">
 			<div class="card" data-class-installed="p.installed">
-				<div class="ch"><div class="cn">{{p.name}}</div><span class="badge" data-if="p.large">Large</span><span class="badge cyan" data-if="p.installed">Installed</span></div>
-				<div class="ca">by {{p.author}}</div>
+				<div class="ch"><div class="cn">{{p.name}}</div><span class="badge" data-if="p.large">Большой</span><span class="badge cyan" data-if="p.installed">Установлено</span></div>
+				<div class="ca">автор: {{p.author}}</div>
 				<div class="cd">{{p.description}}</div>
-				<div class="cm"><span><span class="k">Size</span>{{p.size}}</span><span data-if="p.requirements != ''"><span class="k">Needs</span>{{p.requirements}}</span></div>
-				<div class="cm"><span><span class="k">Terms</span>{{p.licence}}</span></div>
+				<div class="cm"><span><span class="k">Размер</span>{{p.size}}</span><span data-if="p.requirements != ''"><span class="k">Требуется</span>{{p.requirements}}</span></div>
+				<div class="cm"><span><span class="k">Условия</span>{{p.licence}}</span></div>
 				<div class="cs" data-class-warn="!p.installed &amp;&amp; p.file == ''">{{p.state}}</div>
 				<div class="cb">
-					<button class="btn small" data-event-click="act('pack_page', p.id)"><div class="sweep"/><div class="bi i-link"/><span>Open its page</span></button>
-					<button class="btn small" data-class-disabled="busy" data-event-click="act('pack_file', p.id)"><div class="sweep"/><div class="bi i-folder"/><span>Choose the download</span></button>
-					<button class="btn small" data-class-disabled="busy || waiting || p.file == '' || !mem_ready || !game_ok" data-event-click="act('pack_install', p.id)"><div class="sweep"/><div class="bi i-download"/><span>Install</span></button>
+					<button class="btn small" data-event-click="act('pack_page', p.id)"><div class="sweep"/><div class="bi i-link"/><span>Открыть страницу</span></button>
+					<button class="btn small" data-class-disabled="busy" data-event-click="act('pack_file', p.id)"><div class="sweep"/><div class="bi i-folder"/><span>Выберите загрузку</span></button>
+					<button class="btn small" data-class-disabled="busy || waiting || p.file == '' || !mem_ready || !game_ok" data-event-click="act('pack_install', p.id)"><div class="sweep"/><div class="bi i-download"/><span>Установить</span></button>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Settings -->
+	<!-- ===================================================================================== Settings --->
 	<div data-if="page == 'settings'">
-		<div class="stitle">VR game settings</div>
-		<div class="sdesc">The game's own graphics settings (GamerSettings.ini) that VR needs. Restore puts your values back.</div>
-		<div class="row warnrow" data-if="!has_gamer_settings &amp;&amp; game_ok"><div class="lead i-warn"/><div class="rl"><div class="rlab">Start the game once first</div><div class="rdesc">Its settings file is made on the first start. {{first_start_text}}</div></div>
-			<button class="btn" data-class-disabled="busy || waiting" data-event-click="act('first_start')"><div class="sweep"/><div class="bi i-play"/><span>Start the game once</span><div class="tick"/></button></div>
-		<div class="row warnrow" data-if="has_gamer_settings &amp;&amp; settings_pending &amp;&amp; installed"><div class="lead i-warn"/><div class="rl"><div class="rlab">Waiting since the install</div><div class="rdesc">The VR game settings you chose when you installed haven't gone on yet: the game hadn't made this file then. Apply puts on what's chosen below.</div></div></div>
-		<div class="row warnrow" data-if="gamer_read_only"><div class="lead i-warn"/><div class="rl"><div class="rlab">GamerSettings.ini is read-only</div><div class="rdesc">You or a tool ticked Read-only in its Properties (Game\ME1\BioGame\Config), so nothing can be applied to it. Untick it, then Apply.</div></div></div>
+		<div class="stitle">VR-настройки игры</div>
+		<div class="sdesc">Собственные настройки графики игры (GamerSettings.ini), нужные для VR. «Восстановить» вернёт ваши значения.</div>
+		<div class="row warnrow" data-if="!has_gamer_settings &amp;&amp; game_ok"><div class="lead i-warn"/><div class="rl"><div class="rlab">Сначала запустите игру один раз</div><div class="rdesc">Её файл настроек создаётся при первом запуске. {{first_start_text}}</div></div>
+			<button class="btn" data-class-disabled="busy || waiting" data-event-click="act('first_start')"><div class="sweep"/><div class="bi i-play"/><span>Запустите игру один раз</span><div class="tick"/></button></div>
+		<div class="row warnrow" data-if="has_gamer_settings &amp;&amp; settings_pending &amp;&amp; installed"><div class="lead i-warn"/><div class="rl"><div class="rlab">Ждёт с момента установки</div><div class="rdesc">Выбранные при установке VR-настройки игры ещё не применены: тогда игра ещё не создала этот файл. «Применить» включит выбранное ниже.</div></div></div>
+		<div class="row warnrow" data-if="gamer_read_only"><div class="lead i-warn"/><div class="rl"><div class="rlab">GamerSettings.ini только для чтения</div><div class="rdesc">Вы или программа поставили «Только чтение» в его свойствах (Game\ME1\BioGame\Config), поэтому в него ничего нельзя записать. Снимите галочку и нажмите «Применить».</div></div></div>
 		<div class="tiles">
-			<div class="tile"><div class="tl">Resolution</div><div class="tv small">{{cur_res}}</div></div>
-			<div class="tile"><div class="tl">Window</div><div class="tv small">{{cur_window}}</div></div>
+			<div class="tile"><div class="tl">Разрешение</div><div class="tv small">{{cur_res}}</div></div>
+			<div class="tile"><div class="tl">Окно</div><div class="tv small">{{cur_window}}</div></div>
 			<div class="tile"><div class="tl">HDR</div><div class="tv small">{{cur_hdr}}</div></div>
 		</div>
 		<div class="tiles last">
 			<div class="tile"><div class="tl">VSync</div><div class="tv small">{{cur_vsync}}</div></div>
-			<div class="tile"><div class="tl">Motion blur</div><div class="tv small">{{cur_blur}}</div></div>
-			<div class="tile"><div class="tl">Film grain</div><div class="tv small">{{cur_grain}}</div></div>
+			<div class="tile"><div class="tl">Смазывание движения</div><div class="tv small">{{cur_blur}}</div></div>
+			<div class="tile"><div class="tl">Зерно плёнки</div><div class="tv small">{{cur_grain}}</div></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Resolution</span><div class="gline"/></div>
-			<div class="row resolution-row"><div class="rl"><div class="rlab">Render resolution</div><div class="rdesc">{{quality_text}}</div></div>
-				<div class="seg"><button class="segb" data-class-on="quality == 'auto'" data-event-click="quality = 'auto'">Automatic</button><button class="segb" data-if="headset_known" data-class-on="quality == 'headset'" data-event-click="quality = 'headset'">Headset</button><button class="segb" data-class-on="quality == 'performance'" data-event-click="quality = 'performance'">Performance</button><button class="segb" data-class-on="quality == 'balanced'" data-event-click="quality = 'balanced'">Balanced</button><button class="segb" data-class-on="quality == 'sharp'" data-event-click="quality = 'sharp'">Sharp</button><button class="segb" data-class-on="quality == 'keep'" data-event-click="quality = 'keep'">Keep</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Your headset's own size</div><div class="rdesc">{{headset_text}}</div></div>
-				<button class="btn" data-class-disabled="busy" data-event-click="act('detect_headset')"><div class="sweep"/><div class="bi i-headset"/><span>Detect</span><div class="tick"/></button></div>
+			<div class="gtitle"><span>Разрешение</span><div class="gline"/></div>
+			<div class="row resolution-row"><div class="rl"><div class="rlab">Разрешение рендера</div><div class="rdesc">{{quality_text}}</div></div>
+				<div class="seg"><button class="segb" data-class-on="quality == 'auto'" data-event-click="quality = 'auto'">Автоматически</button><button class="segb" data-if="headset_known" data-class-on="quality == 'headset'" data-event-click="quality = 'headset'">Шлем</button><button class="segb" data-class-on="quality == 'performance'" data-event-click="quality = 'performance'">Производительность</button><button class="segb" data-class-on="quality == 'balanced'" data-event-click="quality = 'balanced'">Сбалансированный</button><button class="segb" data-class-on="quality == 'sharp'" data-event-click="quality = 'sharp'">Резкий</button><button class="segb" data-class-on="quality == 'keep'" data-event-click="quality = 'keep'">Сохранить</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Собственный размер шлема</div><div class="rdesc">{{headset_text}}</div></div>
+				<button class="btn" data-class-disabled="busy" data-event-click="act('detect_headset')"><div class="sweep"/><div class="bi i-headset"/><span>Определить</span><div class="tick"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Picture</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">VSync off</div><div class="rdesc">The headset sets the pace, not the monitor</div></div><button class="tog" data-class-on="opt_vsync" data-event-click="opt_vsync = !opt_vsync"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Motion blur off</div><div class="rdesc">Every head turn would smear</div></div><button class="tog" data-class-on="opt_blur" data-event-click="opt_blur = !opt_blur"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Film grain off</div><div class="rdesc">Screen-locked noise is uncomfortable in a headset</div></div><button class="tog" data-class-on="opt_grain" data-event-click="opt_grain = !opt_grain"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">HDR off</div><div class="rdesc">The headset's picture is SDR; HDR highlights would clip</div></div><button class="tog" data-class-on="opt_hdr" data-event-click="opt_hdr = !opt_hdr"><div class="knob"/></button></div>
-			<div class="hint">Always: a borderless window (stereo needs the full size), dynamic shadows off and no 60 fps cap.</div>
+			<div class="gtitle"><span>Картинка</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">VSync выкл.</div><div class="rdesc">Темп задаёт шлем, а не монитор</div></div><button class="tog" data-class-on="opt_vsync" data-event-click="opt_vsync = !opt_vsync"><div class="knob"/></button></div>
+			<div class="row"><div class="rl"><div class="rlab">Смазывание движения выкл.</div><div class="rdesc">Любой поворот головы размазывался бы</div></div><button class="tog" data-class-on="opt_blur" data-event-click="opt_blur = !opt_blur"><div class="knob"/></button></div>
+			<div class="row"><div class="rl"><div class="rlab">Зерно плёнки выкл.</div><div class="rdesc">Шум, привязанный к экрану, неудобен в шлеме</div></div><button class="tog" data-class-on="opt_grain" data-event-click="opt_grain = !opt_grain"><div class="knob"/></button></div>
+			<div class="row"><div class="rl"><div class="rlab">HDR выкл.</div><div class="rdesc">Картинка шлема — SDR; светлые участки HDR обрезались бы</div></div><button class="tog" data-class-on="opt_hdr" data-event-click="opt_hdr = !opt_hdr"><div class="knob"/></button></div>
+			<div class="hint">Всегда: окно без рамки (стерео нужно на весь размер), динамические тени выключены, нет ограничения 60 fps.</div>
 		</div>
 		<div class="group">
-			<div class="row"><div class="rl"><div class="rlab" data-if="settings_applied">Applied</div><div class="rlab" data-if="!settings_applied">Not applied</div><div class="rdesc">Close the game first: it rewrites its settings when it quits.</div></div>
+			<div class="row"><div class="rl"><div class="rlab" data-if="settings_applied">Применено</div><div class="rlab" data-if="!settings_applied">Не применено</div><div class="rdesc">Сначала закройте игру: при выходе она перезаписывает свои настройки.</div></div>
 				<div class="actions">
-					<button class="btn" data-class-disabled="busy || waiting || !settings_applied" data-event-click="act('restore')"><div class="sweep"/><span>Restore mine</span><div class="tick"/></button>
-					<button class="btn primary" data-class-disabled="busy || waiting || !has_gamer_settings" data-event-click="act('apply')"><div class="sweep"/><span>Apply</span></button>
+					<button class="btn" data-class-disabled="busy || waiting || !settings_applied" data-event-click="act('restore')"><div class="sweep"/><span>Восстановить мои</span><div class="tick"/></button>
+					<button class="btn primary" data-class-disabled="busy || waiting || !has_gamer_settings" data-event-click="act('apply')"><div class="sweep"/><span>Применить</span></button>
 				</div></div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Repair -->
+	<!-- ===================================================================================== Repair --->
 	<div data-if="page == 'repair'">
-		<div class="stitle">Repair</div>
-		<div class="sdesc">Checks every file the install put in and puts back what's missing or changed. Steam's or the EA app's "verify files" puts the game's own loader and file table back (the mod and the Mako's cockpit then stay off): this brings ours back. It also applies VR game settings still waiting for the game's first start.</div>
-		<div class="row"><div class="rl"><div class="rlab">Still not right?</div><div class="rdesc">Report a problem: a zip with the logs and a summary for an issue or your AI assistant.</div></div>
-			<button class="btn" data-class-disabled="busy" data-event-click="page = 'report'"><div class="sweep"/><div class="bi i-report"/><span>Report</span><div class="tick"/></button></div>
+		<div class="stitle">Исправить</div>
+		<div class="sdesc">Проверяет все файлы, поставленные установкой, и возвращает недостающие или изменённые. «Проверка файлов» в Steam или EA app возвращает родной загрузчик и таблицу файлов игры (мод и кабина «Мако» тогда не включаются): здесь возвращаются наши. Также применяются VR-настройки игры, ждущие первого запуска.</div>
+		<div class="row"><div class="rl"><div class="rlab">Всё ещё не так?</div><div class="rdesc">Сообщить о проблеме: архив с журналами и сводкой для обращения или ИИ-помощника.</div></div>
+			<button class="btn" data-class-disabled="busy" data-event-click="page = 'report'"><div class="sweep"/><div class="bi i-report"/><span>Отчёт</span><div class="tick"/></button></div>
 		<div class="group">
 			<div class="row"><div class="rl"><div class="rlab">{{repair_title}}</div><div class="rdesc">{{repair_text}}</div></div>
 				<div class="actions">
-					<button class="btn" data-class-disabled="busy || !installed" data-event-click="act('verify')"><div class="sweep"/><span>Check</span><div class="tick"/></button>
-					<button class="btn primary" data-class-disabled="busy || waiting || !installed || !has_payload" data-event-click="act('repair')"><div class="sweep"/><div class="bi i-wrench"/><span>Repair</span></button>
+					<button class="btn" data-class-disabled="busy || !installed" data-event-click="act('verify')"><div class="sweep"/><span>Проверить</span><div class="tick"/></button>
+					<button class="btn primary" data-class-disabled="busy || waiting || !installed || !has_payload" data-event-click="act('repair')"><div class="sweep"/><div class="bi i-wrench"/><span>Исправить</span></button>
 				</div></div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Report a problem -->
+	<!-- ===================================================================================== Report a problem --->
 	<div data-if="page == 'report'">
-		<div class="stitle">Report a problem</div>
-		<div class="sdesc">One zip with the mod's logs, settings and a summary written for you and your AI assistant. It's saved on your PC: nothing is uploaded or sent.</div>
-		<div class="row" data-if="report_request != ''"><div class="lead i-info"/><div class="rl"><div class="rlab">Asked for from the game</div><div class="rdesc">{{report_request}}</div></div></div>
+		<div class="stitle">Сообщить о проблеме</div>
+		<div class="sdesc">Один архив с журналами мода, настройками и сводкой для вас и вашего ИИ-помощника. Он сохраняется на вашем ПК: ничего не загружается и не отправляется.</div>
+		<div class="row" data-if="report_request != ''"><div class="lead i-info"/><div class="rl"><div class="rlab">Запрошено у игры</div><div class="rdesc">{{report_request}}</div></div></div>
 		<div class="hero report" data-if="report_ready">
 			<div class="big i-report"/>
 			<div class="herot">
 				<div class="heroh">{{report_headline}}</div>
 				<div class="herop">{{report_redactions}}</div>
 			</div>
-			<button class="btn primary" data-class-disabled="busy || !report_ready" data-event-click="act('report_create')"><div class="sweep"/><div class="bi i-download"/><span>Create the zip</span></button>
+			<button class="btn primary" data-class-disabled="busy || !report_ready" data-event-click="act('report_create')"><div class="sweep"/><div class="bi i-download"/><span>Создать архив</span></button>
 		</div>
-		<div data-if="report_has_zip" class="row"><div class="lead i-check"/><div class="rl"><div class="rlab">Saved</div><div class="rdesc">{{report_zip}}</div></div>
-			<button class="btn" data-event-click="act('report_reveal')"><div class="sweep"/><div class="bi i-folder"/><span>Show it</span><div class="tick"/></button></div>
+		<div data-if="report_has_zip" class="row"><div class="lead i-check"/><div class="rl"><div class="rlab">Сохранено</div><div class="rdesc">{{report_zip}}</div></div>
+			<button class="btn" data-event-click="act('report_reveal')"><div class="sweep"/><div class="bi i-folder"/><span>Показать</span><div class="tick"/></button></div>
 		<div class="group">
-			<div class="gtitle"><span>Also include</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">The latest snapshot</div><div class="rdesc">What each eye saw when you last took one (menu > Advanced > Diagnostics, or tap both stick clicks): two pictures and their data</div></div>
+			<div class="gtitle"><span>Также включить</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Последний снимок</div><div class="rdesc">Что видел каждый глаз при последнем снимке (меню > Дополнительно > Диагностика или нажатие обоих стиков): два снимка и данные к ним</div></div>
 				<button class="tog" data-class-disabled="busy" data-class-on="report_snapshot" data-event-click="act('report_toggle','snapshot')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">The latest frame-timing measurement</div><div class="rdesc">For stutter and low frame rates: measure first (menu > Advanced > Diagnostics > Measure frame timing)</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Последнее измерение времени кадра</div><div class="rdesc">При подёргиваниях и низком fps: сначала измерьте (меню > Дополнительно > Диагностика > Измерить время кадра)</div></div>
 				<button class="tog" data-class-disabled="busy" data-class-on="report_perf" data-event-click="act('report_toggle','perf')"><div class="knob"/></button></div>
 		</div>
 		<div class="group" data-if="report_ready">
-			<div class="gtitle"><span>What goes in</span><div class="gline"/></div>
+			<div class="gtitle"><span>Что внутри</span><div class="gline"/></div>
 			<div class="files">
 				<div class="frow" data-for="f : report_files"><span class="fname">{{f.name}}</span><span class="fsize">{{f.size}}</span><span class="fnote">{{f.note}}</span></div>
 			</div>
-			<div class="hint">{{report_text}} Other mods' files are never included, only their names in the folder listing.</div>
+			<div class="hint">{{report_text}} Файлы других модов никогда не включаются, только их имена в списке папки.</div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Then</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Ask your AI assistant</div><div class="rdesc">Give it the zip (or paste REPORT.md): the prompt at its end asks for the likely cause, things to try, and help writing the issue.</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Open a GitHub issue</div><div class="rdesc">Opens the issue form in your browser with the versions, headset and error filled in (nothing personal). Attach the zip there yourself.</div></div>
-				<button class="btn" data-class-disabled="busy || !report_ready" data-event-click="act('report_issue')"><div class="sweep"/><div class="bi i-link"/><span>Open the form</span><div class="tick"/></button></div>
+			<div class="gtitle"><span>Затем</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Спросите ИИ-помощника</div><div class="rdesc">Дайте ему архив (или вставьте REPORT.md): запрос в конце просит вероятную причину, что попробовать и помощь с оформлением обращения.</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Открыть обращение на GitHub</div><div class="rdesc">Открывает в браузере форму обращения с заполненными версиями, шлемом и ошибкой (ничего личного). Архив приложите там сами.</div></div>
+				<button class="btn" data-class-disabled="busy || !report_ready" data-event-click="act('report_issue')"><div class="sweep"/><div class="bi i-link"/><span>Открыть форму</span><div class="tick"/></button></div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Uninstall -->
+	<!-- ===================================================================================== Uninstall --->
 	<div data-if="page == 'uninstall'">
-		<div class="stitle">Uninstall</div>
-		<div class="sdesc">Undoes the install from its record: removes what it added, puts back what it replaced, and returns your game settings.</div>
+		<div class="stitle">Удалить</div>
+		<div class="sdesc">Отменяет установку по её записи: удаляет добавленное, возвращает заменённое и восстанавливает ваши настройки игры.</div>
 		<div class="group">
-			<div class="row"><div class="rl"><div class="rlab">What will change</div><div class="rdesc">{{uninstall_text}}</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Keep my VR settings</div><div class="rdesc">Your renderer profiles and calibration stay in the ASI folder for a later reinstall</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Что изменится</div><div class="rdesc">{{uninstall_text}}</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Сохранить мои VR-настройки</div><div class="rdesc">Ваши профили рендера и калибровка останутся в папке ASI для будущей переустановки</div></div>
 				<button class="tog" data-class-on="keep_settings" data-event-click="keep_settings = !keep_settings"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Also delete the mod's diagnostics</div><div class="rdesc">{{local_text}}</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Также удалить диагностику мода</div><div class="rdesc">{{local_text}}</div></div>
 				<button class="tog" data-class-on="remove_local" data-event-click="remove_local = !remove_local"><div class="knob"/></button></div>
-			<div class="row" data-if="textures_marked"><div class="lead i-info"/><div class="rl"><div class="rlab">Texture packs stay</div><div class="rdesc">They changed the game's files for good: a full restore (or reinstall) of the game removes them.</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab" data-if="installed">Ready to uninstall</div><div class="rlab" data-if="!installed">Not installed</div><div class="rdesc">Close the game first.</div></div>
-				<button class="btn danger" data-class-disabled="busy || waiting || !installed" data-event-click="act('uninstall')"><div class="sweep"/><div class="bi i-trash"/><span>Uninstall</span><div class="tick"/></button></div>
+			<div class="row" data-if="textures_marked"><div class="lead i-info"/><div class="rl"><div class="rlab">Наборы текстур останутся</div><div class="rdesc">Они навсегда изменили файлы игры: убрать их можно только полным восстановлением (или переустановкой) игры.</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab" data-if="installed">Готово к удалению</div><div class="rlab" data-if="!installed">Не установлено</div><div class="rdesc">Сначала закройте игру.</div></div>
+				<button class="btn danger" data-class-disabled="busy || waiting || !installed" data-event-click="act('uninstall')"><div class="sweep"/><div class="bi i-trash"/><span>Удалить</span><div class="tick"/></button></div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Launch -->
+	<!-- ===================================================================================== Launch --->
 	<div data-if="page == 'launch'">
-		<div class="stitle">Launch</div>
-		<div class="sdesc">Starts Mass Effect 1 directly, past the Legendary Edition launcher's game picker.</div>
-		<div data-if="installed &amp;&amp; repair_needed" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Repair first</div><div class="rdesc">{{repair_text}}</div></div>
-			<button class="btn" data-class-disabled="busy || waiting" data-event-click="page = 'repair'"><div class="sweep"/><div class="bi i-wrench"/><span>Repair</span><div class="tick"/></button></div>
-		<div data-if="game_ok &amp;&amp; !has_gamer_settings" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Start the game once first</div><div class="rdesc">{{first_start_text}}</div></div>
-			<button class="btn" data-class-disabled="busy || waiting" data-event-click="act('first_start')"><div class="sweep"/><div class="bi i-play"/><span>Start the game once</span><div class="tick"/></button></div>
+		<div class="stitle">Запустить</div>
+		<div class="sdesc">Запускает Mass Effect 1 напрямую, минуя выбор игры в лаунчере Legendary Edition.</div>
+		<div data-if="installed &amp;&amp; repair_needed" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Сначала исправьте</div><div class="rdesc">{{repair_text}}</div></div>
+			<button class="btn" data-class-disabled="busy || waiting" data-event-click="page = 'repair'"><div class="sweep"/><div class="bi i-wrench"/><span>Исправить</span><div class="tick"/></button></div>
+		<div data-if="game_ok &amp;&amp; !has_gamer_settings" class="row warnrow"><div class="lead i-warn"/><div class="rl"><div class="rlab">Сначала запустите игру один раз</div><div class="rdesc">{{first_start_text}}</div></div>
+			<button class="btn" data-class-disabled="busy || waiting" data-event-click="act('first_start')"><div class="sweep"/><div class="bi i-play"/><span>Запустите игру один раз</span><div class="tick"/></button></div>
 		<div class="hero">
 			<div class="big i-play"/>
 			<div class="herot">
-				<div class="heroh">Into Mass Effect</div>
-				<div class="herop">{{launch_advice}} The game uses your launcher settings (language, subtitles). In game, {{menu_key}} or both sticks held opens the VR menu.</div>
+				<div class="heroh">В Mass Effect</div>
+				<div class="herop">{{launch_advice}} Игра использует настройки лаунчера (язык, субтитры). В игре {{menu_key}} или удержание обоих стиков открывает VR-меню.</div>
 			</div>
-			<button class="btn primary" data-class-disabled="!game_ok || busy || waiting" data-event-click="act('launch')"><div class="sweep"/><div class="bi i-play"/><span>Launch</span></button>
+			<button class="btn primary" data-class-disabled="!game_ok || busy || waiting" data-event-click="act('launch')"><div class="sweep"/><div class="bi i-play"/><span>Запустить</span></button>
 		</div>
 		<div class="group">
-			<div class="row"><div class="rl"><div class="rlab">Through Steam instead</div><div class="rdesc">Opens the Legendary Edition launcher; pick Mass Effect there</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Через Steam</div><div class="rdesc">Открывает лаунчер Legendary Edition; выберите там Mass Effect</div></div>
 				<button class="btn" data-class-disabled="busy" data-event-click="act('launch_steam')"><div class="sweep"/><span>Steam</span><div class="tick"/></button></div>
 			<div class="hint">{{launch_text}}</div>
 		</div>
 	</div>
 
-	<!-- The job's log. -->
+	<!-- The job's log. --->
 	<div data-if="log_lines.size > 0 &amp;&amp; (page == 'welcome' || page == 'install' || page == 'repair' || page == 'uninstall' || page == 'settings' || page == 'content' || page == 'report')" class="group">
-		<div class="gtitle"><span>Log</span><div class="gline"/></div>
+		<div class="gtitle"><span>Журнал</span><div class="gline"/></div>
 		<div class="log"><div data-for="line : log_lines" data-class-err="line.error">{{line.text}}</div></div>
 	</div>
 
@@ -318,7 +318,7 @@
 	<span>v{{version}}</span>
 	<span>GPL-3.0</span>
 	<span class="grow">{{footer_text}}</span>
-	<span><span class="key">Esc</span>Close</span>
+	<span><span class="key">Esc</span>Закрыть</span>
 </div>
 
 <div id="dim" data-if="confirm_open">
@@ -326,7 +326,7 @@
 		<div class="dt">{{confirm_title}}</div>
 		<div class="dp">{{confirm_text}}</div>
 		<div class="db">
-			<button class="btn" data-event-click="act('cancel')"><div class="sweep"/><span>Cancel</span></button>
+			<button class="btn" data-event-click="act('cancel')"><div class="sweep"/><span>Отмена</span></button>
 			<button class="btn primary" data-if="!confirm_danger" data-event-click="act('confirm')"><div class="sweep"/><span>{{confirm_button}}</span></button>
 			<button class="btn danger" data-if="confirm_danger" data-event-click="act('confirm')"><div class="sweep"/><span>{{confirm_button}}</span></button>
 		</div>

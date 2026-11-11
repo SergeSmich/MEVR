@@ -33,6 +33,10 @@ __pycache__/
 scratch/
 scratch-*.txt
 dist/
+menu-preview/
+squad-preview/
+calibration-preview/
+power-wheel-preview/
 
 # Local-only notes (never published)
 notes/publication-audit.md

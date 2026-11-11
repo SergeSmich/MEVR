@@ -22,11 +22,11 @@ std::string Run(bool off) {
                       reinterpret_cast<LPCWSTR>(&StatusText), &self);
     wchar_t path[32768]{};
     DWORD const length = GetModuleFileNameW(self, path, static_cast<DWORD>(std::size(path)));
-    if (length == 0 || length >= std::size(path)) return "Cannot locate the ASI folder.";
+    if (length == 0 || length >= std::size(path)) return "Не удалось найти папку ASI.";
     auto const setup = std::filesystem::path(path).parent_path() / L"MEVR-Setup.exe";
     SECURITY_ATTRIBUTES security{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
     HANDLE reader = nullptr, writer = nullptr;
-    if (!CreatePipe(&reader, &writer, &security, 0)) return "Cannot read MEVR Setup's result.";
+    if (!CreatePipe(&reader, &writer, &security, 0)) return "Не удалось прочитать результат MEVR Setup.";
     SetHandleInformation(reader, HANDLE_FLAG_INHERIT, 0);
     // Inherit only the output pipe, never the game's other inheritable handles.
     SIZE_T bytes = 0;
@@ -48,7 +48,7 @@ std::string Run(bool off) {
         setup.parent_path().c_str(), &startup.StartupInfo, &process);
     if (initialized) DeleteProcThreadAttributeList(startup.lpAttributeList);
     CloseHandle(writer);
-    if (!started) { CloseHandle(reader); return "Cannot start ASI\\MEVR-Setup.exe; run Setup after quitting the game."; }
+    if (!started) { CloseHandle(reader); return "Не удалось запустить ASI\\MEVR-Setup.exe; запустите Setup после выхода из игры."; }
     CloseHandle(process.hThread);
     DWORD const waited = WaitForSingleObject(process.hProcess, 30000);
     if (waited != WAIT_OBJECT_0) {
@@ -56,7 +56,7 @@ std::string Run(bool off) {
         WaitForSingleObject(process.hProcess, 5000);
         CloseHandle(process.hProcess);
         CloseHandle(reader);
-        return "MEVR Setup timed out; smoothing was not confirmed. Try again.";
+        return "MEVR Setup не ответил; сглаживание не подтверждено. Попробуйте ещё раз.";
     }
     DWORD code = 3;
     GetExitCodeProcess(process.hProcess, &code);
@@ -70,19 +70,19 @@ std::string Run(bool off) {
     // The player reads the note; the log keeps Setup's own line.
     mevr::log::Info("steamvr smoothing: MEVR Setup --steamvr-smoothing {} exited {}: {}", off ? "off" : "default", code, line);
     if (code == 0) {
-        return off ? "Off for this game. SteamVR has the change." : "Back to your SteamVR setting.";
+        return off ? "Выключено для этой игры. SteamVR применил изменение." : "Возвращено к вашей настройке SteamVR.";
     }
     if (line.find("not running") != std::string::npos) {
-        return "SteamVR isn't running, so nothing changed. Try again in VR.";
+        return "SteamVR не запущен, ничего не изменилось. Повторите в VR.";
     }
-    return "Couldn't change it in SteamVR. Try again; the log says why.";
+    return "Не удалось изменить в SteamVR. Повторите; причина в журнале.";
 }
 } // namespace
 
 void Request(bool off) {
     std::lock_guard const lock(gMutex);
     gPending = off;
-    gStatus = "Asking SteamVR to change motion smoothing...";
+    gStatus = "Прошу SteamVR изменить сглаживание движения...";
     if (gWorking) return;
     gWorking = true;
     try { std::thread([] {
@@ -96,7 +96,7 @@ void Request(bool off) {
             }
             std::string result;
             try { result = Run(next); }
-            catch (...) { result = "MEVR Setup failed; smoothing was not confirmed. Try again."; }
+            catch (...) { result = "MEVR Setup завершился с ошибкой; сглаживание не подтверждено. Попробуйте ещё раз."; }
             std::lock_guard const guard(gMutex);
             if (!gPending) gStatus = std::move(result);
         }
@@ -104,7 +104,7 @@ void Request(bool off) {
     catch (...) {
         gWorking = false;
         gPending.reset();
-        gStatus = "Cannot start the background request; smoothing was not confirmed. Try again.";
+        gStatus = "Не удалось запустить фоновый запрос; сглаживание не подтверждено. Попробуйте ещё раз.";
     }
 }
 

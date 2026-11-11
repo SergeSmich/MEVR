@@ -255,8 +255,8 @@ int main(int argc, char** argv) {
 
     // The concept's arrangement with LE1's six biotics: Barrier, Stasis, Lift (chosen, at the top), Throw, Warp, Singularity.
     draw::WheelView six;
-    six.entries = {Make(gpu, "Barrier", I::Barrier, D::Biotic), Make(gpu, "Stasis", I::Stasis, D::Biotic), Make(gpu, "Lift", I::Lift, D::Biotic),
-        Make(gpu, "Throw", I::Throw, D::Biotic), Make(gpu, "Warp", I::Warp, D::Biotic), Make(gpu, "Singularity", I::Singularity, D::Biotic)};
+    six.entries = {Make(gpu, "Барьер", I::Barrier, D::Biotic), Make(gpu, "Стазис", I::Stasis, D::Biotic), Make(gpu, "Подъём", I::Lift, D::Biotic),
+        Make(gpu, "Бросок", I::Throw, D::Biotic), Make(gpu, "Деформация", I::Warp, D::Biotic), Make(gpu, "Сингулярность", I::Singularity, D::Biotic)};
     six.selected = 2;
     six.time = 0.3f;
     wheel(six, "biotic-six", true);
@@ -297,16 +297,16 @@ int main(int argc, char** argv) {
     }
     {
         draw::WheelView v;
-        v.entries = {Make(gpu, "Overload", I::Overload, D::Tech), Make(gpu, "Damping", I::Damping, D::Tech),
-            Make(gpu, "Sabotage", I::Sabotage, D::Tech), Make(gpu, "AI Hacking", I::Hacking, D::Tech),
-            Make(gpu, "Neural Shock", I::NeuralShock, D::Tech), Make(gpu, "Shield Boost", I::ShieldBoost, D::Tech)};
+        v.entries = {Make(gpu, "Перегрузка", I::Overload, D::Tech), Make(gpu, "Подавление", I::Damping, D::Tech),
+            Make(gpu, "Саботаж", I::Sabotage, D::Tech), Make(gpu, "Взлом ИИ", I::Hacking, D::Tech),
+            Make(gpu, "Нейрошок", I::NeuralShock, D::Tech), Make(gpu, "Усиление щита", I::ShieldBoost, D::Tech)};
         v.selected = 0;
         wheel(v, "tech");
     }
     {
         draw::WheelView v;
-        v.entries = {Make(gpu, "Throw", I::Throw, D::Biotic), Make(gpu, "Lift", I::Lift, D::Biotic), Make(gpu, "Overload", I::Overload, D::Tech),
-            Make(gpu, "Damping", I::Damping, D::Tech), Make(gpu, "Barrier", I::Barrier, D::Biotic)};
+        v.entries = {Make(gpu, "Бросок", I::Throw, D::Biotic), Make(gpu, "Подъём", I::Lift, D::Biotic), Make(gpu, "Перегрузка", I::Overload, D::Tech),
+            Make(gpu, "Подавление", I::Damping, D::Tech), Make(gpu, "Барьер", I::Barrier, D::Biotic)};
         v.entries[1].cooldown = 0.6f;
         v.entries[3].enabled = false;
         v.selected = 0;
@@ -314,10 +314,10 @@ int main(int argc, char** argv) {
     }
     {
         draw::WheelView v;
-        v.entries = {Make(gpu, "Adrenaline Burst", I::Adrenaline, D::Combat), Make(gpu, "Immunity", I::Immunity, D::Combat),
-            Make(gpu, "Unity", I::Unity, D::Combat), Make(gpu, "Marksman", I::Marksman, D::Combat), Make(gpu, "Overkill", I::Overkill, D::Combat),
-            Make(gpu, "Carnage", I::Carnage, D::Combat), Make(gpu, "Assassination", I::Assassination, D::Combat),
-            Make(gpu, "Shield Boost", I::ShieldBoost, D::Tech), Make(gpu, "No power", I::NoPower, D::Combat)};
+        v.entries = {Make(gpu, "Выброс адреналина", I::Adrenaline, D::Combat), Make(gpu, "Иммунитет", I::Immunity, D::Combat),
+            Make(gpu, "Единство", I::Unity, D::Combat), Make(gpu, "Меткий стрелок", I::Marksman, D::Combat), Make(gpu, "Избыточный урон", I::Overkill, D::Combat),
+            Make(gpu, "Резня", I::Carnage, D::Combat), Make(gpu, "Убийство", I::Assassination, D::Combat),
+            Make(gpu, "Усиление щита", I::ShieldBoost, D::Tech), Make(gpu, "Нет способности", I::NoPower, D::Combat)};
         v.selected = 4;
         wheel(v, "eight");
         v.selected = 8;  // the last tile: back to neutral
@@ -326,10 +326,10 @@ int main(int argc, char** argv) {
     {
         // The most a class has (a Sentinel's ten with a bonus power) and No power: eleven tiles, a full ring.
         draw::WheelView v;
-        v.entries = {Make(gpu, "Throw", I::Throw, D::Biotic), Make(gpu, "Lift", I::Lift, D::Biotic), Make(gpu, "Stasis", I::Stasis, D::Biotic),
-            Make(gpu, "Barrier", I::Barrier, D::Biotic), Make(gpu, "Overload", I::Overload, D::Tech), Make(gpu, "Damping", I::Damping, D::Tech),
-            Make(gpu, "Sabotage", I::Sabotage, D::Tech), Make(gpu, "Neural Shock", I::NeuralShock, D::Tech),
-            Make(gpu, "Shield Boost", I::ShieldBoost, D::Tech), Make(gpu, "Unity", I::Unity, D::Combat), Make(gpu, "No power", I::NoPower, D::Combat)};
+        v.entries = {Make(gpu, "Бросок", I::Throw, D::Biotic), Make(gpu, "Подъём", I::Lift, D::Biotic), Make(gpu, "Стазис", I::Stasis, D::Biotic),
+            Make(gpu, "Барьер", I::Barrier, D::Biotic), Make(gpu, "Перегрузка", I::Overload, D::Tech), Make(gpu, "Подавление", I::Damping, D::Tech),
+            Make(gpu, "Саботаж", I::Sabotage, D::Tech), Make(gpu, "Нейрошок", I::NeuralShock, D::Tech),
+            Make(gpu, "Усиление щита", I::ShieldBoost, D::Tech), Make(gpu, "Единство", I::Unity, D::Combat), Make(gpu, "Нет способности", I::NoPower, D::Combat)};
         v.selected = 10;
         wheel(v, "eleven-no-power");
     }
@@ -348,8 +348,8 @@ int main(int argc, char** argv) {
             pwc::Coach coach;
             char const* power;
         };
-        for (Case const c : {Case{pwc::Coach::Target, "Throw"}, Case{pwc::Coach::Place, "Singularity"}, Case{pwc::Coach::Forward, "Barrier"},
-                 Case{pwc::Coach::Chest, "Barrier"}, Case{pwc::Coach::Gun, "Marksman"}, Case{pwc::Coach::Raise, "Unity"}}) {
+        for (Case const c : {Case{pwc::Coach::Target, "Бросок"}, Case{pwc::Coach::Place, "Сингулярность"}, Case{pwc::Coach::Forward, "Барьер"},
+                 Case{pwc::Coach::Chest, "Барьер"}, Case{pwc::Coach::Gun, "Меткий стрелок"}, Case{pwc::Coach::Raise, "Единство"}}) {
             for (int f = 0; f < 3; ++f) {
                 draw::CoachView v;
                 v.coach = c.coach;
@@ -403,8 +403,8 @@ int main(int argc, char** argv) {
             v.progress = i == 3 ? 0.5f : i == 4 ? 1.0f : 0.0f;
             v.confirmation = i == 4 ? pwc::Confirmation::Success : i == 5 ? pwc::Confirmation::Refused : pwc::Confirmation::None;
             v.confirmationFor = 0.08f;
-            std::snprintf(v.name, sizeof(v.name), "%s", "Overkill");
-            std::snprintf(v.reason, sizeof(v.reason), "%s", "Cooling down 40%");
+            std::snprintf(v.name, sizeof(v.name), "%s", "Избыточный урон");
+            std::snprintf(v.reason, sizeof(v.reason), "%s", "Восстановление 40%");
             Picture const picture = Render(gpu, draw::kLockCanvas, draw::kLockCanvas,
                 [&](ImDrawList* dl) { draw::DrawSelfTarget(dl, v); }, true);
             Save(out / (std::string(names[i]) + ".png"), draw::kLockCanvas, draw::kLockCanvas, OverBackdrop(picture));

@@ -1,7 +1,7 @@
-<!-- SPDX-License-Identifier: MIT -->
+<!-- SPDX-License-Identifier: MIT --->
 <rml>
 <head>
-	<title>MEVR settings</title>
+	<title>Настройки MEVR</title>
 	<link type="text/rcss" href="main.rcss"/>
 </head>
 <!--
@@ -17,71 +17,71 @@
 	<div class="live-status">{{manual_live_status}}</div>
 	<div class="live-axis">{{manual_live_axis}}</div>
 	<div class="live-value">{{manual_live_value}}</div>
-	<div class="live-marker-key" data-if="manual_markers"><span class="marker-selected">Orange: selected controller</span> / <span class="marker-other">Cyan: other</span><br/>Generic shape; cross marks raw grip, arrow points forward.</div>
-	<div class="live-marker-key" data-if="!manual_markers">Controller references unavailable.</div>
-	<div class="live-help">Opposite stick: left / right adjusts<br/>Up / down chooses an axis<br/>Hold trigger for fine adjustment<br/>Click stick to reset this axis</div>
+	<div class="live-marker-key" data-if="manual_markers"><span class="marker-selected">Оранжевый: выбранный контроллер</span> / <span class="marker-other">Голубой: второй</span><br/>Общая форма; крестик отмечает исходный хват, стрелка смотрит вперёд.</div>
+	<div class="live-marker-key" data-if="!manual_markers">Опорные модели контроллеров недоступны.</div>
+	<div class="live-help">Стик другой руки: влево / вправо — настройка<br/>Вверх / вниз — выбор оси<br/>Удерживайте курок для точной подстройки<br/>Нажмите стик, чтобы сбросить ось</div>
 	<div class="live-controls">{{manual_live_controls}}</div>
-	<div class="live-note">Done saves. Cancel restores the starting offsets.<br/>The world stays live; movement and actions are blocked.</div>
+	<div class="live-note">«Готово» сохраняет. «Отмена» возвращает исходные смещения.<br/>Мир остаётся активным; движение и действия заблокированы.</div>
 </div>
 
 <div class="top">
 	<div class="brand">
 		<div class="logo"/>
-		<div><div class="brandName">MEVR</div><div class="brandSub">Settings</div></div>
+		<div><div class="brandName">MEVR</div><div class="brandSub">Настройки</div></div>
 	</div>
 	<div class="topspace"/>
-	<!-- The game's own menus: the way into them (no controller menu button can be counted on, e.g. a Quest over Link). -->
+	<!-- The game's own menus: the way into them (no controller menu button can be counted on, e.g. a Quest over Link). --->
 	<div class="gamebtns">
-		<button class="btn game" id="game-menu" data-event-click="cmd('game_menu')"><div class="sweep"/><div class="bi i-gamemenu"/><div class="gl"><span class="gt">Game menu</span><span class="gs">Save, load, squad, map, options</span></div></button>
-		<button class="btn game" id="game-back" data-event-click="cmd('game_back')"><div class="sweep"/><div class="bi i-holster"/><div class="gl"><span class="gt">Holster</span><span class="gs">Puts the drawn gun away</span></div></button>
+		<button class="btn game" id="game-menu" data-event-click="cmd('game_menu')"><div class="sweep"/><div class="bi i-gamemenu"/><div class="gl"><span class="gt">Меню игры</span><span class="gs">Сохранение, загрузка, отряд, карта, параметры</span></div></button>
+		<button class="btn game" id="game-back" data-event-click="cmd('game_back')"><div class="sweep"/><div class="bi i-holster"/><div class="gl"><span class="gt">Убрать в кобуру</span><span class="gs">Убирает достанное оружие</span></div></button>
 	</div>
-	<button class="btn primary" id="resume" data-event-click="cmd('resume')"><div class="sweep"/><div class="bi i-play"/><span>Resume</span></button>
+	<button class="btn primary" id="resume" data-event-click="cmd('resume')"><div class="sweep"/><div class="bi i-play"/><span>Продолжить</span></button>
 </div>
 
 <div class="main">
 	<div class="rail">
-		<button class="navb" id="nav-guide" data-class-on="section == 'guide'" data-event-click="section = 'guide'"><div class="nico i-guide"/><div><div class="navl">Controller guide</div><div class="navs">Every button and gesture</div></div></button>
-		<button class="navb" id="nav-comfort" data-class-on="section == 'comfort'" data-event-click="section = 'comfort'"><div class="nico i-turn"/><div><div class="navl">Comfort</div><div class="navs">Turning, movement</div></div></button>
-		<button class="navb" id="nav-controls" data-class-on="section == 'controls'" data-event-click="section = 'controls'"><div class="nico i-controls"/><div><div class="navl">Controls</div><div class="navs">Guns, holsters, grenades</div></div></button>
-		<button class="navb" id="nav-voice" data-class-on="section == 'voice'" data-event-click="section = 'voice'"><div class="nico i-mic"/><div><div class="navl">Voice</div><div class="navs">Microphone, squad orders</div></div></button>
-		<button class="navb" id="nav-sound" data-class-on="section == 'sound'" data-event-click="section = 'sound'"><div class="nico i-sound"/><div><div class="navl">Sound</div><div class="navs">3D sound, headphones</div></div></button>
-		<button class="navb" id="nav-body" data-class-on="section == 'body'" data-event-click="section = 'body'"><div class="nico i-body"/><div><div class="navl">Body &amp; calibration</div><div class="navs">Height, arms, aim</div></div></button>
-		<button class="navb" id="nav-display" data-class-on="section == 'display'" data-event-click="section = 'display'"><div class="nico i-eye"/><div><div class="navl">Display</div><div class="navs">Colour, resolution</div></div></button>
-		<button class="navb" id="nav-hud" data-class-on="section == 'hud'" data-event-click="section = 'hud'"><div class="nico i-crosshair"/><div><div class="navl">HUD &amp; sights</div><div class="navs">Panel, reticle, scopes</div></div></button>
-		<button class="navb" id="nav-advanced" data-class-on="section == 'advanced'" data-event-click="section = 'advanced'"><div class="nico i-sliders"/><div><div class="navl">Advanced</div><div class="navs">Tracking, graphics, diagnostics</div></div></button>
+		<button class="navb" id="nav-guide" data-class-on="section == 'guide'" data-event-click="section = 'guide'"><div class="nico i-guide"/><div><div class="navl">Руководство по контроллерам</div><div class="navs">Все кнопки и жесты</div></div></button>
+		<button class="navb" id="nav-comfort" data-class-on="section == 'comfort'" data-event-click="section = 'comfort'"><div class="nico i-turn"/><div><div class="navl">Комфорт</div><div class="navs">Поворот, передвижение</div></div></button>
+		<button class="navb" id="nav-controls" data-class-on="section == 'controls'" data-event-click="section = 'controls'"><div class="nico i-controls"/><div><div class="navl">Управление</div><div class="navs">Оружие, кобура, гранаты</div></div></button>
+		<button class="navb" id="nav-voice" data-class-on="section == 'voice'" data-event-click="section = 'voice'"><div class="nico i-mic"/><div><div class="navl">Голос</div><div class="navs">Микрофон, приказы отряду</div></div></button>
+		<button class="navb" id="nav-sound" data-class-on="section == 'sound'" data-event-click="section = 'sound'"><div class="nico i-sound"/><div><div class="navl">Звук</div><div class="navs">3D-звук, наушники</div></div></button>
+		<button class="navb" id="nav-body" data-class-on="section == 'body'" data-event-click="section = 'body'"><div class="nico i-body"/><div><div class="navl">Тело и калибровка</div><div class="navs">Рост, руки, прицел</div></div></button>
+		<button class="navb" id="nav-display" data-class-on="section == 'display'" data-event-click="section = 'display'"><div class="nico i-eye"/><div><div class="navl">Изображение</div><div class="navs">Цвет, разрешение</div></div></button>
+		<button class="navb" id="nav-hud" data-class-on="section == 'hud'" data-event-click="section = 'hud'"><div class="nico i-crosshair"/><div><div class="navl">Интерфейс и прицелы</div><div class="navs">Панель, прицел, оптика</div></div></button>
+		<button class="navb" id="nav-advanced" data-class-on="section == 'advanced'" data-event-click="section = 'advanced'"><div class="nico i-sliders"/><div><div class="navl">Дополнительно</div><div class="navs">Отслеживание, графика, диагностика</div></div></button>
 		<div class="railspace"/>
-		<!-- The headset, controllers and calibration (in the top bar until the game's menus took its room). -->
+		<!-- The headset, controllers and calibration (in the top bar until the game's menus took its room). --->
 		<div class="chips">
 			<div class="chip"><div class="ico i-headset"/><span>{{chip_headset}}</span></div>
 			<div class="chip"><div class="ico i-controller"/><span>{{chip_controllers}}</span></div>
 			<div class="chip" data-class-ok="calibrated"><div class="ico i-check"/><span>{{chip_calibrated}}</span></div>
 		</div>
-		<!-- A failed write of the settings file (a read-only ASI folder): nothing the menu changes is kept. -->
+		<!-- A failed write of the settings file (a read-only ASI folder): nothing the menu changes is kept. --->
 		<div class="note" data-if="save_msg != ''">{{save_msg}}</div>
 	</div>
 
 	<div class="content" id="content">
 
-	<!-- The game crashed last session (crash-breadcrumbs.txt newer than the last report and the last "no"). -->
+	<!-- The game crashed last session (crash-breadcrumbs.txt newer than the last report and the last "no"). --->
 	<div class="group crashoffer" data-if="crash_offer">
-		<div class="row"><div class="rl"><div class="rlab">The game crashed last session</div><div class="rdesc">Create a report? MEVR Setup gathers the logs and the crash details into a zip on your Desktop, in the background. Nothing is sent.</div></div>
+		<div class="row"><div class="rl"><div class="rlab">Игра завершилась сбоем в прошлой сессии</div><div class="rdesc">Создать отчёт? MEVR Setup соберёт журналы и сведения о сбое в архив на рабочем столе, в фоне. Ничего не отправляется.</div></div>
 			<div class="actions">
-				<button class="btn" data-event-click="cmd('crash_dismiss')"><div class="sweep"/><span>No thanks</span><div class="tick"/></button>
-				<button class="btn primary" data-event-click="cmd('report')"><div class="sweep"/><div class="bi i-report"/><span>Create a report</span></button>
+				<button class="btn" data-event-click="cmd('crash_dismiss')"><div class="sweep"/><span>Нет, спасибо</span><div class="tick"/></button>
+				<button class="btn primary" data-event-click="cmd('report')"><div class="sweep"/><div class="bi i-report"/><span>Создать отчёт</span></button>
 			</div></div>
 	</div>
 
-	<!-- ===================================================================================== Controller guide -->
+	<!-- ===================================================================================== Controller guide --->
 	<!-- What each control does (research/28 "The controller guide"). The labels and the list come from the settings
 	     (core/vr/MenuSettings GuideTexts); the drawing is RCSS boxes (.gdraw), no artwork. The first opening for a new
-	     player lands here (MainMenu's first run, [Menu] controlsShown). -->
+	     player lands here (MainMenu's first run, [Menu] controlsShown). --->
 	<div data-if="section == 'guide'">
-		<div class="stitle">Controller guide</div>
-		<div class="sdesc">What each button and gesture does on foot. Open this menu any time: press and hold both thumbsticks.</div>
-		<div class="info welcome" data-if="first_run"><div class="ico i-info"/><span>Welcome to MEVR. This guide stays here, first in the list on the left. Resume when you're ready; Body &amp; calibration fits Shepard to your height and aim.</span></div>
+		<div class="stitle">Руководство по контроллерам</div>
+		<div class="sdesc">Что делает каждая кнопка и жест в пешем режиме. Это меню можно открыть в любой момент: удерживайте оба стика.</div>
+		<div class="info welcome" data-if="first_run"><div class="ico i-info"/><span>Добро пожаловать в MEVR. Это руководство остаётся здесь, первым в списке слева. Продолжите, когда будете готовы; «Тело и калибровка» подгонит Шепарда под ваш рост и прицел.</span></div>
 		<div class="guide">
 			<div class="gcard">
-				<div class="gname">Left controller</div>
+				<div class="gname">Левый контроллер</div>
 				<div class="gdraw">
 					<div class="gtrig"/><div class="gbody"/><div class="gstick"><div class="gknob"/></div>
 					<div class="gbtn up">Y</div><div class="gbtn lo">X</div><div class="gmenu"/><div class="ggrip onright"/>
@@ -93,16 +93,16 @@
 					<div class="glead r g"/><div class="glab r g"><div>{{guide_lgrip}}</div></div>
 				</div>
 				<div class="glist">
-					<div class="gitem"><span class="key">Trigger</span><div class="gdesc">{{guide_lt_how}}</div></div>
-					<div class="gitem"><span class="key">Grip</span><div class="gdesc">{{guide_lgrip_how}}</div></div>
-					<div class="gitem"><span class="key">Stick</span><div class="gdesc">{{guide_lstick_how}}</div></div>
+					<div class="gitem"><span class="key">Курок</span><div class="gdesc">{{guide_lt_how}}</div></div>
+					<div class="gitem"><span class="key">Захват</span><div class="gdesc">{{guide_lgrip_how}}</div></div>
+					<div class="gitem"><span class="key">Стик</span><div class="gdesc">{{guide_lstick_how}}</div></div>
 					<div class="gitem"><span class="key">X</span><div class="gdesc">{{guide_x_how}}</div></div>
 					<div class="gitem"><span class="key">Y</span><div class="gdesc">{{guide_y_how}}</div></div>
-					<div class="gitem"><span class="key">Menu</span><div class="gdesc">{{guide_menu_how}}</div></div>
+					<div class="gitem"><span class="key">Меню</span><div class="gdesc">{{guide_menu_how}}</div></div>
 				</div>
 			</div>
 			<div class="gcard">
-				<div class="gname">Right controller</div>
+				<div class="gname">Правый контроллер</div>
 				<div class="gdraw">
 					<div class="gtrig"/><div class="gbody"/><div class="gstick"><div class="gknob"/></div>
 					<div class="gbtn up">B</div><div class="gbtn lo">A</div><div class="ggrip onleft"/>
@@ -113,64 +113,64 @@
 					<div class="glead l g"/><div class="glab l g"><div>{{guide_rgrip}}</div></div>
 				</div>
 				<div class="glist">
-					<div class="gitem"><span class="key">Trigger</span><div class="gdesc">{{guide_rt_how}}</div></div>
-					<div class="gitem"><span class="key">Grip</span><div class="gdesc">{{guide_rgrip_how}}</div></div>
-					<div class="gitem"><span class="key">Stick</span><div class="gdesc">{{guide_rstick_how}}</div></div>
+					<div class="gitem"><span class="key">Курок</span><div class="gdesc">{{guide_rt_how}}</div></div>
+					<div class="gitem"><span class="key">Захват</span><div class="gdesc">{{guide_rgrip_how}}</div></div>
+					<div class="gitem"><span class="key">Стик</span><div class="gdesc">{{guide_rstick_how}}</div></div>
 					<div class="gitem"><span class="key">A</span><div class="gdesc">{{guide_a_how}}</div></div>
 					<div class="gitem"><span class="key">B</span><div class="gdesc">{{guide_b_how}}</div></div>
 				</div>
 			</div>
 		</div>
-		<div class="info"><div class="ico i-info"/><span>Buttons named as on Quest controllers: A and X are the lower face buttons, B and Y the upper ones.</span></div>
+		<div class="info"><div class="ico i-info"/><span>Кнопки названы как на контроллерах Quest: A и X — нижние лицевые, B и Y — верхние.</span></div>
 		<div class="group">
-			<div class="gtitle"><span>Gestures</span><div class="gline"/></div>
-			<div class="row" data-if="holsters"><div class="rl"><div class="rlab">Holsters</div><div class="rdesc">Reach with your right hand and squeeze the grip: the pistol at your right hip, the assault rifle over your right shoulder, the shotgun at your left hip, the sniper rifle over your left shoulder.</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Grenades</div><div class="rdesc">{{guide_grenade}}</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Melee</div><div class="rdesc">{{guide_melee}}</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Both hands on the gun</div><div class="rdesc">Squeeze the left grip with your left hand on the gun. Raise it to your cheek for aimed fire.</div></div></div>
-			<div class="row" data-if="vent"><div class="rl"><div class="rlab">Vent a hot gun</div><div class="rdesc">When the gun runs hot, squeeze the left grip on its top just ahead of your right hand, then pull back fast as you let go.</div></div></div>
-			<div class="row" data-if="crouch &amp;&amp; play_position != 'seated'"><div class="rl"><div class="rlab">Crouch</div><div class="rdesc">Crouch for real and Shepard crouches with you, down behind low cover.</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab">This menu, recenter</div><div class="rdesc">Press and hold both thumbsticks for this menu. Double-click the right thumbstick to turn the view to face where you look.</div></div></div>
+			<div class="gtitle"><span>Жесты</span><div class="gline"/></div>
+			<div class="row" data-if="holsters"><div class="rl"><div class="rlab">Кобура</div><div class="rdesc">Потянитесь правой рукой и сожмите захват: пистолет у правого бедра, штурмовая винтовка за правым плечом, дробовик у левого бедра, снайперская винтовка за левым плечом.</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Гранаты</div><div class="rdesc">{{guide_grenade}}</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Ближний бой</div><div class="rdesc">{{guide_melee}}</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Обе руки на оружии</div><div class="rdesc">Сожмите левый захват левой рукой на оружии. Поднимите к щеке для прицельной стрельбы.</div></div></div>
+			<div class="row" data-if="vent"><div class="rl"><div class="rlab">Сброс тепла</div><div class="rdesc">Когда оружие нагреется, сожмите левый захват на его верху чуть впереди правой руки, затем резко потяните назад, отпуская.</div></div></div>
+			<div class="row" data-if="crouch &amp;&amp; play_position != 'seated'"><div class="rl"><div class="rlab">Присесть</div><div class="rdesc">Присядьте по-настоящему — Шепард присядет вместе с вами, за низким укрытием.</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Это меню, центрирование</div><div class="rdesc">Удерживайте оба стика, чтобы открыть это меню. Дважды щёлкните правый стик, чтобы повернуть вид туда, куда смотрите.</div></div></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Powers</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Pick a power</div><div class="rdesc">{{guide_pick}}</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Cast it</div><div class="rdesc">{{guide_cast}}</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Powers on yourself</div><div class="rdesc">{{guide_self}}</div></div></div>
+			<div class="gtitle"><span>Способности</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Выбор способности</div><div class="rdesc">{{guide_pick}}</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Применить</div><div class="rdesc">{{guide_cast}}</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Способности на себя</div><div class="rdesc">{{guide_self}}</div></div></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>In the Mako</span><div class="gline"/></div>
+			<div class="gtitle"><span>В «Мако»</span><div class="gline"/></div>
 			<div data-if="mako_controls">
-				<div class="row"><div class="rl"><div class="rlab">Throttle lever, left hand</div><div class="rdesc">Squeeze the grip at the lever by your left side. Push it forward to drive, pull it back to reverse; it stays where you leave it. X: jump jets (and back onto the wheels), Y: boost.</div></div></div>
-				<div class="row"><div class="rl"><div class="rlab">Drive stick, right hand</div><div class="rdesc">Squeeze the grip at the stick by your right side. Tilt it left and right to steer, forward and back to pitch while the jets fire. Trigger: machine gun, A: cannon, thumbstick: turret.</div></div></div>
-				<div class="row"><div class="rl"><div class="rlab">Before you grab them</div><div class="rdesc">Point the right controller to aim. The game's own controls work: the left stick drives, the right trigger fires the machine gun, the right grip the cannon.</div></div></div>
+				<div class="row"><div class="rl"><div class="rlab">Рычаг тяги, левая рука</div><div class="rdesc">Сожмите захват у рычага слева. Вперёд — ехать, назад — задний ход; рычаг остаётся там, где вы его оставили. X: прыжковые двигатели (и обратно на колёса), Y: ускорение.</div></div></div>
+				<div class="row"><div class="rl"><div class="rlab">Джойстик, правая рука</div><div class="rdesc">Сожмите захват у джойстика справа. Наклоняйте влево-вправо для поворота, вперёд-назад для тангажа при работающих двигателях. Курок: пулемёт, A: пушка, стик: турель.</div></div></div>
+				<div class="row"><div class="rl"><div class="rlab">Перед тем как взяться</div><div class="rdesc">Направляйте правый контроллер, чтобы целиться. Работает штатное управление: левый стик — ход, правый курок — пулемёт, правый захват — пушка.</div></div></div>
 			</div>
-			<div class="row" data-if="!mako_controls"><div class="rl"><div class="rlab">The game's controls</div><div class="rdesc">Point the right controller to aim. The left stick drives, the right trigger fires the machine gun, the right grip the cannon, A jumps.</div></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Getting out</div><div class="rdesc">B leaves the Mako.</div></div></div>
+			<div class="row" data-if="!mako_controls"><div class="rl"><div class="rlab">Управление игры</div><div class="rdesc">Направляйте правый контроллер, чтобы целиться. Левый стик — ход, правый курок — пулемёт, правый захват — пушка, A — прыжок.</div></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Выход</div><div class="rdesc">B — выйти из «Мако».</div></div></div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Comfort -->
+	<!-- ===================================================================================== Comfort --->
 	<div data-if="section == 'comfort'">
-		<div class="stitle">Comfort</div>
-		<div class="sdesc">How you turn and move.</div>
+		<div class="stitle">Комфорт</div>
+		<div class="sdesc">Как вы поворачиваетесь и двигаетесь.</div>
 		<div class="group">
-			<div class="gtitle"><span>Turning</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Turn style</div><div class="rdesc">Snap jumps by an angle per flick of the right stick; smooth is the game's own turn while you hold it</div></div>
-				<div class="seg"><button class="segb" data-class-on="turn == 'snap'" data-event-click="pick('turn','snap')">Snap</button><button class="segb" data-class-on="turn == 'smooth'" data-event-click="pick('turn','smooth')">Smooth</button></div></div>
-			<div class="row" data-class-disabled="turn != 'snap'"><div class="rl"><div class="rlab">Snap angle</div><div class="rdesc">How far one flick turns you</div></div>
+			<div class="gtitle"><span>Поворот</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Способ поворота</div><div class="rdesc">Рывками — поворот на угол за каждое движение правого стика; плавно — собственный поворот игры, пока вы держите стик</div></div>
+				<div class="seg"><button class="segb" data-class-on="turn == 'snap'" data-event-click="pick('turn','snap')">Рывками</button><button class="segb" data-class-on="turn == 'smooth'" data-event-click="pick('turn','smooth')">Плавно</button></div></div>
+			<div class="row" data-class-disabled="turn != 'snap'"><div class="rl"><div class="rlab">Угол рывка</div><div class="rdesc">Насколько поворачивает одно движение стика</div></div>
 				<div class="seg"><button class="segb" data-class-on="snap == '30'" data-event-click="pick('snap','30')">30°</button><button class="segb" data-class-on="snap == '45'" data-event-click="pick('snap','45')">45°</button><button class="segb" data-class-on="snap == '60'" data-event-click="pick('snap','60')">60°</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Comfort vignette</div><div class="rdesc">Darkens the edges of your view while the stick turns you</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Виньетка комфорта</div><div class="rdesc">Затемняет края обзора, пока стик вас поворачивает</div></div>
 				<button class="tog" data-class-on="vignette" data-event-click="toggle('vignette')"><div class="knob"/></button></div>
-			<div class="row" data-class-disabled="!vignette"><div class="rl"><div class="rlab">Vignette when</div><div class="rdesc">Only while turning, or while the left stick walks you too</div></div>
-				<div class="seg"><button class="segb" data-class-on="vignette_when == 'turn'" data-event-click="pick('vignette_when','turn')">Turning</button><button class="segb" data-class-on="vignette_when == 'move'" data-event-click="pick('vignette_when','move')">Turning and moving</button></div></div>
-			<div class="srow" data-class-disabled="!vignette"><div class="slab">Vignette strength</div><input type="range" min="10" max="100" step="5" data-value="vignette_strength"/><div class="sval">{{vignette_strength_text}}</div></div>
+			<div class="row" data-class-disabled="!vignette"><div class="rl"><div class="rlab">Виньетка когда</div><div class="rdesc">Только при повороте или ещё и когда левый стик ведёт вас</div></div>
+				<div class="seg"><button class="segb" data-class-on="vignette_when == 'turn'" data-event-click="pick('vignette_when','turn')">Поворот</button><button class="segb" data-class-on="vignette_when == 'move'" data-event-click="pick('vignette_when','move')">Поворот и движение</button></div></div>
+			<div class="srow" data-class-disabled="!vignette"><div class="slab">Сила виньетки</div><input type="range" min="10" max="100" step="5" data-value="vignette_strength"/><div class="sval">{{vignette_strength_text}}</div></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Movement</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Walk toward</div><div class="rdesc">What the left stick's forward means: where you look, or where your left hand points.</div></div>
-				<div class="seg"><button class="segb" data-class-on="walk == 'head'" data-event-click="pick('walk','head')">Where I look</button><button class="segb" data-class-on="walk == 'hand'" data-event-click="pick('walk','hand')">Left hand</button></div></div>
-			<div class="row" data-class-disabled="play_position == 'seated'"><div class="rl"><div class="rlab">Physical crouch</div><div class="rdesc">Crouch for real and Shepard crouches with you. Seated play turns this off; L3 still toggles crouch.</div></div>
+			<div class="gtitle"><span>Передвижение</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Идти туда</div><div class="rdesc">Что значит «вперёд» левого стика: куда вы смотрите или куда указывает левая рука.</div></div>
+				<div class="seg"><button class="segb" data-class-on="walk == 'head'" data-event-click="pick('walk','head')">Куда смотрю</button><button class="segb" data-class-on="walk == 'hand'" data-event-click="pick('walk','hand')">Левая рука</button></div></div>
+			<div class="row" data-class-disabled="play_position == 'seated'"><div class="rl"><div class="rlab">Физическое приседание</div><div class="rdesc">Присядьте по-настоящему — Шепард присядет вместе с вами. При игре сидя это отключается; L3 всё равно переключает приседание.</div></div>
 				<button class="tog" data-class-on="crouch" data-event-click="toggle('crouch')"><div class="knob"/></button></div>
 			<div class="row"><div class="rl"><div class="rlab">Camera shake</div><div class="rdesc">The game shakes the view when you fire and when the Mako's jets or boost fire. Off holds the world still.</div></div>
 				<div class="seg"><button class="segb" data-class-on="screen_shake == 'off'" data-event-click="pick('screen_shake','off')">Off</button><button class="segb" data-class-on="screen_shake == 'low'" data-event-click="pick('screen_shake','low')">Low</button><button class="segb" data-class-on="screen_shake == 'full'" data-event-click="pick('screen_shake','full')">Full</button></div></div>
@@ -178,90 +178,90 @@
 				<button class="tog" data-class-on="view_shake" data-event-click="toggle('view_shake')"><div class="knob"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Conversations and cutscenes</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Conversations</div><div class="rdesc">First person (experimental): you stand where Shepard stands and can walk. In VR: the director's camera moves you. 3D screen: its shots on a big screen with depth. Flat screen: without depth.</div></div>
-				<div class="seg"><button class="segb" data-class-on="cine_convo == 'world'" data-event-click="pick('cine_convo','world')">First person</button><button class="segb" data-class-on="cine_convo == 'vr'" data-event-click="pick('cine_convo','vr')">In VR</button><button class="segb" data-class-on="cine_convo == 'screen'" data-event-click="pick('cine_convo','screen')">3D screen</button><button class="segb" data-class-on="cine_convo == 'flat'" data-event-click="pick('cine_convo','flat')">Flat screen</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Cutscenes</div><div class="rdesc">The same choice for cutscenes.</div></div>
-				<div class="seg"><button class="segb" data-class-on="cine_cut == 'vr'" data-event-click="pick('cine_cut','vr')">In VR</button><button class="segb" data-class-on="cine_cut == 'screen'" data-event-click="pick('cine_cut','screen')">3D screen</button><button class="segb" data-class-on="cine_cut == 'flat'" data-event-click="pick('cine_cut','flat')">Flat screen</button></div></div>
-			<div class="srow" data-class-disabled="!(cine_convo == 'screen' || cine_cut == 'screen')"><div class="slab">Screen width</div><input type="range" min="1.5" max="8" step="0.1" data-value="cine_width"/><div class="sval">{{cine_width_text}}</div></div>
-			<div class="srow" data-class-disabled="!(cine_convo == 'screen' || cine_cut == 'screen')"><div class="slab">Screen distance</div><input type="range" min="1" max="6" step="0.1" data-value="cine_distance"/><div class="sval">{{cine_distance_text}}</div></div>
-			<div class="srow" data-class-disabled="!(cine_convo == 'screen' || cine_cut == 'screen')"><div class="slab">3D depth</div><input type="range" min="0" max="150" step="5" data-value="cine_depth"/><div class="sval">{{cine_depth_text}}</div></div>
+			<div class="gtitle"><span>Диалоги и катсцены</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Диалоги</div><div class="rdesc">От первого лица (предпросмотр): вы стоите там, где стоит Шепард, и можете ходить. В VR: вас ведёт режиссёрская камера. 3D-экран: его кадры на большом экране с глубиной. Плоский экран: без глубины.</div></div>
+				<div class="seg"><button class="segb" data-class-on="cine_convo == 'world'" data-event-click="pick('cine_convo','world')">От первого лица</button><button class="segb" data-class-on="cine_convo == 'vr'" data-event-click="pick('cine_convo','vr')">В VR</button><button class="segb" data-class-on="cine_convo == 'screen'" data-event-click="pick('cine_convo','screen')">3D-экран</button><button class="segb" data-class-on="cine_convo == 'flat'" data-event-click="pick('cine_convo','flat')">Плоский экран</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Катсцены</div><div class="rdesc">Тот же выбор для катсцен.</div></div>
+				<div class="seg"><button class="segb" data-class-on="cine_cut == 'vr'" data-event-click="pick('cine_cut','vr')">В VR</button><button class="segb" data-class-on="cine_cut == 'screen'" data-event-click="pick('cine_cut','screen')">3D-экран</button><button class="segb" data-class-on="cine_cut == 'flat'" data-event-click="pick('cine_cut','flat')">Плоский экран</button></div></div>
+			<div class="srow" data-class-disabled="!(cine_convo == 'screen' || cine_cut == 'screen')"><div class="slab">Ширина экрана</div><input type="range" min="1.5" max="8" step="0.1" data-value="cine_width"/><div class="sval">{{cine_width_text}}</div></div>
+			<div class="srow" data-class-disabled="!(cine_convo == 'screen' || cine_cut == 'screen')"><div class="slab">Расстояние до экрана</div><input type="range" min="1" max="6" step="0.1" data-value="cine_distance"/><div class="sval">{{cine_distance_text}}</div></div>
+			<div class="srow" data-class-disabled="!(cine_convo == 'screen' || cine_cut == 'screen')"><div class="slab">Глубина 3D</div><input type="range" min="0" max="150" step="5" data-value="cine_depth"/><div class="sval">{{cine_depth_text}}</div></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Game screens</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Game screens in the room</div><div class="rdesc">Shops, loot, the journal, the map and the game's other full-screen menus stand in the room where they open; point at them to use them. Off: on a flat screen with the world gone.</div></div>
+			<div class="gtitle"><span>Игровые экраны</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Игровые экраны в комнате</div><div class="rdesc">Магазины, добыча, журнал, карта и другие полноэкранные меню игры появляются в комнате там, где открываются; указывайте на них, чтобы пользоваться. Выкл.: на плоском экране без мира.</div></div>
 				<button class="tog" data-class-on="world_ui" data-event-click="toggle('world_ui')"><div class="knob"/></button></div>
-			<div class="row" data-class-disabled="!world_ui"><div class="rl"><div class="rlab">Omni-tool screens</div><div class="rdesc">Your equipment, squad, journal, codex, map, the game menu and the hacking screen: projected from your left wrist, with a menu beside them to switch (tap your left wrist to open it), or standing in the room</div></div>
-				<div class="seg"><button class="segb" data-class-on="wrist_screen == 'wrist'" data-event-click="pick('wrist_screen','wrist')">On my wrist</button><button class="segb" data-class-on="wrist_screen == 'room'" data-event-click="pick('wrist_screen','room')">In the room</button></div></div>
-			<div class="srow" data-class-disabled="!world_ui || wrist_screen != 'wrist'"><div class="slab">Wrist screen size</div><input type="range" min="0.4" max="1" step="0.05" data-value="wrist_width"/><div class="sval">{{wrist_width_text}}</div></div>
-			<div class="row"><div class="rl"><div class="rlab">Galaxy map hologram</div><div class="rdesc">On the Normandy the galaxy map stands as a hologram over the CIC's projector: walk up and point to pick a destination. Off: the game's flat map.</div></div>
+			<div class="row" data-class-disabled="!world_ui"><div class="rl"><div class="rlab">Экраны омни-тула</div><div class="rdesc">Снаряжение, отряд, журнал, кодекс, карта, меню игры и экран взлома: проецируются с левого запястья, рядом меню для переключения (коснитесь левого запястья, чтобы открыть) — или стоят в комнате</div></div>
+				<div class="seg"><button class="segb" data-class-on="wrist_screen == 'wrist'" data-event-click="pick('wrist_screen','wrist')">На запястье</button><button class="segb" data-class-on="wrist_screen == 'room'" data-event-click="pick('wrist_screen','room')">В комнате</button></div></div>
+			<div class="srow" data-class-disabled="!world_ui || wrist_screen != 'wrist'"><div class="slab">Размер экрана на запястье</div><input type="range" min="0.4" max="1" step="0.05" data-value="wrist_width"/><div class="sval">{{wrist_width_text}}</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Голограмма карты галактики</div><div class="rdesc">На «Нормандии» карта галактики висит голограммой над проектором БИЦ: подойдите и укажите, чтобы выбрать пункт назначения. Выкл.: плоская карта игры.</div></div>
 				<button class="tog" data-class-on="galaxy_holo" data-event-click="toggle('galaxy_holo')"><div class="knob"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>This menu</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Pause while open</div><div class="rdesc">The game waits while you change settings</div></div>
+			<div class="gtitle"><span>Это меню</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Пауза при открытом меню</div><div class="rdesc">Игра ждёт, пока вы меняете настройки</div></div>
 				<button class="tog" data-class-on="pause" data-event-click="toggle('pause')"><div class="knob"/></button></div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Controls -->
+	<!-- ===================================================================================== Controls --->
 	<div data-if="section == 'controls'">
-		<div class="stitle">Controls</div>
-		<div class="sdesc">Your hands are Shepard's hands.</div>
+		<div class="stitle">Управление</div>
+		<div class="sdesc">Ваши руки — руки Шепарда.</div>
 		<div class="group">
-			<div class="gtitle"><span>Weapons</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Grip holds the gun</div><div class="rdesc">Squeeze to carry it; let go at its holster to put it away</div></div>
+			<div class="gtitle"><span>Оружие</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Захват удерживает оружие</div><div class="rdesc">Сожмите, чтобы взять; отпустите у кобуры, чтобы убрать</div></div>
 				<button class="tog" data-class-on="grip_holds" data-event-click="toggle('grip_holds')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Body holsters</div><div class="rdesc">Pistol at the right hip, assault rifle over the right shoulder, shotgun at the left hip, sniper rifle over the left shoulder</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Кобура на теле</div><div class="rdesc">Пистолет у правого бедра, штурмовая винтовка за правым плечом, дробовик у левого бедра, снайперская винтовка за левым плечом</div></div>
 				<button class="tog" data-class-on="holsters" data-event-click="toggle('holsters')"><div class="knob"/></button></div>
-			<div class="srow"><div class="slab">Holster buzz</div><input type="range" min="0" max="100" step="5" data-value="holster_buzz"/><div class="sval">{{holster_buzz_text}}</div></div>
+			<div class="srow"><div class="slab">Вибрация кобуры</div><input type="range" min="0" max="100" step="5" data-value="holster_buzz"/><div class="sval">{{holster_buzz_text}}</div></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Hands</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Left trigger</div><div class="rdesc">Weapon wheel: pull to open it at your left hand, point at a squadmate to arm them, let go to choose. Aim: the game's aim button. Off: nothing. Aimed fire also comes from holding the gun at your cheek with both hands.</div></div>
-				<div class="seg"><button class="segb" data-class-on="left_trigger == 'lb'" data-event-click="pick('left_trigger','lb')">Weapon wheel</button><button class="segb" data-class-on="left_trigger == 'lt'" data-event-click="pick('left_trigger','lt')">Aim</button><button class="segb" data-class-on="left_trigger == 'none'" data-event-click="pick('left_trigger','none')">Off</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Fingers follow yours</div><div class="rdesc">Shepard's index finger curls with your trigger and the other fingers with your grip</div></div>
+			<div class="gtitle"><span>Руки</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Левый курок</div><div class="rdesc">Колесо оружия: потяните, чтобы открыть его у левой руки, укажите на члена отряда, чтобы вооружить его, отпустите, чтобы выбрать. Прицеливание: кнопка прицела игры. Выкл.: ничего. Прицельная стрельба возможна и с оружием у щеки обеими руками.</div></div>
+				<div class="seg"><button class="segb" data-class-on="left_trigger == 'lb'" data-event-click="pick('left_trigger','lb')">Колесо оружия</button><button class="segb" data-class-on="left_trigger == 'lt'" data-event-click="pick('left_trigger','lt')">Прицеливание</button><button class="segb" data-class-on="left_trigger == 'none'" data-event-click="pick('left_trigger','none')">Выкл.</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Пальцы повторяют ваши</div><div class="rdesc">Указательный палец Шепарда сгибается с вашим курком, остальные — с захватом</div></div>
 				<button class="tog" data-class-on="fingers" data-event-click="toggle('fingers')"><div class="knob"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Combat</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Physical grenades and melee</div><div class="rdesc">{{guide_grenade}} Strike fast at an enemy to melee.</div><div class="note" data-if="throwables_note != ''">{{throwables_note}}</div></div>
+			<div class="gtitle"><span>Бой</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Физические гранаты и ближний бой</div><div class="rdesc">{{guide_grenade}} Резко ударьте врага для ближнего боя.</div><div class="note" data-if="throwables_note != ''">{{throwables_note}}</div></div>
 				<button class="tog" data-class-on="throwables" data-event-click="toggle('throwables')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Vent by racking the gun</div><div class="rdesc">When the gun runs hot, squeeze the left grip on its top just ahead of your right hand and pull back fast: the heat is gone at once (a change to the game's rules)</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Сброс тепла передёргиванием</div><div class="rdesc">Когда оружие нагреется, сожмите левый захват на его верху чуть впереди правой руки и резко потяните назад: тепло исчезает сразу (изменение правил игры)</div></div>
 				<button class="tog" data-class-on="vent" data-event-click="toggle('vent')"><div class="knob"/></button></div>
-			<div class="srow"><div class="slab">Recoil buzz</div><input type="range" min="0" max="100" step="5" data-value="recoil_buzz"/><div class="sval">{{recoil_buzz_text}}</div></div>
-			<div class="row"><div class="rl"><div class="rlab">Aim assist</div><div class="rdesc">Off: the stick turns you at the speed you ask, even near enemies</div></div>
+			<div class="srow"><div class="slab">Вибрация отдачи</div><input type="range" min="0" max="100" step="5" data-value="recoil_buzz"/><div class="sval">{{recoil_buzz_text}}</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Помощь при прицеливании</div><div class="rdesc">Выкл.: стик поворачивает вас с заданной скоростью, даже рядом с врагами</div></div>
 				<button class="tog" data-class-on="aim_assist" data-event-click="toggle('aim_assist')"><div class="knob"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Weapon drawn</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Steady view</div><div class="rdesc">Drawing, holstering, aiming and sprinting leave your eyes where they are</div></div>
+			<div class="gtitle"><span>Оружие в руках</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Стабильный вид</div><div class="rdesc">Доставание, убирание, прицеливание и бег не сдвигают взгляд</div></div>
 				<button class="tog" data-class-on="constant_eye" data-event-click="toggle('constant_eye')"><div class="knob"/></button></div>
-			<div class="srow"><div class="slab">Draw speed</div><input type="range" min="1" max="10" step="0.5" data-value="draw_rate"/><div class="sval">{{draw_rate_text}}</div></div>
-			<div class="row"><div class="rl"><div class="rlab">Gun kicks when you fire</div><div class="rdesc">The gun jumps up and back in your hand on each shot, harder for a shotgun or a sniper rifle, less with both hands on it. Your aim and the shots stay where you point.</div></div>
+			<div class="srow"><div class="slab">Скорость доставания</div><input type="range" min="1" max="10" step="0.5" data-value="draw_rate"/><div class="sval">{{draw_rate_text}}</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Отдача при выстреле</div><div class="rdesc">При каждом выстреле оружие в руке подскакивает вверх и назад — сильнее у дробовика и снайперской винтовки, слабее при двух руках. Прицел и выстрелы остаются там, куда вы целитесь.</div></div>
 				<button class="tog" data-class-on="gun_kick" data-event-click="toggle('gun_kick')"><div class="knob"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Mako</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Throttle lever and drive stick</div><div class="rdesc">Drive with a lever by your left side and a stick by your right: grab them with the grips (the Controller guide has the details). Off: the game's own Mako controls.</div></div>
+			<div class="gtitle"><span>Мако</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Рычаг тяги и джойстик</div><div class="rdesc">Управляйте рычагом слева и джойстиком справа: беритесь за них захватами (подробности — в руководстве по контроллерам). Выкл.: собственное управление «Мако» в игре.</div></div>
 				<button class="tog" data-class-on="mako_controls" data-event-click="toggle('mako_controls')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Sit in the cockpit</div><div class="rdesc">In the Mako you sit in its cockpit, the outside view on the screen ahead. Off: the game's camera behind the Mako.</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Сидеть в кабине</div><div class="rdesc">В «Мако» вы сидите в кабине, внешний вид — на экране перед вами. Выкл.: камера игры за «Мако».</div></div>
 				<button class="tog" data-class-on="cockpit" data-event-click="toggle('cockpit')"><div class="knob"/></button></div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Voice -->
+	<!-- ===================================================================================== Voice --->
 	<!-- Voice orders (research/54 "The menu's Voice page"): the microphone, its level, the recognizer (the host's plugin/Voice,
-	     restarted on a change of microphone, model or the switch), and [Voice]'s other keys. -->
+	     restarted on a change of microphone, model or the switch), and [Voice]'s other keys. --->
 	<div data-if="section == 'voice'">
-		<div class="stitle">Voice</div>
-		<div class="sdesc">Talk to your squad: hold the left grip at your left ear like a radio, speak, let go.</div>
+		<div class="stitle">Голос</div>
+		<div class="sdesc">Поговорите с отрядом: удерживайте левый захват у левого уха как рацию, говорите, отпустите.</div>
 		<div class="group">
-			<div class="gtitle"><span>Microphone</span><div class="gline"/></div>
-			<div class="srow meterrow"><div class="sl"><div class="slab">Input level</div><div class="rdesc" data-if="!voice_heard">Speak to test</div><div class="rdesc heard" data-if="voice_heard">Hearing you</div></div>
+			<div class="gtitle"><span>Микрофон</span><div class="gline"/></div>
+			<div class="srow meterrow"><div class="sl"><div class="slab">Уровень входа</div><div class="rdesc" data-if="!voice_heard">Говорите для проверки</div><div class="rdesc heard" data-if="voice_heard">Вас слышно</div></div>
 				<div class="meter"><div class="fill" data-class-hot="voice_heard" data-style-width="voice_level + '%'"/><div class="mark"/></div></div>
 			<div class="info" data-class-warn="!voice_ready"><div class="ico i-info"/><span>{{voice_status}}</span></div>
-			<button class="row mic" data-class-on="mic == 'default'" data-event-click="pick('mic','default')"><div class="radio"/><div class="rl"><div class="rlab">Default</div><div class="rdesc">{{mic_default}}</div></div></button>
+			<button class="row mic" data-class-on="mic == 'default'" data-event-click="pick('mic','default')"><div class="radio"/><div class="rl"><div class="rlab">По умолчанию</div><div class="rdesc">{{mic_default}}</div></div></button>
 			<button class="row mic" data-if="mic_count > 0" data-class-on="mic == '0'" data-event-click="pick('mic','0')"><div class="radio"/><div class="rl"><div class="rlab">{{mic0}}</div></div></button>
 			<button class="row mic" data-if="mic_count > 1" data-class-on="mic == '1'" data-event-click="pick('mic','1')"><div class="radio"/><div class="rl"><div class="rlab">{{mic1}}</div></div></button>
 			<button class="row mic" data-if="mic_count > 2" data-class-on="mic == '2'" data-event-click="pick('mic','2')"><div class="radio"/><div class="rl"><div class="rlab">{{mic2}}</div></div></button>
@@ -270,25 +270,25 @@
 			<button class="row mic" data-if="mic_count > 5" data-class-on="mic == '5'" data-event-click="pick('mic','5')"><div class="radio"/><div class="rl"><div class="rlab">{{mic5}}</div></div></button>
 			<button class="row mic" data-if="mic_count > 6" data-class-on="mic == '6'" data-event-click="pick('mic','6')"><div class="radio"/><div class="rl"><div class="rlab">{{mic6}}</div></div></button>
 			<button class="row mic" data-if="mic_count > 7" data-class-on="mic == '7'" data-event-click="pick('mic','7')"><div class="radio"/><div class="rl"><div class="rlab">{{mic7}}</div></div></button>
-			<div class="row mic on" data-if="mic == 'missing'"><div class="radio"/><div class="rl"><div class="rlab">{{mic_missing}}</div><div class="rdesc">Set in the file but not connected now: the default is used until it is.</div></div></div>
+			<div class="row mic on" data-if="mic == 'missing'"><div class="radio"/><div class="rl"><div class="rlab">{{mic_missing}}</div><div class="rdesc">Указан в файле, но сейчас не подключён: до этого используется устройство по умолчанию.</div></div></div>
 			<div class="note" data-if="mic_note != ''">{{mic_note}}</div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Recognizer</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Voice orders</div><div class="rdesc">Off: the microphone stays closed and the radio gesture does nothing</div></div>
+			<div class="gtitle"><span>Распознаватель</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Голосовые приказы</div><div class="rdesc">Выкл.: микрофон остаётся закрыт, а жест рации ничего не делает</div></div>
 				<button class="tog" data-class-on="voice_on" data-event-click="toggle('voice_on')"><div class="knob"/></button></div>
-			<div class="row" data-class-disabled="!voice_on"><div class="rl"><div class="rlab">Recognizer size</div><div class="rdesc">Tiny is the default: it answers fastest beside the running game. Small and medium understand more but each update takes three times as long or more.</div></div>
-				<div class="seg"><button class="segb" data-class-on="voice_model == 'tiny'" data-event-click="pick('voice_model','tiny')">Tiny</button><button class="segb" data-class-on="voice_model == 'small'" data-event-click="pick('voice_model','small')">Small</button><button class="segb" data-class-on="voice_model == 'medium'" data-event-click="pick('voice_model','medium')">Medium</button></div></div>
-			<div class="row" data-class-disabled="!voice_on"><div class="rl"><div class="rlab">Restart the recognizer</div><div class="rdesc">Opens the microphone again: after plugging in a headset</div></div>
-				<button class="btn" data-event-click="cmd('voice_restart')"><div class="sweep"/><span>Restart</span><div class="tick"/></button></div>
+			<div class="row" data-class-disabled="!voice_on"><div class="rl"><div class="rlab">Размер распознавателя</div><div class="rdesc">По умолчанию крошечный: он отвечает быстрее всего рядом с запущенной игрой. Малый и средний понимают больше, но каждое обновление занимает втрое дольше или больше.</div></div>
+				<div class="seg"><button class="segb" data-class-on="voice_model == 'tiny'" data-event-click="pick('voice_model','tiny')">Крошечный</button><button class="segb" data-class-on="voice_model == 'small'" data-event-click="pick('voice_model','small')">Малый</button><button class="segb" data-class-on="voice_model == 'medium'" data-event-click="pick('voice_model','medium')">Средний</button></div></div>
+			<div class="row" data-class-disabled="!voice_on"><div class="rl"><div class="rlab">Перезапустить распознаватель</div><div class="rdesc">Снова открывает микрофон: после подключения гарнитуры</div></div>
+				<button class="btn" data-event-click="cmd('voice_restart')"><div class="sweep"/><span>Перезапустить</span><div class="tick"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Talking</span><div class="gline"/></div>
-			<div class="srow d" data-class-disabled="!voice_on"><div class="sl"><div class="slab">Radio hum</div><div class="rdesc">The left controller hums when your hand is at the ear, stronger nearer it. 0%: none.</div></div><input type="range" min="0" max="100" step="5" data-value="ear_cue"/><div class="sval">{{ear_cue_text}}</div></div>
-			<div class="row" data-class-disabled="!voice_on"><div class="rl"><div class="rlab">Hold-to-talk key</div><div class="rdesc">A keyboard key held to speak, besides the radio gesture: {{voice_key}}</div></div>
+			<div class="gtitle"><span>Разговор</span><div class="gline"/></div>
+			<div class="srow d" data-class-disabled="!voice_on"><div class="sl"><div class="slab">Гул рации</div><div class="rdesc">Левый контроллер гудит, когда рука у уха, сильнее — ближе к нему. 0%: нет.</div></div><input type="range" min="0" max="100" step="5" data-value="ear_cue"/><div class="sval">{{ear_cue_text}}</div></div>
+			<div class="row" data-class-disabled="!voice_on"><div class="rl"><div class="rlab">Клавиша «нажми и говори»</div><div class="rdesc">Клавиша, которую держат для разговора, помимо жеста рации: {{voice_key}}</div></div>
 				<div class="actions">
-					<button class="btn" data-class-armed="voice_key_wait" data-event-click="cmd('voice_key_set')"><div class="sweep"/><span>Set key</span><div class="tick"/></button>
-					<button class="btn" data-event-click="cmd('voice_key_clear')"><div class="sweep"/><span>None</span><div class="tick"/></button>
+					<button class="btn" data-class-armed="voice_key_wait" data-event-click="cmd('voice_key_set')"><div class="sweep"/><span>Задать клавишу</span><div class="tick"/></button>
+					<button class="btn" data-event-click="cmd('voice_key_clear')"><div class="sweep"/><span>Нет</span><div class="tick"/></button>
 				</div></div>
 		</div>
 		<!-- Thespian mode (research/70): [Thespian] on, strictness, handPick; the mod's, live. -->
@@ -324,39 +324,39 @@
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Body -->
+	<!-- ===================================================================================== Body --->
 	<div data-if="section == 'body'">
-		<div class="stitle">Body &amp; calibration</div>
-		<div class="sdesc">Fit Shepard to you.</div>
+		<div class="stitle">Тело и калибровка</div>
+		<div class="sdesc">Подогнать Шепарда под вас.</div>
 		<div class="hero">
 			<div class="big"/>
 			<div class="herot">
-				<div class="heroh">Full calibration</div>
-				<div class="herop">About a minute in a clear space: standing or seated, arms, then aim a pistol and a rifle the way you naturally would. Seated players skip crouch. Saved for these controllers.</div>
+				<div class="heroh">Полная калибровка</div>
+				<div class="herop">Около минуты на свободном месте: стоя или сидя, руки, затем прицельтесь из пистолета и винтовки так, как вам естественно. При игре сидя приседание пропускается. Сохраняется для этих контроллеров.</div>
 				<div class="stat" data-class-warn="!calibrated"><div class="ico i-check" data-if="calibrated"/><div class="ico i-info" data-if="!calibrated"/><span>{{cal_status}}</span></div>
 			</div>
 			<button class="btn primary" id="calibrate" data-event-click="cmd('calibrate')"><div class="sweep"/><div class="bi i-target"/><span>{{cal_action}}</span></button>
 		</div>
-		<div class="row" data-class-disabled="!position_known"><div class="rl"><div class="rlab">Play position</div><div class="rdesc">Seated keeps a standing body with your head motion on top. Crouch with L3; lowering your head never crouches Shepard.</div><div class="note" data-if="play_position == 'seated'">Holsters sit higher and forward. For a button draw, use the native Weapon wheel (Controls &gt; Left trigger), choose Shepard and a weapon, then release.</div><div class="note" data-if="!position_known">Available once your controllers are tracked.</div></div>
-			<div class="seg"><button class="segb" data-class-on="play_position == 'standing'" data-event-click="pick('play_position','standing')">Standing</button><button class="segb" data-class-on="play_position == 'seated'" data-event-click="pick('play_position','seated')">Seated</button></div></div>
+		<div class="row" data-class-disabled="!position_known"><div class="rl"><div class="rlab">Положение при игре</div><div class="rdesc">Сидя — тело стоит, а сверху добавляется движение головы. Приседание — L3; наклон головы никогда не приседает Шепарда.</div><div class="note" data-if="play_position == 'seated'">Кобура расположена выше и ближе к груди. Для доставания кнопкой используйте штатное колесо оружия (Управление &gt; левый курок), выберите Шепарда и оружие, затем отпустите.</div><div class="note" data-if="!position_known">Доступно, когда контроллеры начнут отслеживаться.</div></div>
+			<div class="seg"><button class="segb" data-class-on="play_position == 'standing'" data-event-click="pick('play_position','standing')">Стоя</button><button class="segb" data-class-on="play_position == 'seated'" data-event-click="pick('play_position','seated')">Сидя</button></div></div>
 		<div class="tiles">
-			<div class="tile"><div class="tl">Standing eye height</div><div class="tv">{{t_stand}}<span class="tu">m</span></div></div>
-			<div class="tile"><div class="tl">Crouched eye height</div><div class="tv">{{t_crouch}}<span class="tu" data-if="play_position != 'seated'">m</span></div></div>
-			<div class="tile"><div class="tl">Arm length</div><div class="tv">{{t_arm}}<span class="tu">m</span></div></div>
+			<div class="tile"><div class="tl">Высота глаз стоя</div><div class="tv">{{t_stand}}<span class="tu">м</span></div></div>
+			<div class="tile"><div class="tl">Высота глаз при приседании</div><div class="tv">{{t_crouch}}<span class="tu" data-if="play_position != 'seated'">м</span></div></div>
+			<div class="tile"><div class="tl">Длина рук</div><div class="tv">{{t_arm}}<span class="tu">м</span></div></div>
 		</div>
 		<div class="tiles last">
-			<div class="tile"><div class="tl">Aiming eye</div><div class="tv">{{t_eye}}</div></div>
-			<div class="tile"><div class="tl">Pistol aim spread</div><div class="tv">{{t_pistol}}<span class="tu">°</span></div></div>
-			<div class="tile"><div class="tl">Rifle aim spread</div><div class="tv">{{t_rifle}}<span class="tu">°</span></div></div>
+			<div class="tile"><div class="tl">Ведущий глаз</div><div class="tv">{{t_eye}}</div></div>
+			<div class="tile"><div class="tl">Разброс прицела пистолета</div><div class="tv">{{t_pistol}}<span class="tu">°</span></div></div>
+			<div class="tile"><div class="tl">Разброс прицела винтовки</div><div class="tv">{{t_rifle}}<span class="tu">°</span></div></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Quick fixes</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Recenter</div><div class="rdesc">Turn the view to face where you look (a badly tilted start is levelled too); also: double-click the right stick</div></div>
-				<button class="btn" data-event-click="cmd('recenter')"><div class="sweep"/><div class="bi i-recenter"/><span>Recenter</span><div class="tick"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Line up with Shepard's head</div><div class="rdesc">Closes the menu: stand naturally, then pull the left trigger</div><div class="note" data-if="align_msg != ''">{{align_msg}}</div></div>
-				<button class="btn" data-event-click="cmd('align')"><div class="sweep"/><div class="bi i-align"/><span>Align</span><div class="tick"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Measure arms only</div><div class="rdesc">Arms straight out to the sides (a T), then pull either trigger</div><div class="note" data-if="measure_msg != ''">{{measure_msg}}</div></div>
-				<button class="btn" data-event-click="cmd('measure')"><div class="sweep"/><span>Measure</span><div class="tick"/></button></div>
+			<div class="gtitle"><span>Быстрые исправления</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Центрирование</div><div class="rdesc">Повернуть вид туда, куда вы смотрите (сильно наклонённое начало тоже выравнивается); также: двойной щелчок правого стика</div></div>
+				<button class="btn" data-event-click="cmd('recenter')"><div class="sweep"/><div class="bi i-recenter"/><span>Центрирование</span><div class="tick"/></button></div>
+			<div class="row"><div class="rl"><div class="rlab">Выровнять по голове Шепарда</div><div class="rdesc">Закрывает меню: встаньте естественно, затем нажмите левый курок</div><div class="note" data-if="align_msg != ''">{{align_msg}}</div></div>
+				<button class="btn" data-event-click="cmd('align')"><div class="sweep"/><div class="bi i-align"/><span>Выровнять</span><div class="tick"/></button></div>
+			<div class="row"><div class="rl"><div class="rlab">Измерить только руки</div><div class="rdesc">Руки прямо в стороны (буквой Т), затем нажмите любой курок</div><div class="note" data-if="measure_msg != ''">{{measure_msg}}</div></div>
+				<button class="btn" data-event-click="cmd('measure')"><div class="sweep"/><span>Измерить</span><div class="tick"/></button></div>
 		</div>
 		<div class="group" id="manual-calibration">
 			<div class="row"><div class="rl"><div class="rlab">Advanced calibration</div><div class="rdesc">Optional manual height and controller overrides.</div></div>
@@ -393,233 +393,233 @@
 			</div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Hand model</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Empty-hand angles</div><div class="rdesc">Extra model corrections for empty hands only, mirrored for the left. Shared across controller setups; held-gun aim is unchanged.</div></div>
-				<button class="btn" data-event-click="fine = !fine"><div class="sweep"/><span data-if="!fine">Show</span><span data-if="fine">Hide</span><div class="tick"/></button></div>
+			<div class="gtitle"><span>Точная подстройка</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Подстройка углов рук</div><div class="rdesc">Небольшие поправки к калибровке, одинаковые для обеих рук</div></div>
+				<button class="btn" data-event-click="fine = !fine"><div class="sweep"/><span data-if="!fine">Показать</span><span data-if="fine">Скрыть</span><div class="tick"/></button></div>
 			<div data-if="fine">
-				<div class="srow"><div class="slab">Pitch</div><input type="range" min="-30" max="30" step="1" data-value="trim_pitch"/><div class="sval">{{trim_pitch_text}}</div></div>
-				<div class="srow"><div class="slab">Yaw</div><input type="range" min="-30" max="30" step="1" data-value="trim_yaw"/><div class="sval">{{trim_yaw_text}}</div></div>
-				<div class="srow"><div class="slab">Roll</div><input type="range" min="-30" max="30" step="1" data-value="trim_roll"/><div class="sval">{{trim_roll_text}}</div></div>
+				<div class="srow"><div class="slab">Тангаж</div><input type="range" min="-30" max="30" step="1" data-value="trim_pitch"/><div class="sval">{{trim_pitch_text}}</div></div>
+				<div class="srow"><div class="slab">Рыскание</div><input type="range" min="-30" max="30" step="1" data-value="trim_yaw"/><div class="sval">{{trim_yaw_text}}</div></div>
+				<div class="srow"><div class="slab">Крен</div><input type="range" min="-30" max="30" step="1" data-value="trim_roll"/><div class="sval">{{trim_roll_text}}</div></div>
 			</div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Display -->
+	<!-- ===================================================================================== Display --->
 	<div data-if="section == 'display'">
-		<div class="stitle">Display</div>
-		<div class="sdesc">How the game looks in your headset.</div>
+		<div class="stitle">Изображение</div>
+		<div class="sdesc">Как игра выглядит в шлеме.</div>
 		<div class="group">
-			<div class="gtitle"><span>Colour</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Colour profile</div><div class="rdesc">Matched to your headset's display and its video link</div></div>
-				<div class="seg"><button class="segb" data-class-on="profile == 'auto'" data-event-click="pick('profile','auto')">Auto</button><button class="segb" data-class-on="profile == 'neutral'" data-event-click="pick('profile','neutral')">Neutral</button><button class="segb" data-class-on="profile == 'vivid'" data-event-click="pick('profile','vivid')">Vivid</button><button class="segb" data-class-on="profile == 'custom'" data-event-click="pick('profile','custom')">Custom</button></div></div>
+			<div class="gtitle"><span>Цвет</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Цветовой профиль</div><div class="rdesc">Под ваши дисплей шлема и видеотракт</div></div>
+				<div class="seg"><button class="segb" data-class-on="profile == 'auto'" data-event-click="pick('profile','auto')">Авто</button><button class="segb" data-class-on="profile == 'neutral'" data-event-click="pick('profile','neutral')">Нейтральный</button><button class="segb" data-class-on="profile == 'vivid'" data-event-click="pick('profile','vivid')">Насыщенный</button><button class="segb" data-class-on="profile == 'custom'" data-event-click="pick('profile','custom')">Своё</button></div></div>
 			<div class="info"><div class="ico i-info"/><span>{{profile_info}}</span></div>
 			<div class="colour">
 				<div class="left">
-					<div class="srow"><div class="slab">Brightness</div><input type="range" min="-20" max="20" step="1" data-value="c_brightness"/><div class="sval">{{c_brightness_text}}</div></div>
-					<div class="srow"><div class="slab">Contrast</div><input type="range" min="-20" max="30" step="1" data-value="c_contrast"/><div class="sval">{{c_contrast_text}}</div></div>
-					<div class="srow"><div class="slab">Saturation</div><input type="range" min="-30" max="40" step="1" data-value="c_saturation"/><div class="sval">{{c_saturation_text}}</div></div>
-					<div class="srow"><div class="slab">Mid-tones</div><input type="range" min="0.7" max="1.3" step="0.01" data-value="c_midtones"/><div class="sval">{{c_midtones_text}}</div></div>
-					<div class="srow"><div class="slab">Black level</div><input type="range" min="-0.05" max="0.05" step="0.005" data-value="c_black"/><div class="sval">{{c_black_text}}</div></div>
-					<div class="hint"><span class="key">A</span><span data-if="!comparing">Hold to flip between the original and the adjusted image.</span><span class="comparing" data-if="comparing">Showing the original picture.</span></div>
+					<div class="srow"><div class="slab">Яркость</div><input type="range" min="-20" max="20" step="1" data-value="c_brightness"/><div class="sval">{{c_brightness_text}}</div></div>
+					<div class="srow"><div class="slab">Контраст</div><input type="range" min="-20" max="30" step="1" data-value="c_contrast"/><div class="sval">{{c_contrast_text}}</div></div>
+					<div class="srow"><div class="slab">Насыщенность</div><input type="range" min="-30" max="40" step="1" data-value="c_saturation"/><div class="sval">{{c_saturation_text}}</div></div>
+					<div class="srow"><div class="slab">Средние тона</div><input type="range" min="0.7" max="1.3" step="0.01" data-value="c_midtones"/><div class="sval">{{c_midtones_text}}</div></div>
+					<div class="srow"><div class="slab">Уровень чёрного</div><input type="range" min="-0.05" max="0.05" step="0.005" data-value="c_black"/><div class="sval">{{c_black_text}}</div></div>
+					<div class="hint"><span class="key">A</span><span data-if="!comparing">Удерживайте, чтобы сравнивать исходную и скорректированную картинку.</span><span class="comparing" data-if="comparing">Показана исходная картинка.</span></div>
 				</div>
 				<div class="pv">
 					<div class="pvcols">
-						<div><div class="pvlab">Original</div><img class="pvimg" src="mevr:strip_original"/></div>
-						<div><div class="pvlab">Adjusted</div><img class="pvimg" src="mevr:strip_adjusted"/></div>
+						<div><div class="pvlab">Исходное</div><img class="pvimg" src="mevr:strip_original"/></div>
+						<div><div class="pvlab">Скорректировано</div><img class="pvimg" src="mevr:strip_adjusted"/></div>
 					</div>
-					<div class="pvnote">The grey steps should all stay distinct, the darkest from black and the brightest from white.</div>
+					<div class="pvnote">Все серые ступени должны различаться: самая тёмная — от чёрного, самая светлая — от белого.</div>
 				</div>
 			</div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Image quality</span><div class="gline"/></div>
+			<div class="gtitle"><span>Качество изображения</span><div class="gline"/></div>
 			<!-- One choice for the frame rate (research/60): each mode sets the render resolution and the levers in Advanced >
-			     Performance; any of them changed by hand shows Custom. -->
-			<div class="row"><div class="rl"><div class="rlab">Performance</div><div class="rdesc">{{perf_desc}}</div><div class="note">{{perf_note}}</div></div>
-				<div class="seg"><button class="segb" data-class-on="perf_mode == 'quality'" data-event-click="pick('perf_mode','quality')">Quality</button><button class="segb" data-class-on="perf_mode == 'balanced'" data-event-click="pick('perf_mode','balanced')">Balanced</button><button class="segb" data-class-on="perf_mode == 'performance'" data-event-click="pick('perf_mode','performance')">Performance</button><button class="segb on shown" data-if="perf_mode == 'custom'">Custom</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Render resolution</div><div class="rdesc">Now {{quality_text}} per eye · {{quality_note}}</div><div class="rdesc">{{headset_text}}</div></div>
-				<div class="seg"><button class="segb disabled" data-if="!headset_known">Headset (unknown until VR starts)</button><button class="segb" data-if="headset_known" data-class-on="quality == 'headset'" data-event-click="pick('quality','headset')">Headset</button><button class="segb" data-if="headset_known" data-class-on="quality == 'headset85'" data-event-click="pick('quality','headset85')">Headset × 0.85</button><button class="segb" data-if="headset_known" data-class-on="quality == 'headset75'" data-event-click="pick('quality','headset75')">Headset × 0.75</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Upscale</div><div class="rdesc">Renders smaller and sharpens it back up: faster, a little softer. Pairs with Headset × 0.85.</div></div>
-				<div class="seg"><button class="segb" data-class-on="upscale == 'off'" data-event-click="pick('upscale','off')">Off</button><button class="segb" data-class-on="upscale == 'fsr'" data-event-click="pick('upscale','fsr')">FSR</button></div></div>
-			<div class="row" id="steamvr-smoothing-row" data-if="steamvr_runtime"><div class="rl"><div class="rlab">Motion smoothing (SteamVR)</div><div class="rdesc">SteamVR fills in frames the game misses by warping older ones. Off shows only real frames. For the Steam version of the game.</div><div class="note">{{steamvr_smoothing_note}}</div></div>
-				<div class="seg"><button class="segb" data-class-on="steamvr_smoothing == 'steamvr'" data-event-click="cmd('steamvr_smoothing','steamvr')">SteamVR decides</button><button class="segb" data-class-on="steamvr_smoothing == 'off'" data-event-click="cmd('steamvr_smoothing','off')">Off</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Steady cutscenes</div><div class="rdesc">Caps cutscenes to a frame rate the headset can hold</div></div>
+			     Performance; any of them changed by hand shows Custom. --->
+			<div class="row"><div class="rl"><div class="rlab">Производительность</div><div class="rdesc">{{perf_desc}}</div><div class="note">{{perf_note}}</div></div>
+				<div class="seg"><button class="segb" data-class-on="perf_mode == 'quality'" data-event-click="pick('perf_mode','quality')">Качество</button><button class="segb" data-class-on="perf_mode == 'balanced'" data-event-click="pick('perf_mode','balanced')">Сбалансированный</button><button class="segb" data-class-on="perf_mode == 'performance'" data-event-click="pick('perf_mode','performance')">Производительность</button><button class="segb on shown" data-if="perf_mode == 'custom'">Своё</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Разрешение рендера</div><div class="rdesc">Сейчас {{quality_text}} на глаз · {{quality_note}}</div><div class="rdesc">{{headset_text}}</div></div>
+				<div class="seg"><button class="segb disabled" data-if="!headset_known">Шлем (неизвестен до запуска VR)</button><button class="segb" data-if="headset_known" data-class-on="quality == 'headset'" data-event-click="pick('quality','headset')">Шлем</button><button class="segb" data-if="headset_known" data-class-on="quality == 'headset85'" data-event-click="pick('quality','headset85')">Шлем × 0,85</button><button class="segb" data-if="headset_known" data-class-on="quality == 'headset75'" data-event-click="pick('quality','headset75')">Шлем × 0,75</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Масштабирование</div><div class="rdesc">Рендерит меньше и повышает резкость: быстрее, чуть мягче. Хорошо сочетается с «Шлем × 0.85».</div></div>
+				<div class="seg"><button class="segb" data-class-on="upscale == 'off'" data-event-click="pick('upscale','off')">Выкл.</button><button class="segb" data-class-on="upscale == 'fsr'" data-event-click="pick('upscale','fsr')">FSR</button></div></div>
+			<div class="row" id="steamvr-smoothing-row" data-if="steamvr_runtime"><div class="rl"><div class="rlab">Сглаживание движения (SteamVR)</div><div class="rdesc">SteamVR дополняет пропущенные игрой кадры, искажая старые. Выкл. — только настоящие кадры. Для версии игры в Steam.</div><div class="note">{{steamvr_smoothing_note}}</div></div>
+				<div class="seg"><button class="segb" data-class-on="steamvr_smoothing == 'steamvr'" data-event-click="cmd('steamvr_smoothing','steamvr')">Решает SteamVR</button><button class="segb" data-class-on="steamvr_smoothing == 'off'" data-event-click="cmd('steamvr_smoothing','off')">Выкл.</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Стабильные катсцены</div><div class="rdesc">Ограничивает катсцены частотой, которую выдержит шлем</div></div>
 				<button class="tog" data-class-on="steady_cine" data-event-click="toggle('steady_cine')"><div class="knob"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Optional content</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Voice orders and texture packs</div><div class="rdesc">Installed: {{content_installed}}</div><div class="note" data-if="content_msg != ''">{{content_msg}}</div></div>
-				<button class="btn" data-event-click="cmd('content_request')"><div class="sweep"/><span>Install after I quit</span><div class="tick"/></button></div>
-			<div class="hint">They go in the game's folder, so MEVR Setup adds them while the game is closed.</div>
+			<div class="gtitle"><span>Дополнительное содержимое</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Голосовые приказы и наборы текстур</div><div class="rdesc">Установлено: {{content_installed}}</div><div class="note" data-if="content_msg != ''">{{content_msg}}</div></div>
+				<button class="btn" data-event-click="cmd('content_request')"><div class="sweep"/><span>Установить после выхода</span><div class="tick"/></button></div>
+			<div class="hint">Они ставятся в папку игры, поэтому MEVR Setup добавляет их при закрытой игре.</div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== HUD -->
+	<!-- ===================================================================================== HUD --->
 	<div data-if="section == 'hud'">
-		<div class="stitle">HUD &amp; sights</div>
-		<div class="sdesc">What's drawn over the world.</div>
+		<div class="stitle">Интерфейс и прицелы</div>
+		<div class="sdesc">Что рисуется поверх мира.</div>
 		<div class="group">
-			<div class="gtitle"><span>HUD</span><div class="gline"/></div>
-			<div class="srow d"><div class="sl"><div class="slab">Distance</div><div class="rdesc">How far in front of you the HUD floats</div></div><input type="range" min="1" max="3" step="0.1" data-value="hud_distance"/><div class="sval">{{hud_distance_text}}</div></div>
-			<div class="srow d"><div class="sl"><div class="slab">Size</div><div class="rdesc">How wide it is: 100% is 1.3 m</div></div><input type="range" min="45" max="155" step="5" data-value="hud_size"/><div class="sval">{{hud_size_text}}</div></div>
-			<div class="srow d"><div class="sl"><div class="slab">Below your eyes</div><div class="rdesc">How far below eye height its middle sits</div></div><input type="range" min="-0.3" max="0.6" step="0.01" data-value="panel_below"/><div class="sval">{{panel_below_text}}</div></div>
-			<div class="srow d"><div class="sl"><div class="slab">Comes round past</div><div class="rdesc">Look this far aside for a second and it moves back in front of you</div></div><input type="range" min="0" max="120" step="5" data-value="panel_follow"/><div class="sval">{{panel_follow_text}}</div></div>
-			<div class="row"><div class="rl"><div class="rlab">Bring it in front of me</div><div class="rdesc">Puts the HUD straight ahead of where you look now (recentering does too)</div></div>
-				<button class="btn" data-event-click="cmd('place_hud')"><div class="sweep"/><div class="bi i-place"/><span>Place</span><div class="tick"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Hand reticle</div><div class="rdesc">A marker where the gun points, instead of the screen crosshair</div></div>
+			<div class="gtitle"><span>Интерфейс</span><div class="gline"/></div>
+			<div class="srow d"><div class="sl"><div class="slab">Расстояние</div><div class="rdesc">На каком расстоянии перед вами висит интерфейс</div></div><input type="range" min="1" max="3" step="0.1" data-value="hud_distance"/><div class="sval">{{hud_distance_text}}</div></div>
+			<div class="srow d"><div class="sl"><div class="slab">Размер</div><div class="rdesc">Насколько широко: 100% — это 1,3 м</div></div><input type="range" min="45" max="155" step="5" data-value="hud_size"/><div class="sval">{{hud_size_text}}</div></div>
+			<div class="srow d"><div class="sl"><div class="slab">Ниже уровня глаз</div><div class="rdesc">Насколько ниже уровня глаз расположена его середина</div></div><input type="range" min="-0.3" max="0.6" step="0.01" data-value="panel_below"/><div class="sval">{{panel_below_text}}</div></div>
+			<div class="srow d"><div class="sl"><div class="slab">Возврат при отклонении</div><div class="rdesc">Посмотрите в сторону настолько на секунду — и оно вернётся перед вами</div></div><input type="range" min="0" max="120" step="5" data-value="panel_follow"/><div class="sval">{{panel_follow_text}}</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Разместить передо мной</div><div class="rdesc">Ставит интерфейс прямо перед тем, куда вы смотрите сейчас (центрирование тоже)</div></div>
+				<button class="btn" data-event-click="cmd('place_hud')"><div class="sweep"/><div class="bi i-place"/><span>Разместить</span><div class="tick"/></button></div>
+			<div class="row"><div class="rl"><div class="rlab">Прицел в руке</div><div class="rdesc">Маркер там, куда направлено оружие, вместо экранного прицела</div></div>
 				<button class="tog" data-class-on="reticle" data-event-click="toggle('reticle')"><div class="knob"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>On you and in the world</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Status on your wrist</div><div class="rdesc">Health, shields, your squad and medi-gel on the back of your left wrist, out of the HUD</div></div>
+			<div class="gtitle"><span>На вас и в мире</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Состояние на запястье</div><div class="rdesc">Здоровье, щиты, отряд и меди-гель на тыльной стороне левого запястья, вместо интерфейса</div></div>
 				<button class="tog" data-class-on="wrist_status" data-event-click="toggle('wrist_status')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Weapon panel on the gun</div><div class="rdesc">The gun's heat and your grenades on top of the drawn gun, out of the HUD</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Панель оружия на оружии</div><div class="rdesc">Нагрев оружия и ваши гранаты над достанным оружием, вместо интерфейса</div></div>
 				<button class="tog" data-class-on="gun_status" data-event-click="toggle('gun_status')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Prompts at the object</div><div class="rdesc">What A will use (a door, a console, a person) is named where it is, big enough to read. Off: small on the HUD.</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Подсказки у объекта</div><div class="rdesc">То, на что подействует A (дверь, консоль, человек), подписано рядом и достаточно крупно. Выкл.: мелко в интерфейсе.</div></div>
 				<button class="tog" data-class-on="interact_label" data-event-click="toggle('interact_label')"><div class="knob"/></button></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Sights</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Pistol</div><div class="rdesc">Seen by the eye you aim with: a red dot, or a holo ring around a dot</div></div>
-				<div class="seg"><button class="segb" data-class-on="sight_pistol == 'dot'" data-event-click="pick('sight_pistol','dot')">Red dot</button><button class="segb" data-class-on="sight_pistol == 'holo'" data-event-click="pick('sight_pistol','holo')">Holo</button><button class="segb" data-class-on="sight_pistol == 'none'" data-event-click="pick('sight_pistol','none')">None</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Shotgun</div><div class="rdesc">The same choice for the shotgun</div></div>
-				<div class="seg"><button class="segb" data-class-on="sight_shotgun == 'dot'" data-event-click="pick('sight_shotgun','dot')">Red dot</button><button class="segb" data-class-on="sight_shotgun == 'holo'" data-event-click="pick('sight_shotgun','holo')">Holo</button><button class="segb" data-class-on="sight_shotgun == 'none'" data-event-click="pick('sight_shotgun','none')">None</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Assault rifle</div><div class="rdesc">A sight, or the rifle's own small scope</div></div>
-				<div class="seg"><button class="segb" data-class-on="sight_rifle == 'dot'" data-event-click="pick('sight_rifle','dot')">Red dot</button><button class="segb" data-class-on="sight_rifle == 'scope'" data-event-click="pick('sight_rifle','scope')">Scope 1.5×</button><button class="segb" data-class-on="sight_rifle == 'holo'" data-event-click="pick('sight_rifle','holo')">Holo</button><button class="segb" data-class-on="sight_rifle == 'none'" data-event-click="pick('sight_rifle','none')">None</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Sniper rifle</div><div class="rdesc">The game's own scope view and zoom; flick the right stick to zoom while aiming down it</div></div>
-				<div class="seg"><button class="segb" data-class-on="sight_sniper == 'scope'" data-event-click="pick('sight_sniper','scope')">Scope</button><button class="segb" data-class-on="sight_sniper == 'dot'" data-event-click="pick('sight_sniper','dot')">Red dot</button><button class="segb" data-class-on="sight_sniper == 'holo'" data-event-click="pick('sight_sniper','holo')">Holo</button><button class="segb" data-class-on="sight_sniper == 'none'" data-event-click="pick('sight_sniper','none')">None</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Sight alignment help</div><div class="rdesc">Raised to your eye, the gun eases the sight onto your line of view</div></div>
+			<div class="gtitle"><span>Прицельные приспособления</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Пистолет</div><div class="rdesc">Виден ведущим глазом: красная точка или голо-кольцо вокруг точки</div></div>
+				<div class="seg"><button class="segb" data-class-on="sight_pistol == 'dot'" data-event-click="pick('sight_pistol','dot')">Красная точка</button><button class="segb" data-class-on="sight_pistol == 'holo'" data-event-click="pick('sight_pistol','holo')">Голо</button><button class="segb" data-class-on="sight_pistol == 'none'" data-event-click="pick('sight_pistol','none')">Нет</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Дробовик</div><div class="rdesc">Тот же выбор для дробовика</div></div>
+				<div class="seg"><button class="segb" data-class-on="sight_shotgun == 'dot'" data-event-click="pick('sight_shotgun','dot')">Красная точка</button><button class="segb" data-class-on="sight_shotgun == 'holo'" data-event-click="pick('sight_shotgun','holo')">Голо</button><button class="segb" data-class-on="sight_shotgun == 'none'" data-event-click="pick('sight_shotgun','none')">Нет</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Штурмовая винтовка</div><div class="rdesc">Мушка или собственный небольшой прицел винтовки</div></div>
+				<div class="seg"><button class="segb" data-class-on="sight_rifle == 'dot'" data-event-click="pick('sight_rifle','dot')">Красная точка</button><button class="segb" data-class-on="sight_rifle == 'scope'" data-event-click="pick('sight_rifle','scope')">Оптика 1,5×</button><button class="segb" data-class-on="sight_rifle == 'holo'" data-event-click="pick('sight_rifle','holo')">Голо</button><button class="segb" data-class-on="sight_rifle == 'none'" data-event-click="pick('sight_rifle','none')">Нет</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Снайперская винтовка</div><div class="rdesc">Собственный вид в оптику игры и зум; дёрните правый стик, чтобы приблизить, целясь через неё</div></div>
+				<div class="seg"><button class="segb" data-class-on="sight_sniper == 'scope'" data-event-click="pick('sight_sniper','scope')">Оптика</button><button class="segb" data-class-on="sight_sniper == 'dot'" data-event-click="pick('sight_sniper','dot')">Красная точка</button><button class="segb" data-class-on="sight_sniper == 'holo'" data-event-click="pick('sight_sniper','holo')">Голо</button><button class="segb" data-class-on="sight_sniper == 'none'" data-event-click="pick('sight_sniper','none')">Нет</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Помощь с выравниванием прицела</div><div class="rdesc">Поднесённое к глазу, оружие мягко наводит прицел на вашу линию взгляда</div></div>
 				<button class="tog" data-class-on="sight_assist" data-event-click="toggle('sight_assist')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Shots land on the dot</div><div class="rdesc">Each shot aims at whatever the sight line points at, near or far</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Выстрелы попадают в точку</div><div class="rdesc">Каждый выстрел летит туда, куда смотрит линия прицела, близко или далеко</div></div>
 				<button class="tog" data-class-on="sight_converge" data-event-click="toggle('sight_converge')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Scope picture in the game's colours</div><div class="rdesc">The zoomed picture gets the game's colour grade, with a dark speckle in shadows. Off: clean, plainer colours. From the next loading screen.</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Картинка оптики в цветах игры</div><div class="rdesc">Увеличенная картинка получает цветокоррекцию игры с тёмной крупинкой в тенях. Выкл.: чистые, простые цвета. Со следующего экрана загрузки.</div></div>
 				<button class="tog" data-class-on="scope_grade" data-event-click="toggle('scope_grade')"><div class="knob"/></button></div>
 		</div>
 	</div>
 
-	<!-- ===================================================================================== Advanced -->
+	<!-- ===================================================================================== Advanced --->
 	<div data-if="section == 'advanced'">
-		<div class="stitle">Advanced</div>
-		<div class="sdesc">Fine-tuning and troubleshooting. The standard settings suit most players.</div>
+		<div class="stitle">Дополнительно</div>
+		<div class="sdesc">Тонкая настройка и решение проблем. Стандартные настройки подходят большинству.</div>
 		<div class="advwrap"><div class="seg advtabs">
-			<button class="segb" data-class-on="advtab == 'tracking'" data-event-click="advtab = 'tracking'">Tracking</button>
-			<button class="segb" data-class-on="advtab == 'perf'" data-event-click="advtab = 'perf'">Performance</button>
-			<button class="segb" data-class-on="advtab == 'graphics'" data-event-click="advtab = 'graphics'">Graphics</button>
-			<button class="segb" data-class-on="advtab == 'hud'" data-event-click="advtab = 'hud'">Game UI</button>
-			<button class="segb" data-class-on="advtab == 'profiles'" data-event-click="advtab = 'profiles'">Profiles</button>
-			<button class="segb" data-class-on="advtab == 'diag'" data-event-click="advtab = 'diag'">Diagnostics</button>
+			<button class="segb" data-class-on="advtab == 'tracking'" data-event-click="advtab = 'tracking'">Отслеживание</button>
+			<button class="segb" data-class-on="advtab == 'perf'" data-event-click="advtab = 'perf'">Производительность</button>
+			<button class="segb" data-class-on="advtab == 'graphics'" data-event-click="advtab = 'graphics'">Графика</button>
+			<button class="segb" data-class-on="advtab == 'hud'" data-event-click="advtab = 'hud'">Интерфейс игры</button>
+			<button class="segb" data-class-on="advtab == 'profiles'" data-event-click="advtab = 'profiles'">Профили</button>
+			<button class="segb" data-class-on="advtab == 'diag'" data-event-click="advtab = 'diag'">Диагностика</button>
 		</div></div>
 
 		<!-- The life-size stereo, first person, lean, the field of view fill and the flat menus are fixed (the MEVR baseline,
-		     MevrBridge::ModernBaseline): no rows for the old renderer's modes and its hand-set stereo. -->
+		     MevrBridge::ModernBaseline): no rows for the old renderer's modes and its hand-set stereo. --->
 		<div data-if="advtab == 'tracking'">
 			<div class="group">
-				<div class="gtitle"><span>Head tracking</span><div class="gline"/></div>
-				<div class="row"><div class="rl"><div class="rlab">Recenter key</div><div class="rdesc">{{recenter_key_desc}}</div></div>
+				<div class="gtitle"><span>Отслеживание головы</span><div class="gline"/></div>
+				<div class="row"><div class="rl"><div class="rlab">Клавиша центрирования</div><div class="rdesc">{{recenter_key_desc}}</div></div>
 					<button class="tog" data-class-on="recenter_key" data-event-click="toggle('recenter_key')"><div class="knob"/></button></div>
-				<div class="srow d"><div class="sl"><div class="slab">Smoothing</div><div class="rdesc">Steadies the picture while your head is still; more feels laggy</div></div><input type="range" min="0" max="0.9" step="0.05" data-value="look_smooth"/><div class="sval">{{look_smooth_text}}</div></div>
+				<div class="srow d"><div class="sl"><div class="slab">Сглаживание</div><div class="rdesc">Стабилизирует картинку, пока голова неподвижна; больше — ощущение запаздывания</div></div><input type="range" min="0" max="0.9" step="0.05" data-value="look_smooth"/><div class="sval">{{look_smooth_text}}</div></div>
 			</div>
 			<div class="group">
-				<div class="gtitle"><span>Flat screens</span><div class="gline"/></div>
-				<div class="hint">Conversations and cutscenes are on the Comfort page.</div>
-				<div class="srow d"><div class="sl"><div class="slab">Flat screen width</div><div class="rdesc">The flat screen for menus the room doesn't take and flat cutscenes</div></div><input type="range" min="1" max="3.5" step="0.05" data-value="flat_size"/><div class="sval">{{flat_size_text}}</div></div>
+				<div class="gtitle"><span>Плоские экраны</span><div class="gline"/></div>
+				<div class="hint">Диалоги и катсцены — на странице «Комфорт».</div>
+				<div class="srow d"><div class="sl"><div class="slab">Ширина плоского экрана</div><div class="rdesc">Плоский экран для меню, которые комната не принимает, и плоских катсцен</div></div><input type="range" min="1" max="3.5" step="0.05" data-value="flat_size"/><div class="sval">{{flat_size_text}}</div></div>
 			</div>
 		</div>
 
 		<div data-if="advtab == 'graphics'">
 			<div class="group">
-				<div class="gtitle"><span>Graphics</span><div class="gline"/></div>
-				<div class="row"><div class="rl"><div class="rlab">Depth of field</div><div class="rdesc">Turning it off sharpens the background but washes out colour (after a restart)</div></div>
+				<div class="gtitle"><span>Графика</span><div class="gline"/></div>
+				<div class="row"><div class="rl"><div class="rlab">Глубина резкости</div><div class="rdesc">Выключение повышает резкость фона, но обесцвечивает его (после перезапуска)</div></div>
 					<button class="tog" data-class-on="dof" data-event-click="toggle('dof')"><div class="knob"/></button></div>
-				<div class="row"><div class="rl"><div class="rlab">Desktop mirror</div><div class="rdesc">How often the game window on your monitor updates. Every 2nd is the standard; every frame is smooth for recording but costs frame rate.</div></div>
-					<div class="seg"><button class="segb" data-class-on="mirror == 'normal'" data-event-click="pick('mirror','normal')">Every 8th</button><button class="segb" data-class-on="mirror == 'smooth'" data-event-click="pick('mirror','smooth')">Every 2nd</button><button class="segb" data-class-on="mirror == 'every'" data-event-click="pick('mirror','every')">Every frame</button></div></div>
+				<div class="row"><div class="rl"><div class="rlab">Зеркало на монитор</div><div class="rdesc">Как часто обновляется окно игры на мониторе. Стандарт — каждый 2-й кадр; каждый кадр плавнее для записи, но снижает fps.</div></div>
+					<div class="seg"><button class="segb" data-class-on="mirror == 'normal'" data-event-click="pick('mirror','normal')">Каждый 8-й</button><button class="segb" data-class-on="mirror == 'smooth'" data-event-click="pick('mirror','smooth')">Каждый 2-й</button><button class="segb" data-class-on="mirror == 'every'" data-event-click="pick('mirror','every')">Каждый кадр</button></div></div>
 			</div>
 		</div>
 
-		<!-- Performance: the levers Display's Performance modes set, one by one (research/60), and Halcyon's fixed render sizes. -->
+		<!-- Performance: the levers Display's Performance modes set, one by one (research/60), and Halcyon's fixed render sizes. --->
 		<div data-if="advtab == 'perf'">
 			<div class="group">
-				<div class="gtitle"><span>Performance levers</span><div class="gline"/></div>
-				<div class="hint">Display's Performance modes set these. Changing one makes the mode Custom. All of them apply at once.</div>
-				<div class="row"><div class="rl"><div class="rlab">Small-object culling</div><div class="rdesc">Skips objects smaller than this many pixels on screen. Up to 8 can't be seen; from 24 far details pop in.</div></div>
-					<div class="seg"><button class="segb" data-class-on="cull_px == '0'" data-event-click="pick('cull_px','0')">Off</button><button class="segb" data-class-on="cull_px == '4'" data-event-click="pick('cull_px','4')">4</button><button class="segb" data-class-on="cull_px == '8'" data-event-click="pick('cull_px','8')">8</button><button class="segb" data-class-on="cull_px == '16'" data-event-click="pick('cull_px','16')">16</button><button class="segb" data-class-on="cull_px == '24'" data-event-click="pick('cull_px','24')">24</button><button class="segb" data-class-on="cull_px == '32'" data-event-click="pick('cull_px','32')">32</button></div></div>
-				<div class="srow d"><div class="sl"><div class="slab">Grass distance</div><div class="rdesc">Of the game's own. Grass costs on the processor and the graphics card for every blade, twice in VR.</div></div><input type="range" min="25" max="100" step="5" data-value="grass"/><div class="sval">{{grass_text}}</div></div>
-				<div class="row"><div class="rl"><div class="rlab">Dynamic shadows</div><div class="rdesc">Moving shadows from characters and lights. Off is the standard: they cost frame time and the game's own shadows stay.</div></div>
+				<div class="gtitle"><span>Способы ускорить</span><div class="gline"/></div>
+				<div class="hint">Эти параметры задают режимы производительности на странице «Изображение». Изменение любого делает режим «Своё». Все применяются сразу.</div>
+				<div class="row"><div class="rl"><div class="rlab">Отсечение мелких объектов</div><div class="rdesc">Пропускает объекты меньше указанного числа пикселей на экране. До 8 их не видно; от 24 дальние детали появляются внезапно.</div></div>
+					<div class="seg"><button class="segb" data-class-on="cull_px == '0'" data-event-click="pick('cull_px','0')">Выкл.</button><button class="segb" data-class-on="cull_px == '4'" data-event-click="pick('cull_px','4')">4</button><button class="segb" data-class-on="cull_px == '8'" data-event-click="pick('cull_px','8')">8</button><button class="segb" data-class-on="cull_px == '16'" data-event-click="pick('cull_px','16')">16</button><button class="segb" data-class-on="cull_px == '24'" data-event-click="pick('cull_px','24')">24</button><button class="segb" data-class-on="cull_px == '32'" data-event-click="pick('cull_px','32')">32</button></div></div>
+				<div class="srow d"><div class="sl"><div class="slab">Дальность травы</div><div class="rdesc">Из самой игры. Трава нагружает процессор и видеокарту за каждую травинку, в VR — дважды.</div></div><input type="range" min="25" max="100" step="5" data-value="grass"/><div class="sval">{{grass_text}}</div></div>
+				<div class="row"><div class="rl"><div class="rlab">Динамические тени</div><div class="rdesc">Подвижные тени от персонажей и света. Выкл. — стандарт: они отнимают время кадра, а собственные тени игры остаются.</div></div>
 					<button class="tog" data-class-on="dyn_shadows" data-event-click="toggle('dyn_shadows')"><div class="knob"/></button></div>
-				<div class="row"><div class="rl"><div class="rlab">Ambient occlusion</div><div class="rdesc">Soft shading in corners and under objects. Off saves graphics-card time and flattens the picture a little.</div></div>
+				<div class="row"><div class="rl"><div class="rlab">Затенение окружения</div><div class="rdesc">Мягкое затенение в углах и под объектами. Выкл. экономит время видеокарты и немного упрощает картинку.</div></div>
 					<button class="tog" data-class-on="ambient_occl" data-event-click="toggle('ambient_occl')"><div class="knob"/></button></div>
-				<div class="srow d"><div class="sl"><div class="slab">FSR sharpness</div><div class="rdesc">How much the upscale sharpens a smaller render. No mode sets it.</div></div><input type="range" min="0" max="100" step="5" data-value="fsr_sharpness"/><div class="sval">{{fsr_sharpness_text}}</div></div>
+				<div class="srow d"><div class="sl"><div class="slab">Резкость FSR</div><div class="rdesc">Насколько масштабирование повышает резкость уменьшенного рендера. Ни один режим это не задаёт.</div></div><input type="range" min="0" max="100" step="5" data-value="fsr_sharpness"/><div class="sval">{{fsr_sharpness_text}}</div></div>
 			</div>
 		</div>
 
 		<!-- The game's conversation wheel and mission overlays: their size and place (Halcyon's HUD tab's transforms). The combat
-		     HUD has none here: the HUD panel shows it at the game's own layout (HUD & sights sizes the panel). -->
+		     HUD has none here: the HUD panel shows it at the game's own layout (HUD & sights sizes the panel). --->
 		<div data-if="advtab == 'hud'">
 			<div class="group">
-				<div class="gtitle"><span>Conversation wheel</span><div class="gline"/></div>
-				<div class="row"><div class="rl"><div class="rlab">Fit it to your view</div><div class="rdesc">The dialogue wheel and conversation captions at the size and place below. Off: the game's own size and place.</div></div>
+				<div class="gtitle"><span>Колесо диалога</span><div class="gline"/></div>
+				<div class="row"><div class="rl"><div class="rlab">Подогнать под обзор</div><div class="rdesc">Колесо диалога и субтитры разговоров — размер и положение ниже. Выкл.: собственные размер и положение игры.</div></div>
 					<button class="tog" data-class-on="g_convo" data-event-click="toggle('g_convo')"><div class="knob"/></button></div>
-				<div class="srow" data-class-disabled="!g_convo"><div class="slab">Size</div><input type="range" min="40" max="250" step="5" data-value="convo_size"/><div class="sval">{{convo_size_text}}</div></div>
-				<div class="srow" data-class-disabled="!g_convo"><div class="slab">Left / right</div><input type="range" min="-600" max="600" step="10" data-value="convo_x"/><div class="sval">{{convo_x_text}}</div></div>
-				<div class="srow" data-class-disabled="!g_convo"><div class="slab">Down / up</div><input type="range" min="-600" max="600" step="10" data-value="convo_y"/><div class="sval">{{convo_y_text}}</div></div>
-				<div class="row" data-class-disabled="!g_convo"><div class="rl"><div class="rlab">Standard size and place</div><div class="rdesc">Open this menu during a conversation to see the wheel change as you move the sliders</div></div>
-					<button class="btn" data-event-click="cmd('ui_reset','convo')"><div class="sweep"/><span>Standard</span><div class="tick"/></button></div>
+				<div class="srow" data-class-disabled="!g_convo"><div class="slab">Размер</div><input type="range" min="40" max="250" step="5" data-value="convo_size"/><div class="sval">{{convo_size_text}}</div></div>
+				<div class="srow" data-class-disabled="!g_convo"><div class="slab">Влево / вправо</div><input type="range" min="-600" max="600" step="10" data-value="convo_x"/><div class="sval">{{convo_x_text}}</div></div>
+				<div class="srow" data-class-disabled="!g_convo"><div class="slab">Вниз / вверх</div><input type="range" min="-600" max="600" step="10" data-value="convo_y"/><div class="sval">{{convo_y_text}}</div></div>
+				<div class="row" data-class-disabled="!g_convo"><div class="rl"><div class="rlab">Стандартные размер и положение</div><div class="rdesc">Откройте это меню во время диалога, чтобы видеть, как колесо меняется при движении ползунков</div></div>
+					<button class="btn" data-event-click="cmd('ui_reset','convo')"><div class="sweep"/><span>Стандарт</span><div class="tick"/></button></div>
 			</div>
 			<div class="group">
-				<div class="gtitle"><span>Mission overlays</span><div class="gline"/></div>
-				<div class="row"><div class="rl"><div class="rlab">Fit them to your view</div><div class="rdesc">Timers, charge counters and boss bars at the size and place below. Off: the game's own size and place.</div></div>
+				<div class="gtitle"><span>Задания на экране</span><div class="gline"/></div>
+				<div class="row"><div class="rl"><div class="rlab">Подогнать под ваш обзор</div><div class="rdesc">Таймеры, счётчики зарядов и полосы боссов — размер и положение ниже. Выкл.: собственные размер и положение игры.</div></div>
 					<button class="tog" data-class-on="g_designer" data-event-click="toggle('g_designer')"><div class="knob"/></button></div>
-				<div class="srow" data-class-disabled="!g_designer"><div class="slab">Size</div><input type="range" min="40" max="250" step="5" data-value="designer_size"/><div class="sval">{{designer_size_text}}</div></div>
-				<div class="srow" data-class-disabled="!g_designer"><div class="slab">Left / right</div><input type="range" min="-900" max="900" step="10" data-value="designer_x"/><div class="sval">{{designer_x_text}}</div></div>
-				<div class="srow" data-class-disabled="!g_designer"><div class="slab">Down / up</div><input type="range" min="-900" max="900" step="10" data-value="designer_y"/><div class="sval">{{designer_y_text}}</div></div>
-				<div class="row" data-class-disabled="!g_designer"><div class="rl"><div class="rlab">Standard size and place</div><div class="rdesc">The change shows the next time an overlay is on screen</div></div>
-					<button class="btn" data-event-click="cmd('ui_reset','designer')"><div class="sweep"/><span>Standard</span><div class="tick"/></button></div>
+				<div class="srow" data-class-disabled="!g_designer"><div class="slab">Размер</div><input type="range" min="40" max="250" step="5" data-value="designer_size"/><div class="sval">{{designer_size_text}}</div></div>
+				<div class="srow" data-class-disabled="!g_designer"><div class="slab">Влево / вправо</div><input type="range" min="-900" max="900" step="10" data-value="designer_x"/><div class="sval">{{designer_x_text}}</div></div>
+				<div class="srow" data-class-disabled="!g_designer"><div class="slab">Вниз / вверх</div><input type="range" min="-900" max="900" step="10" data-value="designer_y"/><div class="sval">{{designer_y_text}}</div></div>
+				<div class="row" data-class-disabled="!g_designer"><div class="rl"><div class="rlab">Стандартные размер и положение</div><div class="rdesc">Изменение появится при следующем показе оверлея</div></div>
+					<button class="btn" data-event-click="cmd('ui_reset','designer')"><div class="sweep"/><span>Стандарт</span><div class="tick"/></button></div>
 			</div>
 		</div>
 
 		<div data-if="advtab == 'profiles'">
 			<div class="group">
-				<div class="gtitle"><span>Profiles</span><div class="gline"/></div>
+				<div class="gtitle"><span>Профили</span><div class="gline"/></div>
 				<div class="tiles">
-					<div class="tile" data-class-active="prof_active == '0'"><div class="tl"><span data-if="prof_active == '0'">Active</span><span data-if="prof_active != '0'">Saved</span></div><div class="tv">{{prof0_name}}</div>
-						<div class="tbtns"><button class="btn small" data-event-click="cmd('prof_load','0')"><div class="sweep"/><span>Load</span></button><button class="btn small" data-event-click="cmd('prof_save','0')"><div class="sweep"/><span>Save</span></button></div></div>
-					<div class="tile" data-class-active="prof_active == '1'"><div class="tl"><span data-if="prof_active == '1'">Active</span><span data-if="prof_active != '1'">Saved</span></div><div class="tv">{{prof1_name}}</div>
-						<div class="tbtns"><button class="btn small" data-event-click="cmd('prof_load','1')"><div class="sweep"/><span>Load</span></button><button class="btn small" data-event-click="cmd('prof_save','1')"><div class="sweep"/><span>Save</span></button></div></div>
+					<div class="tile" data-class-active="prof_active == '0'"><div class="tl"><span data-if="prof_active == '0'">Активный</span><span data-if="prof_active != '0'">Сохранено</span></div><div class="tv">{{prof0_name}}</div>
+						<div class="tbtns"><button class="btn small" data-event-click="cmd('prof_load','0')"><div class="sweep"/><span>Загрузить</span></button><button class="btn small" data-event-click="cmd('prof_save','0')"><div class="sweep"/><span>Сохранить</span></button></div></div>
+					<div class="tile" data-class-active="prof_active == '1'"><div class="tl"><span data-if="prof_active == '1'">Активный</span><span data-if="prof_active != '1'">Сохранено</span></div><div class="tv">{{prof1_name}}</div>
+						<div class="tbtns"><button class="btn small" data-event-click="cmd('prof_load','1')"><div class="sweep"/><span>Загрузить</span></button><button class="btn small" data-event-click="cmd('prof_save','1')"><div class="sweep"/><span>Сохранить</span></button></div></div>
 				</div>
 				<div class="tiles last">
-					<div class="tile" data-class-active="prof_active == '2'"><div class="tl"><span data-if="prof_active == '2'">Active</span><span data-if="prof_active != '2'">Saved</span></div><div class="tv">{{prof2_name}}</div>
-						<div class="tbtns"><button class="btn small" data-event-click="cmd('prof_load','2')"><div class="sweep"/><span>Load</span></button><button class="btn small" data-event-click="cmd('prof_save','2')"><div class="sweep"/><span>Save</span></button></div></div>
-					<div class="tile" data-class-active="prof_active == '3'"><div class="tl"><span data-if="prof_active == '3'">Active</span><span data-if="prof_active != '3'">Saved</span></div><div class="tv">{{prof3_name}}</div>
-						<div class="tbtns"><button class="btn small" data-event-click="cmd('prof_load','3')"><div class="sweep"/><span>Load</span></button><button class="btn small" data-event-click="cmd('prof_save','3')"><div class="sweep"/><span>Save</span></button></div></div>
+					<div class="tile" data-class-active="prof_active == '2'"><div class="tl"><span data-if="prof_active == '2'">Активный</span><span data-if="prof_active != '2'">Сохранено</span></div><div class="tv">{{prof2_name}}</div>
+						<div class="tbtns"><button class="btn small" data-event-click="cmd('prof_load','2')"><div class="sweep"/><span>Загрузить</span></button><button class="btn small" data-event-click="cmd('prof_save','2')"><div class="sweep"/><span>Сохранить</span></button></div></div>
+					<div class="tile" data-class-active="prof_active == '3'"><div class="tl"><span data-if="prof_active == '3'">Активный</span><span data-if="prof_active != '3'">Сохранено</span></div><div class="tv">{{prof3_name}}</div>
+						<div class="tbtns"><button class="btn small" data-event-click="cmd('prof_load','3')"><div class="sweep"/><span>Загрузить</span></button><button class="btn small" data-event-click="cmd('prof_save','3')"><div class="sweep"/><span>Сохранить</span></button></div></div>
 				</div>
 				<div class="note" data-if="prof_msg != ''">{{prof_msg}}</div>
-				<div class="hint">A profile keeps the VR view settings: these Advanced pages, the render resolution, the HUD's size and place and a few comfort choices. Your calibration, controls and colour are kept apart. Changes save into the active profile when the menu closes.</div>
+				<div class="hint">Профиль хранит настройки VR-вида: эти страницы «Дополнительно», разрешение рендера, размер и положение интерфейса и часть настроек комфорта. Калибровка, управление и цвет хранятся отдельно. Изменения сохраняются в активный профиль при закрытии меню.</div>
 			</div>
 		</div>
 
 		<div data-if="advtab == 'diag'">
 			<div class="group">
-				<div class="gtitle"><span>Diagnostics</span><div class="gline"/></div>
-				<div class="row"><div class="rl"><div class="rlab">Report a problem</div><div class="rdesc">Saves the logs, settings and a summary for your AI assistant or an issue in a zip on your Desktop, in the background. Nothing is sent: open it after the game</div><div class="note" data-if="report_msg != ''">{{report_msg}}</div></div>
-					<button class="btn" data-event-click="cmd('report')"><div class="sweep"/><div class="bi i-report"/><span>Report</span><div class="tick"/></button></div>
-				<div class="row"><div class="rl"><div class="rlab">With the latest snapshot</div><div class="rdesc">Take one first (below) if the problem is something you see</div></div>
+				<div class="gtitle"><span>Диагностика</span><div class="gline"/></div>
+				<div class="row"><div class="rl"><div class="rlab">Сообщить о проблеме</div><div class="rdesc">Сохраняет журналы, настройки и сводку для ИИ-помощника или обращения в архив на рабочем столе, в фоне. Ничего не отправляется: откройте после игры</div><div class="note" data-if="report_msg != ''">{{report_msg}}</div></div>
+					<button class="btn" data-event-click="cmd('report')"><div class="sweep"/><div class="bi i-report"/><span>Отчёт</span><div class="tick"/></button></div>
+				<div class="row"><div class="rl"><div class="rlab">С последним снимком</div><div class="rdesc">Сначала снимите (ниже), если проблема в том, что вы видите</div></div>
 					<button class="tog" data-class-on="report_snapshot" data-event-click="toggle('report_snapshot')"><div class="knob"/></button></div>
-				<div class="row"><div class="rl"><div class="rlab">With the latest frame timing</div><div class="rdesc">For stutter or a low frame rate: measure first (below)</div></div>
+				<div class="row"><div class="rl"><div class="rlab">С последним измерением времени кадра</div><div class="rdesc">При подёргиваниях или низком fps: сначала измерьте (ниже)</div></div>
 					<button class="tog" data-class-on="report_perf" data-event-click="toggle('report_perf')"><div class="knob"/></button></div>
-				<div class="row"><div class="rl"><div class="rlab">Snapshot</div><div class="rdesc">Closes the menu and saves what each eye sees, for a bug report (also: tap both stick clicks)</div></div>
-					<button class="btn" data-event-click="cmd('snapshot')"><div class="sweep"/><div class="bi i-camera"/><span>Take</span><div class="tick"/></button></div>
-				<div class="row"><div class="rl"><div class="rlab">Record your movements</div><div class="rdesc">Records your head and hand movements, not the picture, into AppData\Local\MEVR\recordings. Attach the file to a bug report about tracking, aiming or your hands. Press again to stop.</div></div>
-					<button class="btn" data-event-click="cmd('record')"><div class="sweep"/><div class="bi i-record"/><span data-if="!recording">Record</span><span data-if="recording">Stop</span><div class="tick"/></button></div>
-				<div class="row"><div class="rl"><div class="rlab">Measure frame timing</div><div class="rdesc">Closes the menu and measures where each frame's time goes for 20 seconds, for a report about stutter</div><div class="note" data-if="perf_msg != ''">{{perf_msg}}</div></div>
-					<button class="btn" data-event-click="cmd('perf')"><div class="sweep"/><div class="bi i-timer"/><span>Measure</span><div class="tick"/></button></div>
-				<div class="row"><div class="rl"><div class="rlab">Reset VR settings</div><div class="rdesc">Puts the view and HUD settings back to standard for this session, not saved unless you save a profile. Your calibration, controls, resolution and first-person view are kept.</div><div class="note" data-if="diag_msg != ''">{{diag_msg}}</div></div>
-					<button class="btn danger" data-class-armed="reset_armed" data-event-click="cmd('reset')"><div class="sweep"/><div class="bi i-trash"/><span data-if="!reset_armed">Reset</span><span data-if="reset_armed">Confirm</span><div class="tick"/></button></div>
+				<div class="row"><div class="rl"><div class="rlab">Снимок</div><div class="rdesc">Закрывает меню и сохраняет то, что видит каждый глаз, для отчёта об ошибке (также: нажмите оба стика)</div></div>
+					<button class="btn" data-event-click="cmd('snapshot')"><div class="sweep"/><div class="bi i-camera"/><span>Снять</span><div class="tick"/></button></div>
+				<div class="row"><div class="rl"><div class="rlab">Записать ваши движения</div><div class="rdesc">Записывает движения головы и рук (не картинку) в AppData\Local\MEVR\recordings. Приложите файл к отчёту об отслеживании, прицеливании или руках. Нажмите снова, чтобы остановить.</div></div>
+					<button class="btn" data-event-click="cmd('record')"><div class="sweep"/><div class="bi i-record"/><span data-if="!recording">Запись</span><span data-if="recording">Остановить</span><div class="tick"/></button></div>
+				<div class="row"><div class="rl"><div class="rlab">Измерить время кадра</div><div class="rdesc">Закрывает меню и 20 секунд измеряет, на что уходит время каждого кадра, для отчёта о подёргиваниях</div><div class="note" data-if="perf_msg != ''">{{perf_msg}}</div></div>
+					<button class="btn" data-event-click="cmd('perf')"><div class="sweep"/><div class="bi i-timer"/><span>Измерить</span><div class="tick"/></button></div>
+				<div class="row"><div class="rl"><div class="rlab">Сбросить VR-настройки</div><div class="rdesc">Возвращает настройки вида и интерфейса к стандартным на эту сессию; не сохраняется, пока вы не сохраните профиль. Калибровка, управление, разрешение и вид от первого лица сохраняются.</div><div class="note" data-if="diag_msg != ''">{{diag_msg}}</div></div>
+					<button class="btn danger" data-class-armed="reset_armed" data-event-click="cmd('reset')"><div class="sweep"/><div class="bi i-trash"/><span data-if="!reset_armed">Сброс</span><span data-if="reset_armed">Подтвердить</span><div class="tick"/></button></div>
 			</div>
 			<div class="group">
-				<div class="gtitle"><span>About</span><div class="gline"/></div>
+				<div class="gtitle"><span>О программе</span><div class="gline"/></div>
 				<div class="hint">{{about_build}}</div>
-				<div class="hint">© 2026 ME VR Attempt contributors, Halcyon and Aeka0 · GPL-3.0, no warranty · source: github.com/dnehring/MEVR</div>
-				<div class="hint">Fan project, not affiliated with or endorsed by EA or BioWare. Mass Effect is a trademark of EA International (Studio and Publishing) Ltd.</div>
+				<div class="hint">© 2026 участники ME VR Attempt, Halcyon и Aeka0 · GPL-3.0, без гарантий · исходники: github.com/dnehring/MEVR</div>
+				<div class="hint">Фанатский проект, не связан с EA и BioWare и не одобрен ими. Mass Effect — товарный знак EA International (Studio and Publishing) Ltd.</div>
 			</div>
 		</div>
 	</div>
@@ -628,10 +628,10 @@
 </div>
 
 <div class="hints">
-	<span><span class="key">Trigger</span>Select</span>
-	<span><span class="key">Right stick</span>Scroll</span>
-	<span><span class="key">B</span>Back</span>
-	<span><span class="key">Hold both sticks</span>Close</span>
+	<span><span class="key">Курок</span>Выбрать</span>
+	<span><span class="key">Правый стик</span>Прокрутка</span>
+	<span><span class="key">B</span>Назад</span>
+	<span><span class="key">Удерживать оба стика</span>Закрыть</span>
 </div>
 
 <div id="pointer"><div class="dot"/></div>

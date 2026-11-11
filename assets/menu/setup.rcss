@@ -51,6 +51,10 @@ body {
 .row.warnrow .rlab { color: #FFD9D3; }
 .row .actions { display: flex; gap: 8dp; flex: 0 0 auto; }
 .resolution-row .segb { padding: 0dp 10dp; min-width: 56dp; }
+/* Russian labels are longer: keep the description wide enough to read, and let the quality buttons wrap under it. */
+.resolution-row { flex-wrap: wrap; }
+.resolution-row .rl { flex: 1 1 260dp; min-width: 260dp; }
+.resolution-row .seg { flex-wrap: wrap; justify-content: flex-end; }
 
 /* Optional content cards. */
 .card {
@@ -124,3 +128,7 @@ body {
 .frow .fnote { flex: 1 1 auto; }
 .hero .big.i-report { decorator: icon(report); color: #FFB3A8; }
 .hero.report .heroh { font-size: 24dp; line-height: 30dp; }
+/* Russian heroes carry longer text and wider buttons: keep the text readable and let the buttons wrap under it if need be. */
+.hero { flex-wrap: wrap; }
+.hero .herot { flex: 1 1 300dp; min-width: 300dp; }
+.hero .btn { padding: 0dp 12dp; letter-spacing: 0.08em; }

@@ -67,9 +67,9 @@ struct WheelView {
 void DrawWheel(ImDrawList* dl, Fonts const& fonts, WheelView const& view);
 
 struct HintView {
-    std::string title = "Powers";
-    std::vector<std::string> lines = {"Move your left hand toward a power to pick it,", "then let go of X to equip it.",
-        "A card then shows how to cast it."};
+    std::string title = "Способности";
+    std::vector<std::string> lines = {"Ведите левую руку к способности, чтобы выбрать её,", "затем отпустите X, чтобы снарядить.",
+        "Карточка покажет, как её применить."};
     float open = 1.0f;
 };
 void DrawHint(ImDrawList* dl, Fonts const& fonts, HintView const& view);

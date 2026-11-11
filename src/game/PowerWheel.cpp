@@ -969,6 +969,18 @@ void TickConfirmation(Link const& link, vr::controllers::State const& controller
     }
 }
 
+// The panel's refusal (the log keeps the English reason): "Assault rifle only", in Russian.
+char const* WeaponOnlyRu(int rangedType) {
+    switch (rangedType) {
+    case 0: return "Только пистолет";
+    case 1: return "Только дробовик";
+    case 2: return "Только винтовка";
+    case 3: return "Только снайперка";
+    default: break;
+    }
+    return "Только с этим оружием";
+}
+
 void TickLock(Link const& link, vr::host_view::State const& view, vr::controllers::State const& controllers, ue3::Object* controller,
     ue3::Object* pawn, bool onFoot) {
     pw::LockSettings const& s = gLockSettings;
@@ -1224,21 +1236,26 @@ void TickLock(Link const& link, vr::host_view::State const& view, vr::controller
     gConsoleSelfCast = false;
     if (gesture != pw::SelfGesture::None && (selfStep.cast || selfStep.weaponMissing || selfAsked)) {
         bool ok = false;
-        std::string reason;
+        std::string reason;  // the log's
+        std::string shown;   // the panel's
         pw::SelfRefusal const refusal =
             pw::RefusalFor(gesture, WeaponOut(pawn), rightWeapon, ready->enabled && !selfStep.weaponMissing, ready->cooldown);
         if (refusal == pw::SelfRefusal::DrawWeapon) {
             reason = "Draw your weapon";
+            shown = "Достаньте оружие";
         } else if (refusal == pw::SelfRefusal::WrongWeapon) {
             // "Assault rifle only" (WeaponName without its article, capitalised).
             std::string weapon = pw::WeaponName(needs);
             weapon = weapon.substr(weapon.find(' ') + 1);
             weapon[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(weapon[0])));
             reason = needs >= 0 ? weapon + " only" : std::string("Not with this weapon");
+            shown = needs >= 0 ? std::string(WeaponOnlyRu(needs)) : std::string("Не с этим оружием");
         } else if (refusal == pw::SelfRefusal::CoolingDown) {
             reason = std::format("Cooling down {:.0f}%", ready->cooldown * 100.0f);
+            shown = std::format("Восстановление {:.0f}%", ready->cooldown * 100.0f);
         } else if (refusal == pw::SelfRefusal::Unavailable) {
             reason = "Not available now";
+            shown = "Сейчас недоступно";
         } else {
             ok = Cast(controller, *ready, nullptr, std::nullopt);
             if (ok) {
@@ -1247,13 +1264,14 @@ void TickLock(Link const& link, vr::host_view::State const& view, vr::controller
                 ++gCasts;
             } else {
                 reason = "Not available now";
+                shown = "Сейчас недоступно";
             }
         }
         if (!ok) {
             ++gRefused;
             gLastCast = reason;
         }
-        ConfirmGesture(link, ok, reason);
+        ConfirmGesture(link, ok, shown);
         LogGesture(selfStep.attempt, ready->label, gesture, ok ? "cast" : "refused: " + reason);
     }
     gOmniAiming = UsesOmniTool(*ready) && (gSelfProgress > 0.0f || (ready->info->aim != pw::Aim::None && raised && (target != nullptr || gPlace)));

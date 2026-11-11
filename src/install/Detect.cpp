@@ -117,20 +117,32 @@ std::optional<std::string> AppManifestInstallDir(std::string_view acf) {
 
 bool IsGameRoot(fs::path const& root) {
     std::error_code ec;
-    return !root.empty() && fs::exists(root / L"Game" / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe", ec);
+    if (root.empty()) {
+        return false;
+    }
+    // The Steam / EA app layout (<root>\Game\ME1\...), or a copy that holds ME1 directly under <root> (a repack).
+    return fs::exists(root / L"Game" / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe", ec) ||
+        fs::exists(root / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe", ec);
 }
 
 std::optional<fs::path> RootFromPicked(fs::path const& picked) {
+    std::optional<fs::path> best;
+    std::error_code ec;
     for (fs::path dir = picked; !dir.empty(); dir = dir.parent_path()) {
         if (IsGameRoot(dir)) {
-            return dir;
+            // A Steam / EA app root above its own Game folder wins over reading that folder as a flat install.
+            if (!best || fs::exists(dir / L"Game" / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe", ec)) {
+                best = dir;
+            }
         }
         if (dir == dir.parent_path()) {
             break;
         }
     }
+    if (best) {
+        return best;
+    }
     // A folder above the root (a Steam library's common folder, say).
-    std::error_code ec;
     for (fs::path const& child : {picked / L"Mass Effect Legendary Edition", picked / L"steamapps" / L"common" / L"Mass Effect Legendary Edition"}) {
         if (IsGameRoot(child)) {
             return child;
@@ -289,12 +301,12 @@ BinkState ClassifyBink(DllIdentity const& bink, bool originalExists) {
 
 char const* BinkStateText(BinkState state) {
     switch (state) {
-    case BinkState::Missing: return "bink2w64.dll is missing: verify the game's files in Steam or the EA app";
-    case BinkState::Original: return "No ASI loader yet: ours will be installed";
-    case BinkState::Ours: return "Our ASI loader is installed";
-    case BinkState::LEBinkProxy: return "ME3Tweaks' ASI loader is installed: it will load the mod";
-    case BinkState::OtherProxy: return "Another bink2w64.dll proxy is installed: it will be used as it is";
-    case BinkState::Broken: return "bink2w64.dll is a proxy without bink2w64_original.dll behind it: verify the game's files";
+    case BinkState::Missing: return "bink2w64.dll отсутствует: проверьте файлы игры в Steam или EA app";
+    case BinkState::Original: return "ASI-загрузчика пока нет: будет установлен наш";
+    case BinkState::Ours: return "Наш ASI-загрузчик установлен";
+    case BinkState::LEBinkProxy: return "ASI-загрузчик ME3Tweaks установлен: он загрузит мод";
+    case BinkState::OtherProxy: return "Установлен другой прокси bink2w64.dll: он будет использован как есть";
+    case BinkState::Broken: return "bink2w64.dll — прокси без bink2w64_original.dll за ним: проверьте файлы игры";
     }
     return "";
 }
@@ -416,8 +428,9 @@ bool GameRunningIn(fs::path const& root) {
     if (snapshot == INVALID_HANDLE_VALUE) {
         return GameRunning();
     }
-    fs::path const gameExe = root / L"Game" / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe";
-    fs::path const launcherExe = root / L"Game" / L"Launcher" / L"MassEffectLauncher.exe";
+    Layout const layout{root};
+    fs::path const gameExe = layout.Win64() / L"MassEffect1.exe";
+    fs::path const launcherExe = layout.Full(paths::kLauncherExe);
     PROCESSENTRY32W entry{};
     entry.dwSize = sizeof entry;
     bool running = false;

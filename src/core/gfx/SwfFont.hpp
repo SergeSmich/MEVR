@@ -33,6 +33,7 @@ std::vector<FontInfo> Fonts(Movie const& movie);
 
 struct TtfOptions {
     bool everyGlyph = false;  // every code the font has (e.g. its Japanese), not only U+0020..U+007E and U+00A0..U+017F
+    bool cyrillic = false;    // also U+0400..U+04FF (the Russian localisation's letters), without the rest of the glyphs
     std::string styleName;    // the name table's subfamily; default from the font's bold/italic flags
 };
 

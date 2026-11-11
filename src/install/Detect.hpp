@@ -26,7 +26,8 @@ struct GameInstall {
 std::vector<std::filesystem::path> SteamLibraries(std::string_view libraryFoldersVdf);
 // An appmanifest_<id>.acf's "installdir".
 std::optional<std::string> AppManifestInstallDir(std::string_view acf);
-// True if `root` holds Game\ME1\Binaries\Win64\MassEffect1.exe.
+// True if `root` holds Game\ME1\Binaries\Win64\MassEffect1.exe, or ME1\Binaries\Win64\MassEffect1.exe directly (a
+// repack or another copy without the Steam / EA app "Game" folder).
 bool IsGameRoot(std::filesystem::path const& root);
 // The game root for a folder the player picked: the folder itself, or the closest folder above or below it that is one
 // (they may pick Game, Game\ME1, Binaries\Win64 or the exe's folder). nullopt if none.

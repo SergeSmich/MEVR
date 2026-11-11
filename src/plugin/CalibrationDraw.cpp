@@ -6,6 +6,7 @@
 
 #include "core/vr/Calibration.hpp"
 #include "core/vr/CalibrationMarkers.hpp"
+#include "plugin/CyrillicText.hpp"
 
 #include <Windows.h>
 
@@ -108,14 +109,21 @@ void FitText(ImDrawList* dl, ImFont* font, float size, ImVec2 at, ImU32 colour, 
     Text(dl, font, fitted, {at.x, at.y + (size - fitted) * 0.5f}, colour, text, alignX);
 }
 
-// Letter-spaced (the kicker's caps).
+// Letter-spaced (the kicker's caps). One character at a time: a Cyrillic letter is two bytes of UTF-8 and is drawn as
+// one glyph.
 float Tracked(ImDrawList* dl, ImFont* font, float size, ImVec2 at, ImU32 colour, char const* text, float tracking) {
     float x = at.x;
-    char glyph[2] = {0, 0};
-    for (char const* c = text; *c != '\0'; ++c) {
-        glyph[0] = *c;
+    char glyph[5] = {0, 0, 0, 0, 0};
+    for (char const* c = text; *c != '\0';) {
+        unsigned char const lead = static_cast<unsigned char>(*c);
+        std::size_t const bytes = (lead & 0xC0) != 0xC0 ? 1 : (lead & 0xF0) == 0xE0 ? 3 : (lead & 0xF8) == 0xF0 ? 4 : 2;
+        for (std::size_t i = 0; i < bytes && c[i] != '\0'; ++i) {
+            glyph[i] = c[i];
+        }
+        glyph[bytes] = '\0';
         dl->AddText(font, size, {std::floor(x), std::floor(at.y)}, colour, glyph);
         x += Width(font, size, glyph) + tracking;
+        c += bytes;
     }
     return x - at.x;
 }
@@ -171,66 +179,77 @@ void DrawControllerMarkers(ImDrawList* dl, vr::controllers::State const& raw, in
 ScreenText TextFor(Screen screen) {
     switch (screen) {
     case Screen::Prompt:
-        return {"CALIBRATE THESE CONTROLLERS?",
-            "About a minute: choose standing or seated, stretch your arms, then aim a pistol and a rifle at three targets. Your "
-            "sights then line up with your eye, and the two-handed grip and the crouch fit you. Later: hold both sticks, "
-            "then Body & calibration > Start calibration.",
+        return {"КАЛИБРОВАТЬ ЭТИ КОНТРОЛЛЕРЫ?",
+            "Около минуты: выберите «стоя» или «сидя», разведите руки, затем прицельтесь из пистолета и винтовки в три цели. "
+            "Мушки встанут на линию вашего взгляда, а двуручный хват и присед подстроятся под вас. Позже: удерживайте оба стика, "
+            "затем «Тело и калибровка» > «Начать калибровку».",
             0};
-    case Screen::Stand: return {"STAND TALL, LOOK AHEAD", "Stand straight and look at this panel. Seated player? Choose I play seated below.", 1};
-    case Screen::SeatedStand: return {"SIT COMFORTABLY, LOOK AHEAD", "Stay seated. Your seated height will never set Shepard's size. Crouch is skipped; L3 still crouches.", 1};
-    case Screen::TPose: return {"ARMS OUT TO THE SIDES", "Straight out, level with your shoulders, like a T.", 2};
-    case Screen::Forward: return {"BOTH ARMS STRAIGHT AHEAD", "Level with your shoulders, a shoulder-width apart, wrists straight.", 2};
-    case Screen::Crouch: return {"CROUCH DOWN", "As low as you would go to hide behind cover. Seated player? Choose I play seated to skip this.", 3};
+    case Screen::Stand: return {"СТОЙТЕ ПРЯМО, СМОТРИТЕ ВПЕРЁД", "Стойте прямо и смотрите на эту панель. Играете сидя? Выберите «Я играю сидя» ниже.", 1};
+    case Screen::SeatedStand: return {"СЯДЬТЕ УДОБНО, СМОТРИТЕ ВПЕРЁД", "Оставайтесь сидеть. Рост сидя никогда не задаст размер Шепарда. Присед пропускается; L3 всё равно приседает.", 1};
+    case Screen::TPose: return {"РУКИ В СТОРОНЫ", "Прямо в стороны, на уровне плеч, буквой Т.", 2};
+    case Screen::Forward: return {"ОБЕ РУКИ ПРЯМО ВПЕРЁД", "На уровне плеч, на ширине плеч, запястья прямые.", 2};
+    case Screen::Crouch: return {"ПРИСЯДЬТЕ", "Как можно ниже — так вы прячетесь за укрытием. Играете сидя? Выберите «Я играю сидя», чтобы пропустить.", 3};
     case Screen::PistolGrab:
-        return {"TAKE THE PISTOL", "Squeeze the right grip at the orange pistol handle. The cyan ring marks your hand; keep the grip squeezed.", 4};
-    case Screen::PistolAim: return {"AIM AT THE LIT TARGET", "Aim the sightless training pistol naturally. Hold steady; the aiming dot appears only in the final check.", 4};
+        return {"ВОЗЬМИТЕ ПИСТОЛЕТ", "Сожмите правый хват у оранжевой рукояти пистолета. Голубое кольцо отмечает вашу руку; не отпускайте хват.", 4};
+    case Screen::PistolAim: return {"ПРИЦЕЛЬТЕСЬ В ПОДСВЕЧЕННУЮ ЦЕЛЬ", "Наведите учебный пистолет без прицела так, как вам естественно. Держите ровно; точка прицела появится только в финальной проверке.", 4};
     case Screen::RifleGrab:
-        return {"TAKE THE RIFLE ORBS", "Right grip at the near orb, left at the far orb. Then move both hands freely: the orbs mark your hands, not a fixed rifle.", 5};
+        return {"ВОЗЬМИТЕ СФЕРЫ ВИНТОВКИ", "Правый хват — на ближней сфере, левый — на дальней. Затем свободно двигайте обеими руками: сферы отмечают ваши руки, а не жёстко закреплённую винтовку.", 5};
     case Screen::RifleAim:
-        return {"FIND YOUR NATURAL RIFLE AIM",
-            "Aim an imaginary rifle at the lit target. Choose comfortable hand spacing and wrist angles, right hand near your cheek. Hold steady; weapons will follow this pose.", 5};
+        return {"НАЙДИТЕ УДОБНЫЙ ПРИЦЕЛ С ВИНТОВКОЙ",
+            "Прицельтесь воображаемой винтовкой в подсвеченную цель. Выберите удобное расстояние между руками и углы запястий, правая рука у щеки. Держите ровно; оружие будет следовать этой стойке.", 5};
     case Screen::Check:
-        return {"CHECK YOUR AIM", "Squeeze the right grip (pistol) or both grips (rifle) and aim: the red dot should sit on the target.", 6};
-    case Screen::Saved: return {"SAVED", "Calibrated for these controllers. The guns follow it from now on.", 6};
+        return {"ПРОВЕРЬТЕ ПРИЦЕЛ", "Сожмите правый хват (пистолет) или оба (винтовка) и прицельтесь: красная точка должна лежать на цели.", 6};
+    case Screen::Saved: return {"СОХРАНЕНО", "Откалибровано для этих контроллеров. Оружие теперь следует этому.", 6};
     }
     return {};
 }
 
 char const* StepLabel(int pip) {
     switch (pip) {
-    case 1: return "Height";
-    case 2: return "Arms";
-    case 3: return "Crouch";
-    case 4: return "Pistol";
-    case 5: return "Rifle";
-    case 6: return "Check";
+    case 1: return "Высота";
+    case 2: return "Руки";
+    case 3: return "Присед";
+    case 4: return "Пистолет";
+    case 5: return "Винтовка";
+    case 6: return "Проверка";
     default: return "";
     }
 }
 
 char const* ButtonLabel(int id) {
     switch (id) {
-    case kSkip: return "SKIP";
-    case kRestart: return "REDO THIS STEP";
-    case kCancel: return "CANCEL";
-    case kSave: return "SAVE";
-    case kSwitchEye: return "SWITCH EYE";
-    case kRedoBody: return "REDO BODY";
-    case kRedoPistol: return "REDO PISTOL";
-    case kRedoRifle: return "REDO RIFLE";
-    case kCalibrateNow: return "CALIBRATE NOW";
-    case kDismiss: return "NOT NOW";
-    case kSeated: return "I PLAY SEATED";
-    case kStanding: return "I PLAY STANDING";
+    case kSkip: return "ПРОПУСТИТЬ";
+    case kRestart: return "ПОВТОРИТЬ ШАГ";
+    case kCancel: return "ОТМЕНА";
+    case kSave: return "СОХРАНИТЬ";
+    case kSwitchEye: return "СМЕНИТЬ ГЛАЗ";
+    case kRedoBody: return "ПОВТОРИТЬ КОРПУС";
+    case kRedoPistol: return "ПОВТОРИТЬ ПИСТОЛЕТ";
+    case kRedoRifle: return "ПОВТОРИТЬ ВИНТОВКУ";
+    case kCalibrateNow: return "КАЛИБРОВАТЬ СЕЙЧАС";
+    case kDismiss: return "НЕ СЕЙЧАС";
+    case kSeated: return "Я ИГРАЮ СИДЯ";
+    case kStanding: return "Я ИГРАЮ СТОЯ";
     default: return "";
     }
+}
+
+// A label's length in characters: Cyrillic takes two bytes of UTF-8, and only the lead bytes take width.
+std::size_t Characters(char const* text) {
+    std::size_t n = 0;
+    for (char const* c = text; *c != '\0'; ++c) {
+        if ((static_cast<unsigned char>(*c) & 0xC0) != 0x80) {
+            ++n;
+        }
+    }
+    return n;
 }
 
 std::vector<Button> LayoutButtons(PanelView const& view) {
     // Measured without a font (the layout mustn't depend on one being loaded): generous for Rajdhani,
     // Bahnschrift and Segoe UI caps.
     auto const width = [](int id) {
-        return static_cast<float>(std::char_traits<char>::length(ButtonLabel(id))) * kButtonText * 0.60f + 2.0f * kButtonPad;
+        return static_cast<float>(Characters(ButtonLabel(id))) * kButtonText * 0.62f + 2.0f * kButtonPad;
     };
     std::vector<std::vector<int>> rows(1);
     for (int id : view.buttons) {
@@ -285,13 +304,13 @@ void DrawPanel(ImDrawList* dl, Fonts const& fonts, PanelView const& view) {
     CornerStrokes(dl, a, b, kChamfer, 46.0f, kOrange, 4.0f);
 
     // The kicker, the controllers, the step chip.
-    float const kickerWidth = Tracked(dl, heading, 22.0f, {kMargin, 30.0f}, kCyan, "CALIBRATION", 3.5f);
+    float const kickerWidth = Tracked(dl, heading, 22.0f, {kMargin, 30.0f}, kCyan, "КАЛИБРОВКА", 3.5f);
     if (!view.device.empty()) {
         FitText(dl, body, 18.0f, {kMargin + kickerWidth + 16.0f, 33.0f}, kTextDim, view.device.c_str(), right - 190.0f - (kMargin + kickerWidth + 16.0f));
     }
     if (view.step > 0) {
         char chip[32];
-        std::snprintf(chip, sizeof chip, "Step %d of %d", view.step, view.steps);
+        std::snprintf(chip, sizeof chip, "Шаг %d из %d", view.step, view.steps);
         float const w = Width(heading, 20.0f, chip) + 28.0f;
         Chamfer(dl, {right - w, 24.0f}, {right, 56.0f}, 8.0f, kSurfaceHigh, kLineStrong, 1.5f);
         Text(dl, heading, 20.0f, {right - w * 0.5f, 30.0f}, kText, chip, 0.5f);
@@ -343,9 +362,9 @@ void DrawPanel(ImDrawList* dl, Fonts const& fonts, PanelView const& view) {
                 TargetIcon(dl, {x0 + 28.0f, y + 30.0f}, 14.0f, accent);
             }
             char label[16];
-            std::snprintf(label, sizeof label, "TARGET %d", i + 1);
+            std::snprintf(label, sizeof label, "ЦЕЛЬ %d", i + 1);
             Text(dl, heading, 21.0f, {x0 + 52.0f, y + 9.0f}, now ? kText : done ? kCyan : kTextDim, label);
-            Text(dl, body, 16.0f, {x0 + 52.0f, y + 33.0f}, accent, now ? "AIM NOW" : done ? "TAKEN" : "NEXT");
+            Text(dl, body, 16.0f, {x0 + 52.0f, y + 33.0f}, accent, now ? "ПРИЦЕЛЬТЕСЬ" : done ? "ГОТОВО" : "ДАЛЕЕ");
         }
         y += 78.0f;
     }
@@ -373,8 +392,8 @@ void DrawPanel(ImDrawList* dl, Fonts const& fonts, PanelView const& view) {
             dl->PathArcTo(c, r, -kPi * 0.5f, -kPi * 0.5f + 2.0f * kPi * p, 96);
             dl->PathStroke(kOrange, 12.0f);
         }
-        Text(dl, heading, 26.0f, {c.x, c.y - 30.0f}, p > 0.0f ? kText : kTextDim, "HOLD", 0.5f);
-        Text(dl, heading, 26.0f, {c.x, c.y - 2.0f}, p > 0.0f ? kText : kTextDim, "STILL", 0.5f);
+        Text(dl, heading, 26.0f, {c.x, c.y - 30.0f}, p > 0.0f ? kText : kTextDim, "НЕ", 0.5f);
+        Text(dl, heading, 26.0f, {c.x, c.y - 2.0f}, p > 0.0f ? kText : kTextDim, "ДВИГАЙТЕСЬ", 0.5f);
     }
 
     // The bottom: the hints on the left, the buttons on the right.
@@ -396,8 +415,8 @@ void DrawPanel(ImDrawList* dl, Fonts const& fonts, PanelView const& view) {
             Text(dl, body, 19.0f, {x, 575.0f}, kTextDim, what);
             x += Width(body, 19.0f, what) + 26.0f;
         };
-        hint("B", "back a step");
-        hint("HOLD BOTH STICKS", "cancel");
+        hint("B", "шаг назад");
+        hint("ОБА СТИКА", "отмена");
     }
     for (Button const& button : buttons) {
         bool const hovered = button.id == view.hovered;
@@ -486,7 +505,7 @@ void DrawBoard(ImDrawList* dl, Fonts const& fonts, BoardView const& view) {
         }
         if (current) {
             dl->AddCircle(c, r * (1.75f + 0.12f * pulse), WithAlpha(kOrange, 0.35f + 0.3f * pulse), 64, 3.0f);
-            Text(dl, heading, 46.0f, {c.x, c.y + r * 1.9f}, kOrange, "AIM HERE", 0.5f);
+            Text(dl, heading, 46.0f, {c.x, c.y + r * 1.9f}, kOrange, "ЦЕЛЬТЕСЬ", 0.5f);
         } else {
             char number[8];
             std::snprintf(number, sizeof number, "%d", i + 1);
@@ -623,7 +642,7 @@ ImFont* FirstFont(ImGuiIO& io, std::vector<std::filesystem::path> const& paths, 
     for (std::filesystem::path const& path : paths) {
         std::error_code ec;
         if (std::filesystem::exists(path, ec)) {
-            if (ImFont* font = io.Fonts->AddFontFromFileTTF(Utf8(path.wstring()).c_str(), 48.0f)) {
+            if (ImFont* font = cyr::AddFace(io, path, 48.0f)) {
                 name = Utf8(path.filename().wstring());
                 return font;
             }

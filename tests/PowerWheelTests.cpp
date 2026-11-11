@@ -989,8 +989,8 @@ void TestXOwnership() {
     file = mevr::ini::Parse("[Throwables]\ngrenadeButton=0\nhands=both\n");
     CHECK(!fc::MigrateGrenades(file).button);
     CHECK(!fc::MigrateGrenades({}).button);
-    CHECK(std::string(pw::kControlsCoach).find("X: power wheel") != std::string::npos);
-    CHECK(std::string(pw::kControlsCoach).find("either hand at your left chest") != std::string::npos);
+    CHECK(std::string(pw::kControlsCoach).find("X: колесо способностей") != std::string::npos);
+    CHECK(std::string(pw::kControlsCoach).find("любая рука к левой стороне груди") != std::string::npos);
 }
 
 int RunPowerWheelTests() {

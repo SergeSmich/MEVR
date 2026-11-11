@@ -32,7 +32,18 @@ namespace detect = install::detect;
 namespace packs = install::packs;
 
 std::string OnOff(bool on) {
-    return on ? "On" : "Off";
+    return on ? "Вкл" : "Выкл";
+}
+
+// Russian counts: 1 файл, 2 файла, 5 файлов (11-14 take the many form).
+std::string CountText(std::size_t n, char const* one, char const* few, char const* many) {
+    std::size_t const tail = n % 100;
+    char const* form = tail >= 11 && tail <= 14 ? many : n % 10 == 1 ? one : n % 10 >= 2 && n % 10 <= 4 ? few : many;
+    return std::to_string(n) + " " + form;
+}
+
+bool CountIsOne(std::size_t n) {
+    return n % 10 == 1 && n % 100 != 11;
 }
 
 // The in-game menu's key: menuKey = 220 (VK_OEM_5) in every MELEVR.ini slot (install/Ini FixHalcyonIni).
@@ -56,28 +67,39 @@ std::string KeyName(UINT vk) {
 // "the \ key", "the ^ key", or a description when the layout has no name for it.
 std::string MenuKeyText() {
     std::string const name = KeyName(kMenuKeyVk);
-    return name.empty() ? std::string("the menu key (\\ on a US keyboard)") : "the " + name + " key";
+    return name.empty() ? std::string("клавиша меню (\\ на раскладке США)") : "клавиша " + name;
+}
+
+// The source labels as the pages show them. status_.source keeps the English values: the report and --status read them.
+std::string SourceText(std::string const& source) {
+    if (source == "Folder") {
+        return "Папка";
+    }
+    if (source == "this copy's game folder") {
+        return "папка этой копии";
+    }
+    return source;
 }
 
 // The pages' row for a game never started here (no GamerSettings.ini yet).
 std::string FirstStartText(bool installed, bool pending) {
     if (installed && pending) {
-        return "The VR game settings you chose at install are waiting for its settings file. Start the game once: the setup waits for the "
-               "file, you quit at the game's main menu, and they go on by themselves.";
+        return "Настройки VR, выбранные при установке, ждут файла настроек игры. Запустите игру один раз: установщик дождётся "
+               "этого файла, вы выйдете в главное меню игры, и настройки применятся сами.";
     }
-    return "Without its settings file the VR game settings can't go on, and VR starts in a bordered window with a broken picture. Start the "
-           "game once, before or after Install: the setup waits for the file, you quit at the game's main menu, and the settings go on by "
-           "themselves.";
+    return "Без файла настроек игры настройки VR не применить, и VR запустится в окне с рамкой и сломанной картинкой. Запустите "
+           "игру один раз, до или после установки: установщик дождётся файла, вы выйдете в главное меню игры, и настройки применятся "
+           "сами.";
 }
 
 // The Repair page's name for a file it would put back.
 std::string RepairItemName(std::string const& relative) {
     std::string const file = detect::Utf8(fs::path(detect::Wide(relative)).filename().wstring());
     if (relative == install::paths::kBink) {
-        return file + " (the ASI loader)";
+        return file + " (ASI-загрузчик)";
     }
     if (relative == install::paths::kToc) {
-        return file + " (the cockpit's entry)";
+        return file + " (запись кабины)";
     }
     return file;
 }
@@ -226,11 +248,15 @@ void App::Start() {
         SetGame(detect::RootFromPicked(*options_.gameRoot).value_or(*options_.gameRoot), "Folder");
     } else {
         fs::path const asiDir = options_.exe.parent_path();
-        fs::path const own = asiDir.parent_path().parent_path().parent_path().parent_path().parent_path();
-        if (_wcsicmp(asiDir.filename().c_str(), L"ASI") == 0 && detect::IsGameRoot(own)) {
+        // This copy's own game: ...\Game\ME1\Binaries\Win64\ASI (Steam, EA app) or ...\ME1\Binaries\Win64\ASI (a repack).
+        std::optional<fs::path> own;
+        if (_wcsicmp(asiDir.filename().c_str(), L"ASI") == 0) {
+            own = detect::RootFromPicked(asiDir);
+        }
+        if (own) {
             std::error_code ec;
-            bool const steam = fs::exists(own / L"Game" / L"ME1" / L"Binaries" / L"Win64" / L"steam_appid.txt", ec);
-            SetGame(own, steam ? "Steam" : "this copy's game folder");
+            bool const steam = fs::exists(install::Layout{*own}.Full(install::paths::kSteamAppId), ec);
+            SetGame(*own, steam ? "Steam" : "this copy's game folder");
         } else {
             auto const installs = detect::FindInstalls();
             if (!installs.empty()) {
@@ -246,12 +272,12 @@ void App::Start() {
         }
     }
     updateEnabled_ = !install::updates::LatestReleaseApi(options_.repo).empty();
-    updateText_ = updateEnabled_ ? "Check for a newer release. Download and install updates here while keeping your settings."
-                             : "No release page set yet (MEVR-Setup.ini, [Update] repo).";
+    updateText_ = updateEnabled_ ? "Проверить новую версию. Скачать и установить обновления можно здесь, с сохранением ваших настроек."
+                             : "Страница релизов ещё не задана (MEVR-Setup.ini, [Update] repo).";
     if (options_.request) {
         // "Install after I quit" (plugin/SetupRequest): the game wrote the request and started us as it exited.
         page_ = "content";
-        requestText_ = "Choose what to add below: the voice orders' files, or a texture pack.";
+        requestText_ = "Выберите, что добавить: файлы голосовых приказов или набор текстур.";
         if (auto const text = install::ReadFile(install::RequestFile())) {
             if (auto const request = install::ParseSetupRequest(*text)) {
                 std::string names;
@@ -263,7 +289,7 @@ void App::Start() {
                     }
                 }
                 if (!names.empty()) {
-                    requestText_ = "You asked for: " + names + ".";
+                    requestText_ = "Вы просили: " + names + ".";
                 }
             }
         }
@@ -272,7 +298,7 @@ void App::Start() {
     }
     if (options_.waitPid != 0) {
         waiting_ = true;
-        waitText_ = options_.finishUpdate ? "The downloaded installer is waiting for the previous Setup to close." : "Changes start once the game has exited.";
+        waitText_ = options_.finishUpdate ? "Скачанный установщик ждёт, пока закроется предыдущий установщик." : "Изменения начнутся после выхода из игры.";
     }
     // Report a problem: a request the game left (its setup copy wasn't there to answer it), or a crash since the last
     // report and the last "no".
@@ -288,7 +314,7 @@ void App::Start() {
                 }
             }
             fs::remove(marks::RequestFile(local), ec);
-            reportRequest_ = "You asked for a report from the game's menu. Look over what goes in, then create it.";
+            reportRequest_ = "Вы запросили отчёт из меню игры. Проверьте, что в него войдёт, и создайте его.";
             page_ = "report";
         }
         crashOffer_ = marks::CrashOffer(local);
@@ -311,7 +337,7 @@ void App::GatherReport() {
     }
     auto bundle = std::make_shared<install::report::Bundle>();
     install::report::Options const options = ReportOptions();
-    RunJob("Gathering what the report holds", [bundle, options] { *bundle = install::report::Collect(options); });
+    RunJob("Собираем содержимое отчёта", [bundle, options] { *bundle = install::report::Collect(options); });
     jobDone_ = [this, bundle] {
         bundle_ = bundle;
         reportReady_ = true;
@@ -326,23 +352,24 @@ void App::ShowBundle() {
     }
     install::report::Bundle const& b = *bundle_;
     reportFiles_.push_back({"REPORT.md", "~" + install::report::SizeText(install::report::BuildReportMd(b).size()),
-        "The summary: system, what went wrong, settings changed, a prompt for your AI assistant"});
+        "Сводка: система, что пошло не так, изменённые настройки, запрос для вашего ИИ-ассистента"});
     std::uint64_t total = 0;
     for (install::report::File const& f : b.files) {
         total += f.bytes.size();
         std::string note = f.note;
         if (f.redactions > 0) {
-            note += std::format("{}{} redacted", note.empty() ? "" : "; ", f.redactions);
+            note += std::format("{}{} скрыто", note.empty() ? "" : "; ", f.redactions);
         }
         reportFiles_.push_back({f.name, install::report::SizeText(f.bytes.size()), note});
     }
     install::report::Redactions const& r = b.redactions;
-    reportRedactions_ = std::format("{} redactions: your Windows user name {} times, the computer's name {}, your profile folder {}, e-mail "
-                                    "addresses {}. They read <user>, <computer>, <profile>, <email> in the zip.",
-        r.Total(), r.userName, r.computerName, r.profilePath, r.email);
+    reportRedactions_ = std::format("{}: имя пользователя Windows {} раз, имя компьютера {}, папка профиля {}, адреса e-mail "
+                                    "{}. В архиве они читаются как <user>, <computer>, <profile>, <email>.",
+        CountText(r.Total(), "скрытие", "скрытия", "скрытий"), r.userName, r.computerName, r.profilePath, r.email);
     reportHeadline_ = install::report::Headline(b);
-    reportText_ = std::format("{} files, {} before compression.{}", b.files.size() + 1, install::report::SizeText(total),
-        b.missing.empty() ? std::string() : " Not on this PC: " + [&] {
+    reportText_ = std::format("{}, {} до сжатия.{}", CountText(b.files.size() + 1, "файл", "файла", "файлов"),
+        install::report::SizeText(total),
+        b.missing.empty() ? std::string() : " На этом ПК отсутствует: " + [&] {
             std::string m;
             for (std::string const& x : b.missing) {
                 m += (m.empty() ? "" : ", ") + x;
@@ -366,9 +393,10 @@ void App::Refresh() {
     gamerReadOnly_ = status_.gamerSettingsReadOnly;
     upstreamFound_ = gameOk_ && status_.upstream.Found();
     upstreamText_ = upstreamFound_
-        ? std::string("Its dxgi.dll") + (status_.upstream.openxrLoader ? " and openxr_loader.dll are" : " is") +
-              " in Binaries\\Win64. This mod has Halcyon's renderer built in, and with both two would run, so Install renames " +
-              (status_.upstream.openxrLoader ? "them" : "it") + " to *.mevr-off. Uninstall puts them back. Its MELEVR.ini stays. Installing means you agree."
+        ? std::string("Его dxgi.dll") + (status_.upstream.openxrLoader ? " и openxr_loader.dll лежат" : " лежит") +
+              " в Binaries\\Win64. В этот мод встроен рендерер Halcyon, а вдвоём они работали бы оба, поэтому установка " +
+              "переименует " + (status_.upstream.openxrLoader ? "их" : "его") +
+              " в *.mevr-off. Удаление вернёт на место. Его MELEVR.ini остаётся. Устанавливая, вы соглашаетесь."
         : std::string();
     settingsApplied_ = status_.gameSettings;
     texturesMarked_ = status_.texturesMarked;
@@ -378,70 +406,70 @@ void App::Refresh() {
     ready_ = gameOk_ && versionOk_ && binkUsable;
     headsetKnown_ = headsetWidth_ > 0;
 
-    chipGame_ = gameOk_ ? "Mass Effect 1 LE" : "Game not found";
-    chipXr_ = xrOk_ ? xr_.kind : "No VR runtime";
-    chipInstalled_ = installed_ ? "Installed " + status_.installedVersion : "Not installed";
+    chipGame_ = gameOk_ ? "Mass Effect 1 LE" : "Игра не найдена";
+    chipXr_ = xrOk_ ? xr_.kind : "Нет среды VR";
+    chipInstalled_ = installed_ ? "Установлено " + status_.installedVersion : "Не установлено";
     // Install's label: it puts this setup's version in place, so it's an update only when that is newer.
     std::string const mine = install::updates::kVersion;
     std::string const theirs = status_.installedVersion;
     int const order = installed_ && !theirs.empty() ? install::updates::CompareVersions(theirs, mine) : 0;
     if (!installed_) {
-        installTitle_ = "Ready";
-        installButton_ = "Install";
+        installTitle_ = "Готово";
+        installButton_ = "Установить";
     } else if (theirs.empty()) {
-        installTitle_ = std::format("Installed: install again to put this setup's version ({}) in place", mine);
-        installButton_ = "Reinstall";
+        installTitle_ = std::format("Установлено: переустановите, чтобы поставить версию этого установщика ({})", mine);
+        installButton_ = "Переустановить";
     } else if (order < 0) {
-        installTitle_ = std::format("Installed {}: this setup updates it to {}", theirs, mine);
-        installButton_ = "Update";
+        installTitle_ = std::format("Установлено {}: этот установщик обновит до {}", theirs, mine);
+        installButton_ = "Обновить";
     } else if (order == 0) {
-        installTitle_ = std::format("Installed {}, the same version as this setup: install again to replace its files", theirs);
-        installButton_ = "Reinstall";
+        installTitle_ = std::format("Установлено {}, та же версия, что у этого установщика: переустановите, чтобы заменить файлы", theirs);
+        installButton_ = "Переустановить";
     } else {
-        installTitle_ = std::format("Installed {} is newer than this setup ({}): installing goes back to {}", theirs, mine, mine);
-        installButton_ = std::format("Install {}", mine);
+        installTitle_ = std::format("Установлено {} — новее этого установщика ({}): установка откатит до {}", theirs, mine, mine);
+        installButton_ = std::format("Установить {}", mine);
     }
-    rootText_ = gameOk_ ? detect::Utf8(status_.root.wstring()) : "No game folder";
-    sourceText_ = status_.source.empty() ? "nothing yet" : status_.source;
+    rootText_ = gameOk_ ? detect::Utf8(status_.root.wstring()) : "Папка игры не выбрана";
+    sourceText_ = status_.source.empty() ? "пока нет" : SourceText(status_.source);
     settingsPending_ = status_.pendingSettings.has_value();
     menuKey_ = MenuKeyText();
     launchAdvice_ = install::launch::runtime_start::PlanFor(xr_.kind, xr_.manifest).advice;
     firstStartText_ = FirstStartText(installed_, settingsPending_);
-    gameTitle_ = gameOk_ ? "Found" : "Not found";
-    gameText_ = gameOk_ ? status_.source + ": " + detect::Utf8(status_.root.filename().wstring()) : "Pick the folder on the Welcome page";
-    versionTitle_ = status_.version ? status_.version->ToString() : "Unknown";
-    versionText_ = versionOk_ ? "The version the mod is built for"
-        : gameOk_ ? "The mod needs 2.0.0.48602 and stays off on any other. Update the game in Steam or the EA app."
+    gameTitle_ = gameOk_ ? "Найдено" : "Не найдено";
+    gameText_ = gameOk_ ? SourceText(status_.source) + ": " + detect::Utf8(status_.root.filename().wstring()) : "Выберите папку на странице «Добро пожаловать»";
+    versionTitle_ = status_.version ? status_.version->ToString() : "Неизвестно";
+    versionText_ = versionOk_ ? "Версия, под которую собран мод"
+        : gameOk_ ? "Моду нужна версия 2.0.0.48602, на любой другой он не включается. Обновите игру в Steam или EA app."
                   : "";
-    xrTitle_ = xrOk_ ? xr_.kind : "None";
-    xrText_ = xrOk_ ? (xr_.name.empty() ? std::string("The active OpenXR runtime") : xr_.name)
-                    : "No OpenXR runtime is active: install SteamVR, the Meta app or Virtual Desktop and make it the active runtime";
+    xrTitle_ = xrOk_ ? xr_.kind : "Нет";
+    xrText_ = xrOk_ ? (xr_.name.empty() ? std::string("Активная среда OpenXR") : xr_.name)
+                    : "Активная среда OpenXR не найдена: установите SteamVR, приложение Meta или Virtual Desktop и сделайте её активной";
     switch (status_.bink) {
-    case detect::BinkState::Original: loaderTitle_ = "None yet"; break;
-    case detect::BinkState::Ours: loaderTitle_ = "MEVR loader"; break;
+    case detect::BinkState::Original: loaderTitle_ = "Пока нет"; break;
+    case detect::BinkState::Ours: loaderTitle_ = "Загрузчик MEVR"; break;
     case detect::BinkState::LEBinkProxy: loaderTitle_ = "ME3Tweaks'"; break;
-    case detect::BinkState::OtherProxy: loaderTitle_ = "Another proxy"; break;
+    case detect::BinkState::OtherProxy: loaderTitle_ = "Другой прокси"; break;
     case detect::BinkState::Missing:
-    case detect::BinkState::Broken: loaderTitle_ = gameOk_ ? "Broken" : "-"; break;
+    case detect::BinkState::Broken: loaderTitle_ = gameOk_ ? "Сломан" : "-"; break;
     }
     loaderText_ = gameOk_ ? detect::BinkStateText(status_.bink) : "";
-    loaderPlan_ = status_.bink == detect::BinkState::LEBinkProxy ? "ME3Tweaks' ASI loader is already installed: it loads the mod; nothing to add"
-        : status_.bink == detect::BinkState::OtherProxy           ? "Another bink2w64.dll proxy is installed: it's used as it is (it must load ASI\\*.asi)"
-                                                                  : "Ours: the game's bink2w64.dll is kept as bink2w64_original.dll and ours goes in front of it";
+    loaderPlan_ = status_.bink == detect::BinkState::LEBinkProxy ? "ASI-загрузчик ME3Tweaks уже установлен: он загрузит мод, добавлять ничего не нужно"
+        : status_.bink == detect::BinkState::OtherProxy           ? "Установлен другой прокси bink2w64.dll: он используется как есть (он должен загружать ASI\\*.asi)"
+                                                                  : "Наш: bink2w64.dll игры сохранён как bink2w64_original.dll, а наш ставится перед ним";
     install::settings::Target const target = install::settings::TargetFor(quality_, headsetWidth_, headsetHeight_);
-    qualityText_ = quality_ == "keep" ? "The resolution stays as it is"
-        : quality_ == "auto"         ? std::format("Starts at {} × {} per eye. After the first VR session and restart, uses 85% of the detected eye size.",
+    qualityText_ = quality_ == "keep" ? "Разрешение остаётся как есть"
+        : quality_ == "auto"         ? std::format("Стартует с {} × {} на глаз. После первого сеанса VR и перезапуска берёт 85% найденного размера глаза.",
                                            target.width, target.height)
-        : target.width > 0           ? std::format("{} × {} per eye{}", target.width, target.height,
-                                           quality_ == "headset" ? " (0.85 of your headset's eye size; FSR sharpens it up to it)" : quality_ == "performance" ? " (Halcyon's default)" : "")
+        : target.width > 0           ? std::format("{} × {} на глаз{}", target.width, target.height,
+                                           quality_ == "headset" ? " (0.85 размера глаза вашего шлема; FSR доводит до него)" : quality_ == "performance" ? " (значение Halcyon по умолчанию)" : "")
                                      : "";
-    headsetText_ = headsetKnown_ ? std::format("{} × {} per eye, from the last VR session", headsetWidth_, headsetHeight_)
-                                 : "Not known yet: it's read from the last VR session, or Detect asks the VR runtime";
+    headsetText_ = headsetKnown_ ? std::format("{} × {} на глаз, из последнего сеанса VR", headsetWidth_, headsetHeight_)
+                                 : "Пока неизвестно: берётся из последнего сеанса VR, либо «Определить» спросит среду VR";
     // The Settings page's current values.
     if (auto const gamer = install::ReadFile(install::Layout{status_.root}.Full(install::paths::kGamerSettings)); gameOk_ && gamer) {
         install::settings::Current const now = install::settings::Read(*gamer);
-        curRes_ = now.resX > 0 ? std::format("{} × {}", now.resX, now.resY) : "Default";
-        curWindow_ = now.borderless ? "Borderless" : "Windowed or full screen";
+        curRes_ = now.resX > 0 ? std::format("{} × {}", now.resX, now.resY) : "По умолчанию";
+        curWindow_ = now.borderless ? "Без рамки" : "В окне или на весь экран";
         curHdr_ = OnOff(now.hdr);
         curVsync_ = OnOff(now.vsync);
         curBlur_ = OnOff(now.motionBlur);
@@ -454,9 +482,9 @@ void App::Refresh() {
     UpdateHero();
     {
         fs::path const local = install::LocalDataDir();
-        localText_ = local.empty() ? "Not found."
-                                   : detect::Utf8(local.wstring()) + ": snapshots, recordings, frame-timing captures, crash reports, the downloaded "
-                                     "Mass Effect Modder and texture-pack work files. Off: they stay.";
+        localText_ = local.empty() ? "Не найдено."
+                                   : detect::Utf8(local.wstring()) + ": снимки, записи, замеры времени кадров, отчёты о падениях, скачанные "
+                                     "рабочие файлы Mass Effect Modder и наборов текстур. Выключено: они остаются.";
     }
     if (status_.hasRecord) {
         install::Transaction tx(install::Layout{status_.root});
@@ -467,19 +495,20 @@ void App::Refresh() {
             replaced += f.action == "replaced" || f.action == "renamed" ? 1 : 0;
             edited += f.action == "edited" ? 1 : 0;
         }
-        uninstallText_ = std::format("{} files removed, {} put back as they were, {} settings files returned to your values.", added, replaced, edited);
+        uninstallText_ = std::format("Удалено: {}. Возвращено как было: {}. Файлов настроек возвращено к вашим значениям: {}.",
+            CountText(added, "файл", "файла", "файлов"), CountText(replaced, "файл", "файла", "файлов"), edited);
     } else {
-        uninstallText_ = "Nothing is installed.";
+        uninstallText_ = "Ничего не установлено.";
     }
     if (launchText_.empty()) {
-        launchText_ = "The Legendary Edition's launcher only starts MassEffect1.exe with your language and subtitle settings; Launch does "
-                      "the same directly, with Steam running.";
+        launchText_ = "Лаунчер Legendary Edition лишь запускает MassEffect1.exe с вашими настройками языка и субтитров; «Запустить» делает "
+                      "то же самое напрямую, при работающем Steam.";
     }
-    footerText_ = gameOk_ ? "Mod log: Binaries\\Win64\\Logs\\LE1MEVR.log · loader log: Logs\\MEVRLoader.log" : "";
+    footerText_ = gameOk_ ? "Журнал мода: Binaries\\Win64\\Logs\\LE1MEVR.log · журнал загрузчика: Logs\\MEVRLoader.log" : "";
     std::error_code ec;
     memReady_ = fs::exists(packs::MemExe(), ec);
-    memText_ = memReady_ ? "Ready: it installs the texture packs below (GPL, from its own GitHub releases)."
-                         : "Installs texture packs (GPL, by the ALOT team). Downloaded from its own GitHub releases when you press Download.";
+    memText_ = memReady_ ? "Готов: он ставит наборы текстур ниже (GPL, из собственных релизов на GitHub)."
+                         : "Ставит наборы текстур (GPL, от команды ALOT). Скачивается из собственных релизов на GitHub по кнопке «Скачать».";
     UpdatePacks();
     UpdateVoice();
     Dirty();
@@ -489,8 +518,8 @@ void App::UpdateRepairStatus(bool reread) {
     if (sample_) {
         // The preview's stand-ins: status_.needsRepair as Sample set it.
     } else if (!installed_ || status_.root.empty()) {
-        repairTitle_ = "Not installed";
-        repairText_ = "Install first.";
+        repairTitle_ = "Не установлено";
+        repairText_ = "Сначала установите мод.";
         repairNeeded_ = false;
         return;
     } else if (reread) {
@@ -498,8 +527,8 @@ void App::UpdateRepairStatus(bool reread) {
         status_.needsRepair = install::ReadStatus(status_.root, status_.source).needsRepair;
     }
     if (!installed_) {
-        repairTitle_ = "Not installed";
-        repairText_ = "Install first.";
+        repairTitle_ = "Не установлено";
+        repairText_ = "Сначала установите мод.";
         repairNeeded_ = false;
         return;
     }
@@ -510,22 +539,22 @@ void App::UpdateRepairStatus(bool reread) {
     // The VR game settings chosen at install, waiting for the game's first start: Repair puts them on once the file exists.
     bool const settingsDue = settingsPending_ && hasGamerSettings_;
     if (settingsDue) {
-        items.push_back("the VR game settings chosen at install (the game has made its settings file since)");
+        items.push_back("настройки VR, выбранные при установке (файл настроек игры с тех пор появился)");
     }
     repairNeeded_ = !items.empty();
     std::size_t const files = status_.needsRepair.size();
-    repairTitle_ = files == 0 && !settingsDue ? "Every file is as installed"
-        : files == 0                          ? "The VR game settings are waiting"
-        : files == 1                          ? "1 file needs repair"
-                                              : std::format("{} files need repair", files);
+    repairTitle_ = files == 0 && !settingsDue ? "Все файлы как после установки"
+        : files == 0                          ? "Настройки VR ждут"
+                                              : CountText(files, "файл", "файла", "файлов") +
+                                                    (CountIsOne(files) ? " требует исправления" : " требуют исправления");
     repairText_.clear();
     for (std::string const& item : items) {
         repairText_ += (repairText_.empty() ? "" : ", ") + item;
     }
     if (items.empty()) {
-        repairText_ = settingsPending_ ? "Nothing to do. The VR game settings still wait for the game's first start (Welcome page)." : "Nothing to do.";
+        repairText_ = settingsPending_ ? "Делать нечего. Настройки VR всё ещё ждут первого запуска игры (страница «Добро пожаловать»)." : "Делать нечего.";
     } else {
-        repairText_ += ". Repair puts them back.";
+        repairText_ += ". «Исправить» вернёт их на место.";
     }
 }
 
@@ -535,59 +564,59 @@ void App::UpdateHero() {
     heroButton_.clear();
     heroEnabled_ = false;
     if (!gameOk_) {
-        heroTitle_ = "Game not found";
-        heroText_ = "Mass Effect Legendary Edition wasn't found in Steam or the EA app. Pick its folder below (the one with Game\\ME1 in it).";
+        heroTitle_ = "Игра не найдена";
+        heroText_ = "Mass Effect Legendary Edition не найдена в Steam или EA app. Выберите её папку ниже (ту, где есть Game\\ME1).";
     } else if (!versionOk_) {
-        heroTitle_ = "Unsupported game version";
-        heroText_ = "The mod is built for MassEffect1.exe 2.0.0.48602 and stays switched off on any other version, so it isn't installed.";
+        heroTitle_ = "Неподдерживаемая версия игры";
+        heroText_ = "Мод собран для MassEffect1.exe 2.0.0.48602 и на любой другой версии не включается, поэтому не установлен.";
     } else if (!binkUsable) {
-        heroTitle_ = "The game needs a repair";
+        heroTitle_ = "Игру нужно исправить";
         heroText_ = detect::BinkStateText(status_.bink);
     } else if (installed_ && repairNeeded_ && !status_.needsRepair.empty()) {
-        heroTitle_ = "The mod needs a repair";
-        heroText_ = "Some of its files changed or went missing since the install (Steam's or the EA app's \"verify files\" puts the game's own "
-                    "loader and file table back, which switches the mod off): " + repairText_;
+        heroTitle_ = "Мод нужно исправить";
+        heroText_ = "Часть его файлов изменилась или пропала после установки («проверка файлов» в Steam или EA app возвращает игре её собственный "
+                    "загрузчик и оглавление, и мод отключается): " + repairText_;
         heroAction_ = "repair";
-        heroButton_ = "Repair";
+        heroButton_ = "Исправить";
         heroEnabled_ = hasPayload_;
         if (!hasPayload_) {
-            heroText_ += " Run MEVR-Setup.exe from the download to repair.";
+            heroText_ += " Запустите MEVR-Setup.exe из загрузки, чтобы исправить.";
         }
     } else if (!hasGamerSettings_) {
-        heroTitle_ = installed_ ? "One step left: start the game once" : "Mass Effect 1 hasn't been started here yet";
-        heroText_ = installed_ ? "Mass Effect 1 makes its settings file on its first start, and the VR game settings you chose at install go into "
-                                 "it. Start it once: the setup waits for the file, you quit at the game's main menu, and they go on by themselves."
-                               : "It makes its settings file on its first start, and the VR game settings go into it. Start it once now, or "
-                                 "install first: the settings you choose are kept until the file exists.";
+        heroTitle_ = installed_ ? "Остался один шаг: запустите игру один раз" : "Mass Effect 1 здесь ещё не запускалась";
+        heroText_ = installed_ ? "Mass Effect 1 создаёт файл настроек при первом запуске, и настройки VR, выбранные при установке, записываются в "
+                                 "него. Запустите игру один раз: установщик дождётся файла, вы выйдете в главное меню игры, и настройки применятся сами."
+                               : "Игра создаёт файл настроек при первом запуске, и настройки VR записываются в него. Запустите игру один раз сейчас или "
+                                 "сначала установите мод: выбранные настройки хранятся, пока файла нет.";
         heroAction_ = "first_start";
-        heroButton_ = "Start the game once";
+        heroButton_ = "Запустить игру один раз";
         heroEnabled_ = true;
     } else if (installed_ && settingsPending_) {
-        heroTitle_ = "One step left: the VR game settings";
-        heroText_ = "Mass Effect 1 has made its settings file since the install: put on the VR game settings you chose then (a borderless window at "
-                    "the VR resolution; your values are kept for Restore).";
+        heroTitle_ = "Остался один шаг: настройки VR";
+        heroText_ = "Mass Effect 1 создала файл настроек после установки: примените настройки VR, выбранные тогда (окно без рамки в "
+                    "разрешении VR; ваши значения сохранены для восстановления).";
         heroAction_ = "apply_pending";
-        heroButton_ = "Apply them";
+        heroButton_ = "Применить их";
         heroEnabled_ = true;
     } else if (installed_) {
-        heroTitle_ = "Ready for VR";
-        heroText_ = "The mod is installed. " + launchAdvice_ + " In game, " + menuKey_ + " or both sticks held opens the VR menu.";
+        heroTitle_ = "Готово к VR";
+        heroText_ = "Мод установлен. " + launchAdvice_ + " В игре " + menuKey_ + " или оба стика, удерживаемые вместе, открывают VR-меню.";
         heroAction_ = "launch";
-        heroButton_ = "Launch";
+        heroButton_ = "Запустить";
         heroEnabled_ = true;
     } else if (upstreamFound_) {
-        heroTitle_ = "Ready to install";
-        heroText_ = "Halcyon's MELE-VR is installed: Install moves its two DLLs aside (Uninstall puts them back), then puts the mod, its ASI loader and "
-                    "the recommended VR game settings in place, recorded so it can all be undone. Options lets you choose the settings first.";
+        heroTitle_ = "Готово к установке";
+        heroText_ = "MELE-VR от Halcyon установлен: установка отодвинет два его DLL (удаление вернёт их), затем поставит мод, его ASI-загрузчик и "
+                    "рекомендованные настройки VR, записав всё, чтобы это можно было отменить. «Настройки» позволяют сначала выбрать параметры.";
         heroAction_ = "install";  // one click: the Install page's defaults (research/33 section 11)
-        heroButton_ = "Install";
+        heroButton_ = "Установить";
         heroEnabled_ = canInstall_ && hasPayload_;
     } else {
-        heroTitle_ = "Ready to install";
-        heroText_ = "Everything checks out. Install puts the mod, its ASI loader and the recommended VR game settings in place, recorded so it can all "
-                    "be undone. Options lets you choose the settings first.";
+        heroTitle_ = "Готово к установке";
+        heroText_ = "Всё в порядке. Установка поставит мод, его ASI-загрузчик и рекомендованные настройки VR, записав всё, чтобы это можно было "
+                    "отменить. «Настройки» позволяют сначала выбрать параметры.";
         heroAction_ = "install";  // one click: the Install page's defaults (research/33 section 11)
-        heroButton_ = "Install";
+        heroButton_ = "Установить";
         heroEnabled_ = canInstall_ && hasPayload_;
     }
 }
@@ -612,7 +641,7 @@ void App::StartFirstRun() {
         std::error_code ec;
         bool const already = detect::GameRunningIn(layout.root);
         if (already) {
-            Post("Mass Effect 1 is already running: waiting for its settings file and for it to close.");
+            Post("Mass Effect 1 уже запущена: ждём её файл настроек и её закрытия.");
         } else {
             install::launch::Result const r = install::launch::StartLe1(layout.root, steam);
             Post(r.message, !r.started);
@@ -647,7 +676,7 @@ void App::StartFirstRun() {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
         if (cancel_) {
-            Post("Stopped waiting. Once Mass Effect 1 has made its settings file and closed, Repair (or Settings > Apply) puts the VR game settings on.");
+            Post("Ожидание остановлено. Когда Mass Effect 1 создаст файл настроек и закроется, «Исправить» (или «Настройки» → «Применить») включит настройки VR.");
             return;
         }
         if (phase != fst::Phase::Apply) {
@@ -661,13 +690,13 @@ void App::StartFirstRun() {
 
 void App::UpdateVoice() {
     namespace voice = install::voice;
-    voiceSources_ = "GitHub: moonshine-ai/moonshine (v0.1.5), ggml-org/llama.cpp (b12128) and this mod's release " + std::string(voice::kModelTag) +
+    voiceSources_ = "GitHub: moonshine-ai/moonshine (v0.1.5), ggml-org/llama.cpp (b12128) и релиз этого мода " + std::string(voice::kModelTag) +
         "; Hugging Face: moonshine-ai/moonshine-voice-assets";
-    voiceLicences_ = "MIT (Moonshine Voice and its models, ONNX Runtime, llama.cpp); Apache-2.0 (the order model, fine-tuned from Qwen3-0.6B)";
+    voiceLicences_ = "MIT (Moonshine Voice и его модели, ONNX Runtime, llama.cpp); Apache-2.0 (модель приказов, дообученная из Qwen3-0.6B)";
     voice::Part const* modelPart = voice::Find("llm-model");
-    voiceModelText_ = std::format("Reads the loose wordings the rules aren't sure of: llama.cpp ({}) and our fine-tuned model ({}, this mod's GitHub "
-                                  "release {}). If that release isn't published yet, Install still puts in the speech recognizer and voice orders "
-                                  "work with the built-in rules; the model tier waits for the release, and Apply adds it once it's there.",
+    voiceModelText_ = std::format("Понимает свободные формулировки, в которых не уверены правила: llama.cpp ({}) и наша дообученная модель ({}, релиз этого мода "
+                                  "{}). Если релиз ещё не опубликован, установка всё равно поставит распознаватель речи, и голосовые приказы "
+                                  "будут работать по встроенным правилам; уровень модели дождётся релиза, и «Применить» добавит её, когда он появится.",
         install::http::SizeText(voice::SizesFor({"llm-runtime"}).download), install::http::SizeText(modelPart != nullptr ? modelPart->modelSize : 0),
         voice::kModelTag);
     if (sample_) {
@@ -704,7 +733,7 @@ void App::UpdateVoice() {
     voiceReady_ = haveGame && dllOk && !waiting_;
     voiceUpToDate_ = voiceInstalled_ && missing.empty() && !extra && state.damaged.empty();
     voiceWarn_ = !state.damaged.empty() || (haveGame && !dllOk);
-    voiceSize_ = std::format("{} to download, {} in the game folder", fetch.download == 0 ? std::string("nothing") : install::http::SizeText(fetch.download),
+    voiceSize_ = std::format("{} на скачивание, {} в папке игры", fetch.download == 0 ? std::string("ничего") : install::http::SizeText(fetch.download),
         install::http::SizeText(disk.disk));
     voiceParts_.clear();
     for (std::string const& id : state.parts) {
@@ -712,24 +741,24 @@ void App::UpdateVoice() {
             voiceParts_ += (voiceParts_.empty() ? "" : ", ") + p->name;
         }
     }
-    voiceButton_ = !voiceInstalled_ ? "Install" : !state.damaged.empty() ? "Fetch again" : "Apply";
+    voiceButton_ = !voiceInstalled_ ? "Установить" : !state.damaged.empty() ? "Скачать заново" : "Применить";
     if (!haveGame) {
-        voiceState_ = "Find the game first (the Welcome page).";
+        voiceState_ = "Сначала найдите игру (страница «Добро пожаловать»).";
     } else if (!dllOk) {
-        voiceState_ = "This install has no MEVR-Voice.dll: install or Repair this release of the mod with the MEVR-Setup.exe from its download "
-                      "first, then add the voice files here.";
+        voiceState_ = "В этой установке нет MEVR-Voice.dll: сначала установите или исправьте этот релиз мода тем MEVR-Setup.exe из его загрузки, "
+                      "затем добавьте сюда голосовые файлы.";
     } else if (!state.damaged.empty()) {
-        voiceState_ = std::format("{} voice file{} missing or changed: {} downloads {} again.", state.damaged.size(),
-            state.damaged.size() == 1 ? " is" : "s are", voiceButton_, state.damaged.size() == 1 ? "it" : "them");
+        voiceState_ = std::format("Файлов не хватает или они изменены: {}. {} скачает недостающее заново.",
+            state.damaged.size(), voiceButton_);
     } else if (voiceUpToDate_) {
-        voiceState_ = "Installed: " + voiceParts_ + ". In game, hold the left grip at your left ear, speak, let go.";
+        voiceState_ = "Установлено: " + voiceParts_ + ". В игре прижмите левый хват у левого уха, говорите, отпустите.";
     } else if (voiceInstalled_ && voiceLlm_ && !state.Has("llm-model") && !extra && missing.size() <= 2) {
-        voiceState_ = "The speech recognizer is installed and voice orders work. The model tier is waiting: its release (voice-model-1) "
-                      "wasn't published yet when you installed. Apply adds it once it's there.";
+        voiceState_ = "Распознаватель речи установлен, голосовые приказы работают. Уровень модели ждёт: его релиз (voice-model-1) "
+                      "ещё не был опубликован на момент установки. «Применить» добавит его, когда он появится.";
     } else if (voiceInstalled_) {
-        voiceState_ = "Installed: " + voiceParts_ + ". Apply makes it match the choices below.";
+        voiceState_ = "Установлено: " + voiceParts_ + ". «Применить» приведёт в соответствие с выбором ниже.";
     } else {
-        voiceState_ = "Not installed.";
+        voiceState_ = "Не установлено.";
     }
 }
 
@@ -759,11 +788,11 @@ void App::UpdatePacks() {
             }
         }
         if (v.installed) {
-            v.state = "Installed with this setup.";
+            v.state = "Установлено этим установщиком.";
         } else if (!v.file.empty()) {
-            v.state = "Ready to install: " + v.file;
+            v.state = "Готов к установке: " + v.file;
         } else {
-            v.state = "Not downloaded: open its page, download the MEM version, then choose the file.";
+            v.state = "Не скачано: откройте его страницу, скачайте версию для MEM и выберите файл.";
         }
         packs_.push_back(std::move(v));
     }
@@ -788,7 +817,7 @@ void App::Apply(install::Outcome const& outcome) {
     for (std::string const& line : outcome.log) {
         Post(line, line.rfind("error: ", 0) == 0);
     }
-    Post(outcome.ok ? "Done." : "Stopped: see the errors above.", !outcome.ok);
+    Post(outcome.ok ? "Готово." : "Остановлено: смотрите ошибки выше.", !outcome.ok);
 }
 
 void App::RunJob(std::string title, std::function<void()> job) {
@@ -858,7 +887,7 @@ void App::Tick() {
         busy_ = false;
         applyingUpdate_ = false;
         canCancel_ = false;
-        cancelText_ = "Stop waiting";
+        cancelText_ = "Прекратить ожидание";
         {
             std::lock_guard const lock(jobMutex_);
             log_ = jobLog_;
@@ -919,7 +948,7 @@ void App::Act(std::string const& name, std::string const& arg) {
         return;
     }
     if (name == "stop_waiting") {
-        // The jobs that can be stopped: "Start the game once" waiting for the game, Launch waiting for SteamVR, the voice
+        // The jobs that can be stopped: "Запустить игру один раз" waiting for the game, Launch waiting for SteamVR, the voice
         // orders' download.
         if (busy_ && canCancel_) {
             cancel_ = true;
@@ -933,11 +962,12 @@ void App::Act(std::string const& name, std::string const& arg) {
         if (!host_.pickFolder) {
             return;
         }
-        if (auto const picked = host_.pickFolder(L"The Mass Effect Legendary Edition folder")) {
+        if (auto const picked = host_.pickFolder(L"Папка Mass Effect Legendary Edition")) {
             if (auto const root = detect::RootFromPicked(*picked)) {
                 SetGame(*root, "Folder");
             } else {
-                Post("That folder doesn't hold Mass Effect Legendary Edition (Game\\ME1\\Binaries\\Win64\\MassEffect1.exe).", true);
+                Post("В этой папке нет Mass Effect Legendary Edition (Game\\ME1\\Binaries\\Win64\\MassEffect1.exe) "
+                     "или копии с ME1\\Binaries\\Win64\\MassEffect1.exe прямо в ней.", true);
                 std::lock_guard const lock(jobMutex_);
                 log_ = jobLog_;
             }
@@ -953,11 +983,11 @@ void App::Act(std::string const& name, std::string const& arg) {
         options.setupExe = options_.exe;
         options.source = SteamGame() ? "Steam" : status_.source;
         auto const payload = *payload_;
-        RunJob("Installing", [this, layout, payload, options] {
+        RunJob("Установка", [this, layout, payload, options] {
             Apply(install::Install(layout, payload, options));
             if (!install::ReadStatus(layout.root, "").hasGamerSettings && options.gameSettings) {
-                Post("One step left: Mass Effect 1 hasn't been started on this PC, so the VR game settings wait for its settings file. Press "
-                     "\"Start the game once\" above (or on the Welcome page).",
+                Post("Остался один шаг: Mass Effect 1 ещё не запускалась на этом ПК, поэтому настройки VR ждут её файла настроек. Нажмите "
+                     "«Запустить игру один раз» выше (или на странице «Добро пожаловать»).",
                     true);
             }
         });
@@ -970,20 +1000,20 @@ void App::Act(std::string const& name, std::string const& arg) {
             return;
         }
         auto const choices = PendingOrModelChoices();
-        RunJob("Applying the VR game settings", [this, layout, choices] { Apply(install::ApplySettings(layout, choices)); });
+        RunJob("Применение настроек VR", [this, layout, choices] { Apply(install::ApplySettings(layout, choices)); });
     } else if (name == "uninstall") {
         if (waiting_ || !installed_) {
             return;
         }
         bool const keep = keepSettings_;
         bool const removeLocal = removeLocal_;
-        std::string text = keep ? "Removes the mod and its loader and puts back every file and game setting it changed. Your VR settings and calibration stay."
-                                : "Removes the mod and its loader, puts back every file and game setting it changed, and deletes your VR settings and calibration.";
+        std::string text = keep ? "Убирает мод и его загрузчик и возвращает каждый изменённый файл и настройку игры. Ваши настройки VR и калибровка остаются."
+                                : "Убирает мод и его загрузчик, возвращает каждый изменённый файл и настройку игры и удаляет ваши настройки VR и калибровку.";
         if (removeLocal) {
-            text += " It also deletes the mod's diagnostics and downloads in %LOCALAPPDATA%\\MEVR.";
+            text += " Также удаляет диагностику и загрузки мода в %LOCALAPPDATA%\\MEVR.";
         }
-        Confirm("Uninstall the VR mod?", text, "Uninstall", true, [this, layout, keep, removeLocal] {
-            RunJob("Uninstalling", [this, layout, keep, removeLocal] { Apply(install::Uninstall(layout, keep, options_.exe, removeLocal)); });
+        Confirm("Удалить VR-мод?", text, "Удалить", true, [this, layout, keep, removeLocal] {
+            RunJob("Удаление", [this, layout, keep, removeLocal] { Apply(install::Uninstall(layout, keep, options_.exe, removeLocal)); });
         });
     } else if (name == "verify") {
         if (!installed_) {
@@ -995,24 +1025,24 @@ void App::Act(std::string const& name, std::string const& arg) {
             return;
         }
         auto const payload = *payload_;
-        RunJob("Repairing", [this, layout, payload] { Apply(install::Repair(layout, payload)); });
+        RunJob("Исправление", [this, layout, payload] { Apply(install::Repair(layout, payload)); });
     } else if (name == "apply") {
         if (waiting_ || !hasGamerSettings_) {
             return;
         }
         auto const choices = ChoicesFromModel();
-        RunJob("Applying the VR game settings", [this, layout, choices] { Apply(install::ApplySettings(layout, choices)); });
+        RunJob("Применение настроек VR", [this, layout, choices] { Apply(install::ApplySettings(layout, choices)); });
     } else if (name == "restore") {
         if (waiting_ || !settingsApplied_) {
             return;
         }
-        RunJob("Restoring your settings", [this, layout] { Apply(install::RestoreSettings(layout)); });
+        RunJob("Восстановление ваших настроек", [this, layout] { Apply(install::RestoreSettings(layout)); });
     } else if (name == "launch") {
         if (!gameOk_ || waiting_) {
             return;
         }
         if (detect::GameRunningIn(status_.root)) {
-            launchText_ = "Mass Effect is already running.";
+            launchText_ = "Mass Effect уже запущена.";
             Refresh();
             return;
         }
@@ -1023,7 +1053,7 @@ void App::Act(std::string const& name, std::string const& arg) {
         canCancel_ = plan.action == rs::Action::StartSteamVr;  // the wait for SteamVR can be cut short
         std::string const kind = xr_.kind;
         std::string const manifest = xr_.manifest;
-        RunJob("Starting Mass Effect", [this, root, steam, kind, manifest] {
+        RunJob("Запуск Mass Effect", [this, root, steam, kind, manifest] {
             install::launch::LaunchHooks hooks;
             hooks.progress = [this](std::string const& step, int percent) { Progress(step, percent); };
             hooks.post = [this](std::string const& line, bool warning) { Post(line, warning); };
@@ -1041,16 +1071,16 @@ void App::Act(std::string const& name, std::string const& arg) {
     } else if (name == "launch_steam") {
         install::launch::StartThroughSteam();
     } else if (name == "detect_headset") {
-        Confirm("Ask the VR runtime?",
-            "Detect starts your VR runtime (SteamVR may open) to ask for the headset's own eye resolution. Nothing else changes.", "Detect", false,
+        Confirm("Спросить среду VR?",
+            "«Определить» запустит среду VR (может открыться SteamVR), чтобы узнать собственное разрешение глаза шлема. Больше ничего не меняется.", "Определить", false,
             [this] {
                 auto probe = std::make_shared<HeadsetProbe>();
-                RunJob("Asking the VR runtime", [this, probe] {
+                RunJob("Запрос к среде VR", [this, probe] {
                     *probe = ProbeHeadset();
                     if (probe->ok) {
-                        Post(std::format("{} reports {} × {} per eye ({})", probe->runtime, probe->width, probe->height, probe->system));
+                        Post(std::format("{} сообщает {} × {} на глаз ({})", probe->runtime, probe->width, probe->height, probe->system));
                     } else {
-                        Post("No answer: " + probe->error, true);
+                        Post("Нет ответа: " + probe->error, true);
                     }
                 });
                 jobDone_ = [this, probe] {
@@ -1071,7 +1101,7 @@ void App::Act(std::string const& name, std::string const& arg) {
         auto result = std::make_shared<install::updates::CheckResult>();
         std::string const repo = options_.repo;
         std::string const mine = status_.installedVersion.empty() ? install::updates::kVersion : status_.installedVersion;
-        RunJob("Checking for updates", [this, repo, mine, result] {
+        RunJob("Проверка обновлений", [this, repo, mine, result] {
             *result = install::updates::Check(repo,mine);
             Post(result->text, result->state == install::updates::CheckResult::State::Failed);
         });
@@ -1082,9 +1112,9 @@ void App::Act(std::string const& name, std::string const& arg) {
             updateAvailable_ = updateRelease_ && updateRelease_->package &&
                 (!updateRelease_->package->sha256.empty() || updateRelease_->checksums);
             if (updateAvailable_) {
-                updateText_ += " Download " + install::http::SizeText(updateRelease_->package->size) + ". Your settings will be kept.";
+                updateText_ += " Скачать " + install::http::SizeText(updateRelease_->package->size) + ". Ваши настройки сохранятся.";
             } else if (updateRelease_) {
-                updateText_ += " Its verified update package isn't available yet. Check again later.";
+                updateText_ += " Его проверенный пакет обновления пока недоступен. Проверьте позже.";
             }
         };
     } else if (name == "install_update") {
@@ -1093,8 +1123,8 @@ void App::Act(std::string const& name, std::string const& arg) {
         auto const game = status_.root;
         auto prepared = std::make_shared<install::updates::Prepared>();
         canCancel_ = true;
-        cancelText_ = "Cancel download";
-        RunJob("Downloading the update",[this,release,prepared] {
+        cancelText_ = "Отменить скачивание";
+        RunJob("Скачивание обновления",[this,release,prepared] {
             *prepared = install::updates::Prepare(release,[this](std::string const& text,int percent) { Progress(text,percent); },&cancel_);
             if (!prepared->error.empty()) Post(prepared->error,true);
         });
@@ -1103,21 +1133,21 @@ void App::Act(std::string const& name, std::string const& arg) {
             std::string const error = host_.updateInstaller(prepared->installer,game);
             if (!error.empty()) {
                 Post(error,true);
-                updateText_ = error + " Press Download and install to retry.";
+                updateText_ = error + " Нажмите «Скачать и установить», чтобы повторить.";
             }
         };
     } else if (name == "finish_update") {
         page_ = "welcome";
         if (!gameOk_ || !payload_) {
-            Post("The update package or selected game folder is missing.",true);
+            Post("Пакет обновления или выбранная папка игры отсутствует.",true);
             return;
         }
         canCancel_ = true;
         applyingUpdate_ = true;
-        cancelText_ = "Cancel update";
+        cancelText_ = "Отменить обновление";
         auto const payload = *payload_;
         auto const installer = options_.exe;
-        RunJob("Installing the update",[this,layout,payload,installer] {
+        RunJob("Установка обновления",[this,layout,payload,installer] {
             Apply(install::updates::Apply(layout,payload,installer,[this](std::string const& text,int percent) { Progress(text,percent); },&cancel_));
         });
     } else if (name == "voice_toggle") {
@@ -1148,8 +1178,8 @@ void App::Act(std::string const& name, std::string const& arg) {
         }
         auto run = [this, voiceLayout, payload, choices, model] {
             canCancel_ = true;
-            cancelText_ = "Stop the download";
-            RunJob("Installing the voice orders", [this, voiceLayout, payload, choices, model] {
+            cancelText_ = "Остановить скачивание";
+            RunJob("Установка голосовых приказов", [this, voiceLayout, payload, choices, model] {
                 Apply(voice::Install(voiceLayout, payload, choices, model, [this](voice::Step const& step) { Progress(step.text, step.percent); },
                     &cancel_));
             });
@@ -1159,31 +1189,31 @@ void App::Act(std::string const& name, std::string const& arg) {
             run();  // only taking parts out, or nothing to fetch: no download to confirm
             return;
         }
-        Confirm("Download the voice orders?",
-            std::format("About {} ({} on a 50 Mbit/s line) from the official releases of Moonshine Voice and llama.cpp on GitHub, Moonshine's "
-                        "models on Hugging Face and this mod's own GitHub release for the order model. Each file is checked against its "
-                        "SHA-256 and goes in the game's ASI\\voice folder, on record so Remove here or Uninstall takes it out. Everything runs "
-                        "on your PC: the microphone is only heard while you hold the radio gesture, and nothing is sent anywhere. Close the "
-                        "game first.",
+        Confirm("Скачать голосовые приказы?",
+            std::format("Около {} ({} на канале 50 Мбит/с) из официальных релизов Moonshine Voice и llama.cpp на GitHub, моделей Moonshine "
+                        "на Hugging Face и собственного релиза этого мода на GitHub для модели приказов. Каждый файл сверяется по "
+                        "SHA-256 и кладётся в папку игры ASI\\voice с записью, чтобы «Удалить» здесь или удаление мода убрали его. Всё работает "
+                        "на вашем ПК: микрофон слышен, только пока вы держите жест рации, и ничего никуда не отправляется. Сначала закройте "
+                        "игру.",
                 install::http::SizeText(sizes.download), install::http::TimeText(sizes.download, 6.25e6)),
-            "Download and install", false, run);
+            "Скачать и установить", false, run);
     } else if (name == "voice_remove") {
         if (!gameOk_ || waiting_) {
             return;
         }
         install::Layout const voiceLayout{status_.root};
-        Confirm("Remove the voice orders?",
-            "Takes the downloaded voice files out of the game's ASI\\voice folder (the recognizer, its models, the model tier). The mod "
-            "keeps working without them: it logs \"voice off\" and the squad takes gesture orders as before. Install puts them back.",
-            "Remove", true, [this, voiceLayout] {
-                RunJob("Removing the voice orders", [this, voiceLayout] { Apply(install::voice::Remove(voiceLayout)); });
+        Confirm("Удалить голосовые приказы?",
+            "Убирает скачанные голосовые файлы из папки игры ASI\\voice (распознаватель, его модели, уровень модели). Мод "
+            "продолжает работать без них: в журнале будет \"voice off\", а отряд принимает приказы жестами, как раньше. Установка вернёт их.",
+            "Удалить", true, [this, voiceLayout] {
+                RunJob("Удаление голосовых приказов", [this, voiceLayout] { Apply(install::voice::Remove(voiceLayout)); });
             });
     } else if (name == "voice_check") {
         if (!gameOk_) {
             return;
         }
         install::Layout const voiceLayout{status_.root};
-        RunJob("Checking the voice files", [this, voiceLayout] { Apply(install::voice::Check(voiceLayout, true)); });
+        RunJob("Проверка голосовых файлов", [this, voiceLayout] { Apply(install::voice::Check(voiceLayout, true)); });
     } else if (name == "mem_page") {
         if (host_.openUrl) {
             host_.openUrl(packs::kMemPage);
@@ -1194,11 +1224,11 @@ void App::Act(std::string const& name, std::string const& arg) {
         }
         // First what the latest release offers (its name and size), then the download once the player has seen them.
         auto asset = std::make_shared<std::optional<packs::Asset>>();
-        RunJob("Looking up Mass Effect Modder's latest release", [this, asset] {
+        RunJob("Поиск последнего релиза Mass Effect Modder", [this, asset] {
             packs::MemLookup const found = packs::FindMemRelease();
             *asset = found.asset;
             if (!*asset) {
-                Post(found.error + ". Use its page instead.", true);
+                Post(found.error + ". Воспользуйтесь его страницей.", true);
             }
         });
         jobDone_ = [this, asset] {
@@ -1206,21 +1236,21 @@ void App::Act(std::string const& name, std::string const& arg) {
                 return;
             }
             packs::Asset const a = **asset;
-            Confirm("Download Mass Effect Modder?",
-                std::format("{} ({}, {} on a 50 Mbit/s line) from github.com/MassEffectModder, its official releases. GPL-3.0. It goes to "
+            Confirm("Скачать Mass Effect Modder?",
+                std::format("{} ({}, {} на канале 50 Мбит/с) с github.com/MassEffectModder, из его официальных релизов. GPL-3.0. Он будет в "
                             "%LOCALAPPDATA%\\MEVR\\tools.",
                     a.name, install::http::SizeText(a.size), install::http::TimeText(a.size, 6.25e6)),
-                "Download", false, [this, a] {
-                    RunJob("Downloading " + a.name, [this, a] {
+                "Скачать", false, [this, a] {
+                    RunJob("Скачивание " + a.name, [this, a] {
                         std::string const error = packs::DownloadMem(a, [this, a](install::http::Progress const& p) {
                             if (p.total > 0 && p.received >= p.total) {
-                                Progress("Unpacking " + a.name, 100);
+                                Progress("Распаковка " + a.name, 100);
                                 return;
                             }
                             int const percent = p.total > 0 ? static_cast<int>(100 * p.received / p.total) : 0;
-                            Progress(std::format("Downloading {}: {} of {}", a.name, install::http::SizeText(p.received), install::http::SizeText(p.total)), percent);
+                            Progress(std::format("Скачивание {}: {} из {}", a.name, install::http::SizeText(p.received), install::http::SizeText(p.total)), percent);
                         }, &cancel_);
-                        Post(error.empty() ? "Mass Effect Modder is ready." : error, !error.empty());
+                        Post(error.empty() ? "Mass Effect Modder готов." : error, !error.empty());
                     });
                 });
         };
@@ -1233,7 +1263,7 @@ void App::Act(std::string const& name, std::string const& arg) {
         if (p == nullptr || !host_.pickFile) {
             return;
         }
-        if (auto const file = host_.pickFile(std::wstring(L"The downloaded ") + detect::Wide(p->name))) {
+        if (auto const file = host_.pickFile(std::wstring(L"Скачанный ") + detect::Wide(p->name))) {
             std::erase_if(packFiles_, [&](auto const& e) { return e.first == arg; });
             packFiles_.emplace_back(arg, *file);
             Refresh();
@@ -1247,13 +1277,13 @@ void App::Act(std::string const& name, std::string const& arg) {
         fs::path const file = it->second;
         std::string const id = p->id;
         std::string const packName = p->name;
-        Confirm(std::string("Install ") + p->name + "?",
-            std::format("This changes the game's files for good: Mass Effect Modder rewrites its textures ({}; it can take a long while the "
-                        "first time, as it scans the game). Install texture packs after every other content mod: content mods can't go on "
-                        "afterwards, and only a full restore or reinstall of the game takes textures out. Close the game first.",
+        Confirm(std::string("Установить ") + p->name + "?",
+            std::format("Это навсегда меняет файлы игры: Mass Effect Modder перезаписывает её текстуры ({}; первый раз это может занять "
+                        "много времени, пока он сканирует игру). Ставьте наборы текстур после всех остальных контентных модов: контентные моды "
+                        "после них уже не поставить, а убрать текстуры можно только полным восстановлением или переустановкой игры. Сначала закройте игру.",
                 p->size),
-            "Install for good", true, [this, layout, file, id, packName] {
-                RunJob("Installing " + packName, [this, layout, file, id] {
+            "Установить навсегда", true, [this, layout, file, id, packName] {
+                RunJob("Установка " + packName, [this, layout, file, id] {
                     // MEM, the manifest's record, and our recorded VR game settings again where MEM wrote over them.
                     Apply(install::InstallPack(layout, id, file, [this](packs::InstallStep const& s) {
                         Progress(s.detail.empty() ? s.stage : s.stage + ": " + s.detail, s.percent);
@@ -1281,11 +1311,11 @@ void App::Act(std::string const& name, std::string const& arg) {
         auto bundle = bundle_;
         install::report::Options const options = ReportOptions();
         auto result = std::make_shared<install::report::Result>();
-        RunJob("Writing the report", [this, bundle, options, result] {
+        RunJob("Запись отчёта", [this, bundle, options, result] {
             *result = install::report::Write(*bundle, options);
-            Post(result->ok ? "Saved " + detect::Utf8(result->zip.filename().wstring()) + " (" + install::report::SizeText(result->bytes) +
-                                  ") to " + result->folder + ". Nothing was sent anywhere."
-                            : "Couldn't save the report: " + result->error,
+            Post(result->ok ? "Сохранено " + detect::Utf8(result->zip.filename().wstring()) + " (" + install::report::SizeText(result->bytes) +
+                                  ") to " + result->folder + ". Никуда ничего не отправлялось."
+                            : "Не удалось сохранить отчёт: " + result->error,
                 !result->ok);
         });
         jobDone_ = [this, result] {
@@ -1293,13 +1323,13 @@ void App::Act(std::string const& name, std::string const& arg) {
             reportHasZip_ = result->ok;
             if (result->ok) {
                 reportZipPath_ = result->zip;
-                reportZip_ = "Saved to " + result->folder + ": " + detect::Utf8(result->zip.filename().wstring()) +
-                             ". Open it to see exactly what's inside; attach it to your issue or give it to your AI assistant.";
+                reportZip_ = "Сохранено в " + result->folder + ": " + detect::Utf8(result->zip.filename().wstring()) +
+                             ". Откройте его, чтобы увидеть точное содержимое; приложите к обращению или отдайте своему ИИ-ассистенту.";
                 if (host_.revealFile) {
                     host_.revealFile(result->zip);
                 }
             } else {
-                reportZip_ = "Couldn't save the report: " + result->error;
+                reportZip_ = "Не удалось сохранить отчёт: " + result->error;
             }
         };
     } else if (name == "report_reveal") {
@@ -1383,41 +1413,41 @@ void App::Sample(std::string const& state) {
     canInstall_ = gameOk_ && versionOk_;
     ready_ = canInstall_;
     adminNeeded_ = false;
-    rootText_ = gameOk_ ? detect::Utf8(root.wstring()) : "No game folder";
-    chipGame_ = gameOk_ ? "Mass Effect 1 LE" : "Game not found";
-    chipInstalled_ = installed_ ? "Installed 0.1.0" : "Not installed";
-    gameTitle_ = gameOk_ ? "Found" : "Not found";
-    gameText_ = gameOk_ ? "Steam: Mass Effect Legendary Edition" : "Pick the folder on the Welcome page";
-    versionTitle_ = keep.version ? keep.version->ToString() : "Unknown";
-    loaderTitle_ = keep.bink == detect::BinkState::Ours ? "MEVR loader" : "None yet";
+    rootText_ = gameOk_ ? detect::Utf8(root.wstring()) : "Папка игры не выбрана";
+    chipGame_ = gameOk_ ? "Mass Effect 1 LE" : "Игра не найдена";
+    chipInstalled_ = installed_ ? "Установлено 0.1.0" : "Не установлено";
+    gameTitle_ = gameOk_ ? "Найдено" : "Не найдено";
+    gameText_ = gameOk_ ? "Steam: Mass Effect Legendary Edition" : "Выберите папку на странице «Добро пожаловать»";
+    versionTitle_ = keep.version ? keep.version->ToString() : "Неизвестно";
+    loaderTitle_ = keep.bink == detect::BinkState::Ours ? "Загрузчик MEVR" : "Пока нет";
     loaderText_ = gameOk_ ? detect::BinkStateText(keep.bink) : "";
     versionText_ = !gameOk_    ? ""
-        : versionOk_           ? "The version the mod is built for"
-                               : "The mod needs 2.0.0.48602 and stays off on any other. Update the game in Steam or the EA app.";
+        : versionOk_           ? "Версия, под которую собран мод"
+                               : "Моду нужна версия 2.0.0.48602, на любой другой он не включается. Обновите игру в Steam или EA app.";
     firstStartText_ = FirstStartText(installed_, settingsPending_);
     bool const applied = installed_ && settingsApplied_;
     curRes_ = !hasGamerSettings_ ? "-" : applied ? "2824 × 2880" : "2560 × 1440";
-    curWindow_ = !hasGamerSettings_ ? "-" : applied ? "Borderless" : "Windowed or full screen";
-    curHdr_ = !hasGamerSettings_ ? "-" : "Off";
+    curWindow_ = !hasGamerSettings_ ? "-" : applied ? "Без рамки" : "В окне или на весь экран";
+    curHdr_ = !hasGamerSettings_ ? "-" : OnOff(!applied);
     curVsync_ = !hasGamerSettings_ ? "-" : OnOff(!applied);
     curBlur_ = !hasGamerSettings_ ? "-" : OnOff(!applied);
     curGrain_ = !hasGamerSettings_ ? "-" : OnOff(!applied);
     UpdateRepairStatus();
     UpdateHero();
-    uninstallText_ = installed_ ? "41 files removed, 2 put back as they were, 2 settings files returned to your values." : "Nothing is installed.";
+    uninstallText_ = installed_ ? "Удалено: 41 файл. Возвращено как было: 2 файла. Файлов настроек возвращено к вашим значениям: 2." : "Ничего не установлено.";
     memReady_ = state == "content";
-    memText_ = memReady_ ? "Ready: it installs the texture packs below (GPL, from its own GitHub releases)."
-                         : "Installs texture packs (GPL, by the ALOT team). Downloaded from its own GitHub releases when you press Download.";
-    footerText_ = "Mod log: Binaries\\Win64\\Logs\\LE1MEVR.log · loader log: Logs\\MEVRLoader.log";
+    memText_ = memReady_ ? "Готов: он ставит наборы текстур ниже (GPL, из собственных релизов на GitHub)."
+                         : "Ставит наборы текстур (GPL, от команды ALOT). Скачивается из собственных релизов на GitHub по кнопке «Скачать».";
+    footerText_ = "Журнал мода: Binaries\\Win64\\Logs\\LE1MEVR.log · журнал загрузчика: Logs\\MEVRLoader.log";
     UpdatePacks();
     if (state == "content") {
         for (PackView& v : packs_) {
             v.installed = v.id == "alot-le1";
-            v.state = v.installed ? "Installed with this setup." : v.id == "isl-le1" ? "Ready to install: Improved Static Lighting for ME1-363-1-0.7z"
-                                                                                     : "Not downloaded: open its page, download the MEM version, then choose the file.";
+            v.state = v.installed ? "Установлено этим установщиком." : v.id == "isl-le1" ? "Ready to install: Improved Static Lighting for ME1-363-1-0.7z"
+                                                                                     : "Не скачано: откройте его страницу, скачайте версию для MEM и выберите файл.";
             v.file = v.id == "isl-le1" ? "Improved Static Lighting for ME1-363-1-0.7z" : "";
         }
-        requestText_ = "You asked for: Improved Static Lighting for ME1.";
+        requestText_ = "Вы просили: Improved Static Lighting for ME1.";
         voiceInstalled_ = true;
         voiceReady_ = true;
         voiceSmall_ = false;
@@ -1425,28 +1455,28 @@ void App::Sample(std::string const& state) {
         voiceLlm_ = true;
         voiceUpToDate_ = false;
         voiceWarn_ = false;
-        voiceButton_ = "Apply";
-        voiceParts_ = "Speech recognizer runtime, Recognizer model (tiny)";
-        voiceSize_ = std::format("{} to download, {} in the game folder", install::http::SizeText(install::voice::SizesFor({"llm-runtime", "llm-model"}).download),
+        voiceButton_ = "Применить";
+        voiceParts_ = "Среда выполнения распознавателя речи, Модель распознавателя (tiny)";
+        voiceSize_ = std::format("{} на скачивание, {} в папке игры", install::http::SizeText(install::voice::SizesFor({"llm-runtime", "llm-model"}).download),
             install::http::SizeText(install::voice::SizesFor(install::voice::PartsFor({})).disk));
-        voiceState_ = "The speech recognizer is installed and voice orders work. The model tier is waiting: its release (voice-model-1) "
-                      "wasn't published yet when you installed. Apply adds it once it's there.";
+        voiceState_ = "Распознаватель речи установлен, голосовые приказы работают. Уровень модели ждёт: его релиз (voice-model-1) "
+                      "ещё не был опубликован на момент установки. «Применить» добавит его, когда он появится.";
     } else {
         for (PackView& v : packs_) {
             v.installed = false;
             v.file.clear();
-            v.state = "Not downloaded: open its page, download the MEM version, then choose the file.";
+            v.state = "Не скачано: откройте его страницу, скачайте версию для MEM и выберите файл.";
         }
         requestText_.clear();
         voiceInstalled_ = false;
         voiceReady_ = gameOk_;
         voiceUpToDate_ = false;
         voiceWarn_ = false;
-        voiceButton_ = "Install";
+        voiceButton_ = "Установить";
         voiceParts_.clear();
-        voiceSize_ = std::format("{} to download, {} in the game folder", install::http::SizeText(install::voice::SizesFor(install::voice::PartsFor({})).download),
+        voiceSize_ = std::format("{} на скачивание, {} в папке игры", install::http::SizeText(install::voice::SizesFor(install::voice::PartsFor({})).download),
             install::http::SizeText(install::voice::SizesFor(install::voice::PartsFor({})).disk));
-        voiceState_ = gameOk_ ? "Not installed." : "Find the game first (the Welcome page).";
+        voiceState_ = gameOk_ ? "Не установлено." : "Сначала найдите игру (страница «Добро пожаловать»).";
     }
     if (state == "busy") {
         busy_ = true;
@@ -1483,57 +1513,57 @@ void App::Sample(std::string const& state) {
             {"edited Game/ME1/BioGame/Config/BIOEngine.ini (1 values)", false}, {"Done.", false}};
     }
     if (state == "confirm-uninstall") {
-        Confirm("Uninstall the VR mod?",
-            "Removes the mod and its loader, puts back every file and game setting it changed, and deletes your VR settings and calibration.",
-            "Uninstall", true, {});
+        Confirm("Удалить VR-мод?",
+            "Убирает мод и его загрузчик, возвращает каждый изменённый файл и настройку игры и удаляет ваши настройки VR и калибровку.",
+            "Удалить", true, {});
     }
     if (state == "confirm-pack") {
-        Confirm("Install Improved Static Lighting for ME1?",
-            "This changes the game's files for good: Mass Effect Modder rewrites its textures (about 9.7 GB; it can take a long while the first "
-            "time, as it scans the game). Install texture packs after every other content mod: content mods can't go on afterwards, and only a "
-            "full restore or reinstall of the game takes textures out. Close the game first.",
-            "Install for good", true, {});
+        Confirm("Установить Improved Static Lighting for ME1?",
+            "Это навсегда меняет файлы игры: Mass Effect Modder перезаписывает её текстуры (около 9.7 ГБ; первый раз это может занять много "
+            "времени, пока он сканирует игру). Ставьте наборы текстур после всех остальных контентных модов: контентные моды после них уже не "
+            "поставить, а убрать текстуры можно только полным восстановлением или переустановкой игры. Сначала закройте игру.",
+            "Установить навсегда", true, {});
     }
     if (state == "waiting") {
         waiting_ = true;
-        waitText_ = "Changes start once the game has exited.";
+        waitText_ = "Изменения начнутся после выхода из игры.";
     } else {
         waiting_ = false;
     }
     updateEnabled_ = false;
-    updateText_ = "No release page set yet (MEVR-Setup.ini, [Update] repo).";
+    updateText_ = "Страница релизов ещё не задана (MEVR-Setup.ini, [Update] repo).";
     updateAvailable_ = state == "update-available";
     if (updateAvailable_) {
         updateEnabled_ = true;
-        updateText_ = "Version v0.2.0 is out. Download 24 MB. Your settings will be kept.";
+        updateText_ = "Вышла версия v0.2.0. Скачать 24 МБ. Ваши настройки сохранятся.";
     }
     // Report a problem's stand-ins: a crash last session, a gathered preview.
     crashOffer_ = state == "crash";
-    reportRequest_ = state == "report-request" ? "You asked for a report from the game's menu. Look over what goes in, then create it." : "";
+    reportRequest_ = state == "report-request" ? "Вы запросили отчёт из меню игры. Проверьте, что в него войдёт, и создайте его." : "";
     reportSnapshot_ = state == "report-request";
     reportPerf_ = false;
     reportHasZip_ = state == "report-saved";
-    reportZip_ = reportHasZip_ ? "Saved to Desktop: MEVR-report-2026-10-26-0143.zip. Open it to see exactly what's inside; attach it to your issue or "
-                                 "give it to your AI assistant."
+    reportZip_ = reportHasZip_ ? "Сохранено на рабочий стол: MEVR-report-2026-10-26-0143.zip. Откройте его, чтобы увидеть точное содержимое; приложите к обращению или "
+                                 "отдайте своему ИИ-ассистенту."
                                : "";
     reportReady_ = state.rfind("report", 0) == 0;
     reportFiles_.clear();
     if (reportReady_) {
-        reportFiles_ = {{"REPORT.md", "~6.2 KB", "The summary: system, what went wrong, settings changed, a prompt for your AI assistant"},
-            {"logs/LE1MEVR.log", "246.1 KB", "4 redacted"}, {"logs/LE1MEVR.prev.log", "502.1 KB", "6 redacted"},
-            {"logs/MELEVR_Log.txt", "3.0 MB", "its last session only: the first 0.5 MB and the last 2.5 MB of 9.1 MB (the file holds 182.7 MB from every session)"},
-            {"logs/MEVRLoader.log", "1.2 KB", ""}, {"logs/crash-breadcrumbs.txt", "29.4 KB", "written 2026-10-26 00:11"},
-            {"logs/reflect-check.json", "80.9 KB", "12 redacted"}, {"settings/LE1MEVR.ini", "12.7 KB", ""}, {"settings/MELEVR.ini", "9.8 KB", ""},
-            {"settings/MEVR-install.json", "6.0 KB", ""}, {"system/folders.txt", "3.1 KB", "file names and sizes"}};
+        reportFiles_ = {{"REPORT.md", "~6.2 KB", "Сводка: система, что пошло не так, изменённые настройки, запрос для вашего ИИ-ассистента"},
+            {"logs/LE1MEVR.log", "246.1 KB", "4 скрыто"}, {"logs/LE1MEVR.prev.log", "502.1 KB", "6 скрыто"},
+            {"logs/MELEVR_Log.txt", "3.0 MB", "только последний сеанс: первые 0.5 МБ и последние 2.5 МБ из 9.1 МБ (файл хранит 182.7 МБ из всех сеансов)"},
+            {"logs/MEVRLoader.log", "1.2 KB", ""}, {"logs/crash-breadcrumbs.txt", "29.4 KB", "записано 2026-10-26 00:11"},
+            {"logs/reflect-check.json", "80.9 KB", "12 скрыто"}, {"settings/LE1MEVR.ini", "12.7 KB", ""}, {"settings/MELEVR.ini", "9.8 KB", ""},
+            {"settings/MEVR-install.json", "6.0 KB", ""}, {"system/folders.txt", "3.1 KB", "имена и размеры файлов"}};
         if (reportSnapshot_) {
             reportFiles_.push_back({"snapshot/20261026-014210.json", "18.2 KB", ""});
-            reportFiles_.push_back({"snapshot/20261026-014210-left.png", "2.1 MB", "what that eye showed"});
-            reportFiles_.push_back({"snapshot/20261026-014210-right.png", "2.1 MB", "what that eye showed"});
+            reportFiles_.push_back({"snapshot/20261026-014210-left.png", "2.1 MB", "что видел этот глаз"});
+            reportFiles_.push_back({"snapshot/20261026-014210-right.png", "2.1 MB", "что видел этот глаз"});
         }
-        reportRedactions_ = "22 redactions: your Windows user name 4 times, the computer's name 2, your profile folder 16, e-mail addresses 0. "
-                            "They read <user>, <computer>, <profile>, <email> in the zip.";
-        reportHeadline_ = "Crash: 0xC0000005 (access violation) at ntdll.dll+0x1A12D";
-        reportText_ = "12 files, 4.1 MB before compression.";
+        reportRedactions_ = "22 скрытия: имя пользователя Windows 4 раза, имя компьютера 2, папка профиля 16, адреса e-mail 0. "
+                            "В архиве они читаются как <user>, <computer>, <profile>, <email>.";
+        reportHeadline_ = "Падение: 0xC0000005 (нарушение доступа) в ntdll.dll+0x1A12D";
+        reportText_ = "12 файлов, 4.1 МБ до сжатия.";
     }
     Dirty();
 }

@@ -184,17 +184,21 @@ bool Ui::Init(UiSetup const& setup) {
     RegisterDecorators();
 
     // The mockup's fonts (SIL OFL, third_party/fonts, deployed to ASI\fonts): Rajdhani for headings, Titillium Web
-    // for text. Named families and weights, so a SemiBold file is weight 600 whatever its tables say.
+    // for text. Named families and weights, so a SemiBold file is weight 600 whatever its tables say. Those two are
+    // Latin only; Exo 2 (SIL OFL) carries the Cyrillic of the translated menu and is loaded first, as the fallback
+    // face that answers for every character they lack.
     struct Face {
         wchar_t const* file;
         char const* family;
         Rml::Style::FontWeight weight;
+        bool fallback;
     };
     static constexpr Face kFaces[] = {
-        {L"TitilliumWeb-Regular.ttf", "Titillium Web", Rml::Style::FontWeight(400)},
-        {L"TitilliumWeb-SemiBold.ttf", "Titillium Web", Rml::Style::FontWeight(600)},
-        {L"Rajdhani-SemiBold.ttf", "Rajdhani", Rml::Style::FontWeight(600)},
-        {L"Rajdhani-Bold.ttf", "Rajdhani", Rml::Style::FontWeight(700)},
+        {L"Exo2-SemiBold.ttf", "Exo 2", Rml::Style::FontWeight(600), true},
+        {L"TitilliumWeb-Regular.ttf", "Titillium Web", Rml::Style::FontWeight(400), false},
+        {L"TitilliumWeb-SemiBold.ttf", "Titillium Web", Rml::Style::FontWeight(600), false},
+        {L"Rajdhani-SemiBold.ttf", "Rajdhani", Rml::Style::FontWeight(600), false},
+        {L"Rajdhani-Bold.ttf", "Rajdhani", Rml::Style::FontWeight(700), false},
     };
     int loaded = 0;
     for (Face const& face : kFaces) {
@@ -203,7 +207,7 @@ bool Ui::Init(UiSetup const& setup) {
             std::error_code ec;
             std::filesystem::path const file = dir / face.file;
             if (std::filesystem::exists(file, ec) &&
-                Rml::LoadFontFace(Utf8(file), face.family, Rml::Style::FontStyle::Normal, face.weight, loaded == 0)) {
+                Rml::LoadFontFace(Utf8(file), face.family, Rml::Style::FontStyle::Normal, face.weight, face.fallback || loaded == 0)) {
                 found = true;
                 ++loaded;
                 break;

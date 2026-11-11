@@ -66,7 +66,7 @@ std::string FormatValue(Format format, float value) {
     case Format::Percent: return Plain(value, 0, "%");
     case Format::SignedDegrees: return Signed(value, 0, "\xC2\xB0");
     case Format::Degrees: return Plain(value, 0, "\xC2\xB0");
-    case Format::DegreesOrNever: return std::lround(value) <= 0 ? std::string("Never") : Plain(value, 0, "\xC2\xB0");
+    case Format::DegreesOrNever: return std::lround(value) <= 0 ? std::string("Никогда") : Plain(value, 0, "\xC2\xB0");
     case Format::DegreesPerSec: return Plain(value, 0, "\xC2\xB0/s");
     case Format::Fixed1: return Plain(value, 1, "");
     case Format::Fixed2: return Plain(value, 2, "");
@@ -74,13 +74,13 @@ std::string FormatValue(Format format, float value) {
     case Format::SignedFixed3: return Signed(value, 3, "");
     case Format::Times1: return Plain(value, 1, "\xC3\x97");
     case Format::Times2: return Plain(value, 2, "\xC3\x97");
-    case Format::Meters1: return Plain(value, 1, " m");
-    case Format::Meters2: return Plain(value, 2, " m");
-    case Format::SignedMeters2: return Signed(value, 2, " m");
+    case Format::Meters1: return Plain(value, 1, " м");
+    case Format::Meters2: return Plain(value, 2, " м");
+    case Format::SignedMeters2: return Signed(value, 2, " м");
     case Format::Signed0: return Signed(value, 0, "");
-    case Format::Centimeters1: return Plain(value, 1, " cm");
-    case Format::SignedCentimeters1: return Signed(value * 100.0f, 1, " cm");
-    case Format::SignedDecibels: return Signed(value, 0, " dB");
+    case Format::Centimeters1: return Plain(value, 1, " см");
+    case Format::SignedCentimeters1: return Signed(value * 100.0f, 1, " см");
+    case Format::SignedDecibels: return Signed(value, 0, " дБ");
     }
     return Plain(value, 2, "");
 }
@@ -96,9 +96,9 @@ std::vector<Field> const& Schema() {
         {"comparing", Type::Flag, 0, "", 0, 1, F::None, true},
         {"first_run", Type::Flag, 0, "", 0, 1, F::None, true},  // opened by itself on the controller guide (MainMenu's first run)
         // The top bar.
-        {"chip_headset", Type::Text, 0, "Headset not started"},
-        {"chip_controllers", Type::Text, 0, "No controllers"},
-        {"chip_calibrated", Type::Text, 0, "Not calibrated"},
+        {"chip_headset", Type::Text, 0, "Шлем не запущен"},
+        {"chip_controllers", Type::Text, 0, "Нет контроллеров"},
+        {"chip_calibrated", Type::Text, 0, "Не откалибровано"},
         {"calibrated", Type::Flag, 0},
         // Comfort.
         {"turn", Type::Choice, 0, "smooth"},
@@ -195,8 +195,8 @@ std::vector<Field> const& Schema() {
         {"manual_right_pitch", Type::Number, 0, "", -45.0f, 45.0f, F::SignedDegrees},
         {"manual_right_yaw", Type::Number, 0, "", -45.0f, 45.0f, F::SignedDegrees},
         {"manual_right_roll", Type::Number, 0, "", -45.0f, 45.0f, F::SignedDegrees},
-        {"cal_status", Type::Text, 0, "Not calibrated for these controllers yet"},
-        {"cal_action", Type::Text, 0, "Start calibration"},
+        {"cal_status", Type::Text, 0, "Ещё не откалибровано для этих контроллеров"},
+        {"cal_action", Type::Text, 0, "Начать калибровку"},
         {"t_stand", Type::Text, 0, "\xE2\x80\x93"},
         {"t_crouch", Type::Text, 0, "\xE2\x80\x93"},
         {"t_arm", Type::Text, 0, "\xE2\x80\x93"},
@@ -218,9 +218,9 @@ std::vector<Field> const& Schema() {
         {"c_black", Type::Number, 0, "", -0.05f, 0.05f, F::SignedFixed3},
         {"quality", Type::Choice, 0, "performance"},
         {"quality_text", Type::Text, 0, "3072 \xC3\x97 3188"},
-        {"quality_note", Type::Text, 0, "applies after a restart"},
+        {"quality_note", Type::Text, 0, "применится после перезапуска"},
         {"headset_known", Type::Flag, 0},
-        {"headset_text", Type::Text, 0, "Your headset's own eye size, known once VR starts"},
+        {"headset_text", Type::Text, 0, "Собственный размер глаз вашего шлема, известен после запуска VR"},
         {"upscale", Type::Choice, 0, "fsr"},  // FSR 1 by default (2026-11-05): it acts only when the target is below the eye
         {"steamvr_runtime", Type::Flag, 0, "", 0, 1, Format::None, true},
         {"steamvr_smoothing", Type::Choice, 0, "steamvr"},
@@ -288,10 +288,10 @@ std::vector<Field> const& Schema() {
         {"designer_x", Type::Number, 0, "", -900, 900, F::Signed0},
         {"designer_y", Type::Number, 0, "", -900, 900, F::Signed0},
         {"prof_active", Type::Choice, 0, "0"},
-        {"prof0_name", Type::Text, 0, "Default"},
-        {"prof1_name", Type::Text, 0, "Custom 1"},
-        {"prof2_name", Type::Text, 0, "Custom 2"},
-        {"prof3_name", Type::Text, 0, "Custom 3"},
+        {"prof0_name", Type::Text, 0, "По умолчанию"},
+        {"prof1_name", Type::Text, 0, "Свой 1"},
+        {"prof2_name", Type::Text, 0, "Свой 2"},
+        {"prof3_name", Type::Text, 0, "Свой 3"},
         {"prof_msg", Type::Text, 0, ""},
         {"recording", Type::Flag, 0},
         {"diag_msg", Type::Text, 0, ""},
@@ -307,9 +307,9 @@ std::vector<Field> const& Schema() {
         // Status and per-machine texts (2026-10-26).
         {"save_msg", Type::Text, 0, ""},            // the top bar: the settings file couldn't be written
         {"throwables_note", Type::Text, 0, ""},     // grenades and melee set apart in the file
-        {"recenter_key_desc", Type::Text, 0, "R on the keyboard recenters (the right stick's double-click works either way)"},
-        {"classic_desc", Type::Text, 0, "The original MELE-VR settings menu, with expert settings these pages don't have (also: Ctrl + "
-                                        "the menu key)"},
+        {"recenter_key_desc", Type::Text, 0, "R на клавиатуре центрирует вид (двойной щелчок правого стика работает в любом случае)"},
+        {"classic_desc", Type::Text, 0, "Исходное меню настроек MELE-VR, с экспертными настройками, которых нет на этих страницах (также: Ctrl + "
+                                        "клавиша меню)"},
         {"about_build", Type::Text, 0, ""},  // Diagnostics > About: version and commit (AboutBuild)
         // Voice (research/54 "The menu's Voice page"): [Voice] in <GAME>MEVR.ini and the host's recognizer (plugin/Voice).
         {"voice_on", Type::Flag, 1},                                 // [Voice] enabled
@@ -327,11 +327,11 @@ std::vector<Field> const& Schema() {
         {"mic5", Type::Text, 0, ""},
         {"mic6", Type::Text, 0, ""},
         {"mic7", Type::Text, 0, ""},
-        {"mic_default", Type::Text, 0, "Windows' default communications microphone"},
+        {"mic_default", Type::Text, 0, "Микрофон связи Windows по умолчанию"},
         {"mic_missing", Type::Text, 0, ""},                          // [Voice] device when no listed device holds it
         {"mic_note", Type::Text, 0, ""},                             // why there's no list
         {"voice_model", Type::Choice, 0, "tiny"},                    // [Voice] model
-        {"voice_key", Type::Text, 0, "(none)"},                      // [Voice] key by name
+        {"voice_key", Type::Text, 0, "(нет)"},                      // [Voice] key by name
         {"voice_key_wait", Type::Flag, 0},                           // waiting for the key to press
         {"ear_cue", Type::Number, 40, "", 0, 100, F::Percent},       // [Voice] earCueStrength x 100 (the mod's)
         // Thespian mode (research/70): the mod's, live.
@@ -477,12 +477,12 @@ Size FirstStartSize(bool wanted, bool alreadySet, Size current, int recommendedW
 
 std::string HeadsetSizesText(int recommendedWidth, int recommendedHeight) {
     if (recommendedWidth <= 0 || recommendedHeight <= 0) {
-        return "Your headset's own eye size, known once VR starts";
+        return "Собственный размер глаз вашего шлема, известен после запуска VR";
     }
     Size const full = HeadsetSize("headset", recommendedWidth, recommendedHeight);
     Size const s85 = HeadsetSize("headset85", recommendedWidth, recommendedHeight);
     Size const s75 = HeadsetSize("headset75", recommendedWidth, recommendedHeight);
-    return std::format("Headset {} \xC2\xB7 \xC3\x97 0.85: {} \xC2\xB7 \xC3\x97 0.75: {}", SizeText(full.width, full.height),
+    return std::format("Шлем {} \xC2\xB7 \xC3\x97 0,85: {} \xC2\xB7 \xC3\x97 0,75: {}", SizeText(full.width, full.height),
         SizeText(s85.width, s85.height), SizeText(s75.width, s75.height));
 }
 
@@ -607,123 +607,128 @@ std::vector<std::pair<std::string, std::string>> GuideTexts(GuideInput const& in
     // unless it holds the gun (holsters with gripHolds); then [Holsters] powerWheel names the control that is.
     bool const gripIsRb = !(in.holsters && in.gripHolds);
     std::string const power = gripIsRb ? std::string("grip") : Lower(Trim(in.powerWheel));
-    std::string const powersHow = "hold for the power wheel, tap for the power you mapped in it";
+    std::string const powersHow = "удерживайте для колеса способностей, нажмите для выбранной в нём";
     bool const grenadeRight = in.grenades && Lower(Trim(in.grenadeHands)) != "left";
     bool const grenadeLeft = in.grenades && (Lower(Trim(in.grenadeHands)) == "left" || Lower(Trim(in.grenadeHands)) == "both");
     std::string const lt = Lower(Trim(in.leftTrigger));
 
     // ---- The left controller ----
     if (lt == "lt") {
-        put("lt", "Aim", "The game's aim button: steadier, zoomed fire. Aimed fire also comes from holding the gun at your cheek "
-                         "with both hands.");
+        put("lt", "Прицеливание", "Кнопка прицела игры: устойчивее и с зумом. Прицельная стрельба получается и тогда, когда вы "
+                                   "держите оружие у щеки обеими руками.");
     } else if (lt == "lb" && in.squad && Lower(Trim(in.squadStyle)) == "custom") {
-        put("lt", "Squad weapons", "Pull for the squad weapon menu at your hand: the left stick picks a squadmate, a flick of the "
-                                   "right stick a weapon; let go to give it, B cancels.");
+        put("lt", "Оружие отряда", "Потяните, чтобы открыть у руки меню оружия отряда: левый стик выбирает члена отряда, движение "
+                                    "правого стика — оружие; отпустите, чтобы выдать его, B отменяет.");
     } else if (lt == "lb" && in.squad) {
-        put("lt", "Weapon wheel", "Pull to open the weapon wheel at your hand. Point at a squadmate to arm them; the right stick "
-                                  "picks a weapon; let go to choose it.");
+        put("lt", "Колесо оружия", "Потяните, чтобы открыть колесо оружия у руки. Укажите на члена отряда, чтобы вооружить его; "
+                                    "правый стик выбирает оружие; отпустите, чтобы выбрать.");
     } else if (lt == "lb") {
-        put("lt", "Weapon wheel", "Hold for the game's weapon wheel; tap to switch to your other weapon.");
+        put("lt", "Колесо оружия", "Удерживайте для колеса оружия игры; нажмите, чтобы сменить оружие на второе.");
     } else {
-        put("lt", "Nothing", "Off (Controls > Left trigger). Aimed fire comes from holding the gun at your cheek with both hands.");
+        put("lt", "Ничего", "Выкл. (Управление > Левый курок). Прицельная стрельба получается, если держать оружие у щеки "
+                             "обеими руками.");
     }
-    put("lgrip", in.vent ? "Two-handed grip, vent" : "Two-handed grip",
-        std::string("With your hand on the gun: hold it with both hands; at your cheek that is aimed fire.") +
-            (in.vent ? " On a hot gun, squeeze just ahead of your right hand and rack it back to vent the heat." : "") +
-            (grenadeLeft ? " At the left of your chest: take a grenade." : ""));
-    std::string const toward = in.walk == "hand" ? "where your left hand points" : in.walk == "body" ? "where Shepard faces"
-                                                                                                   : "where you look";
-    put("lstick", "Walk, click: crouch",
-        "Walk toward " + toward + ". Click to crouch or stand" + (in.seated ? ". Seated play: lowering your head never crouches Shepard."
-            : in.physicalCrouch ? "; or just crouch for real." : "."));
+    put("lgrip", in.vent ? "Двуручный хват, сброс" : "Двуручный хват",
+        std::string("Рука на оружии: держите его обеими руками; у щеки это прицельная стрельба.") +
+            (in.vent ? " На раскалённом оружии сожмите захват чуть впереди правой руки и резко потяните назад, чтобы сбросить тепло." : "") +
+            (grenadeLeft ? " Слева на груди: взять гранату." : ""));
+    std::string const toward = in.walk == "hand" ? "туда, куда указывает левая рука" : in.walk == "body" ? "туда, куда смотрит Шепард"
+                                                                                                        : "туда, куда вы смотрите";
+    put("lstick", "Идти, нажатие: присесть",
+        "Идти " + toward + ". Нажмите, чтобы присесть или встать" + (in.seated ? ". При игре сидя наклон головы никогда не приседает Шепарда."
+            : in.physicalCrouch ? "; или просто присядьте по-настоящему." : "."));
     if (in.handWheel) {
-        put("x", "Power wheel", std::string("Hold for your powers around your left hand: move the hand toward one and let go of X to "
-                                            "equip it (a tap keeps the wheel open).") +
-                                    " X is only the power wheel on foot, for taps and holds.");
+        put("x", "Колесо способностей", std::string("Удерживайте, чтобы открыть способности вокруг левой руки: подведите руку к "
+                                                     "нужной и отпустите X, чтобы взять её (нажатие оставляет колесо открытым).") +
+                                            " X — это колесо способностей только пешком, для нажатий и удержаний.");
     } else if (power == "x") {
-        put("x", "Powers", "Powers: " + powersHow + ".");
+        put("x", "Способности", "Способности: " + powersHow + ".");
     } else if (in.grenadeButton) {
-        put("x", "Grenade", "Throw a grenade the game's way.");
+        put("x", "Граната", "Бросить гранату способом игры.");
     } else {
-        put("x", "Nothing", "Nothing on foot: take grenades from your chest.");
+        put("x", "Ничего", "Пешком ничего: гранаты берите с груди.");
     }
     if (power == "y") {
-        put("y", "Powers", "Powers: " + powersHow + ". Medi-gel is in the power wheel.");
+        put("y", "Способности", "Способности: " + powersHow + ". Меди-гель — в колесе способностей.");
     } else {
-        put("y", "Medi-gel", "Use medi-gel: heals you and your squad.");
+        put("y", "Меди-гель", "Использовать меди-гель: лечит вас и отряд.");
     }
-    put("menu", "Game menu", "The game's pause menu, on controllers that send this button. The Game menu button at the top of "
-                             "this menu always opens it.");
+    put("menu", "Меню игры", "Меню паузы игры, на контроллерах, которые посылают эту кнопку. Кнопка «Меню игры» вверху этого "
+                              "меню открывает его всегда.");
 
     // ---- The right controller ----
-    put("rt", "Fire", "Fire the gun in your hand.");
+    put("rt", "Огонь", "Стрелять из оружия в руке.");
     if (!in.holsters) {
-        put("rgrip", "Powers", "Powers: " + powersHow + ".");
+        put("rgrip", "Способности", "Способности: " + powersHow + ".");
     } else if (!in.gripHolds) {
-        put("rgrip", "Draw, powers", "At a holster on your body: squeeze to draw that weapon; squeeze and let go there to put it "
-                                     "away. Anywhere else, powers: " + powersHow + ".");
+        put("rgrip", "Достать, способности", "У кобуры на теле: сожмите, чтобы достать это оружие; сожмите и отпустите там, чтобы "
+                                              "убрать. В любом другом месте — способности: " + powersHow + ".");
     } else {
-        put("rgrip", "Draw and holster", "Squeeze at a holster on your body to draw that weapon and keep squeezing to hold "
-                                              "it. Let go at its holster to put it away; anywhere else it goes back by itself.");
+        put("rgrip", "Достать и убрать", "Сожмите у кобуры на теле, чтобы достать оружие, и держите захват, чтобы удерживать "
+                                          "его. Отпустите у его кобуры, чтобы убрать; в любом другом месте оно вернётся само.");
     }
-    std::string const turnHow = in.turn == "snap" ? "Turn in steps (Comfort > Turn style)." : "Turn (Comfort > Turn style).";
+    std::string const turnHow = in.turn == "snap" ? "Поворот шагами (Комфорт > Способ поворота)." : "Поворот (Комфорт > Способ поворота).";
     if (power == "r3") {
-        put("rstick", "Turn, hold: powers", turnHow + " Hold the click: the game's power wheel, steered with this stick; "
-                                            "let go to close it. Double-click: recenter the view.");
+        put("rstick", "Поворот, удержание", turnHow + " Удерживайте нажатие: колесо способностей игры, управляется "
+                                                                    "этим стиком; отпустите, чтобы закрыть. Двойной щелчок: "
+                                                                    "центрировать вид.");
     } else {
-        put("rstick", "Turn", turnHow + " Double-click the stick to recenter the view.");
+        put("rstick", "Поворот", turnHow + " Двойной щелчок стика центрирует вид.");
     }
-    put("a", "Use, hold: sprint", "Use what you look at: doors, consoles, people, loot. Hold to sprint.");
+    put("a", "Действие, бег", "Взаимодействовать с тем, на что смотрите: двери, консоли, люди, добыча. Удерживайте "
+                                          "для бега.");
     if (power == "b") {
-        put("b", "Powers", "Powers: " + powersHow + ".");
+        put("b", "Способности", "Способности: " + powersHow + ".");
     } else if (in.meleeButton) {
-        put("b", "Melee", "Strike with your weapon.");
+        put("b", "Ближний бой", "Ударьте оружием.");
     } else {
-        put("b", "Back (menus)", "Nothing on foot: melee is a real strike (below). In menus it backs out.");
+        put("b", "Назад (меню)", "Пешком ничего: ближний бой — настоящий удар (ниже). В меню — назад.");
     }
 
     // ---- Gestures ----
-    std::string const grenadeHand = grenadeRight && grenadeLeft ? "Either hand" : grenadeLeft ? "Left hand" : "Right hand";
-    out.emplace_back("guide_grenade", in.grenades ? grenadeHand + " to the left of your chest, squeeze the grip to take a "
-                                                    "grenade, then throw: let go mid-swing. Let go slowly to put it back."
-                                                  : std::string("Off (Controls > Physical grenades and melee)."));
-    out.emplace_back("guide_melee", in.melee ? std::string("Strike fast at an enemy within reach, with either hand, about once a "
-                                                           "second.") + (in.meleeFist ? " With your weapon away, punch with your "
-                                                                                        "right fist: squeeze the grip and the trigger."
-                                                                                      : "")
-                                             : std::string("Off (Controls > Physical grenades and melee)."));
+    std::string const grenadeHand = grenadeRight && grenadeLeft ? "Любой рукой" : grenadeLeft ? "Левой рукой" : "Правой рукой";
+    out.emplace_back("guide_grenade", in.grenades ? grenadeHand + " слева на груди сожмите захват, чтобы взять гранату, затем "
+                                                    "бросьте: отпустите на замахе. Отпускайте медленно, чтобы вернуть её."
+                                                  : std::string("Выкл. (Управление > Физические гранаты и ближний бой)."));
+    out.emplace_back("guide_melee", in.melee ? std::string("Резко ударьте врага в пределах досягаемости любой рукой, примерно раз "
+                                                          "в секунду.") + (in.meleeFist ? " Без оружия бейте правым кулаком: "
+                                                                                          "сожмите захват и курок."
+                                                                                        : "")
+                                             : std::string("Выкл. (Управление > Физические гранаты и ближний бой)."));
 
     // ---- Powers (research/55): the wheel at the left hand, the lock and the push, the self-cast gestures ----
-    std::string const gameWheel = power == "r3" ? "hold the right stick click for the game's power wheel"
-                                : power == "grip" ? "hold the right grip for the game's power wheel"
-                                : power == "none" || power.empty() ? "the game's power wheel isn't on a button (Controls)"
-                                                                   : "hold " + Upper(power) + " for the game's power wheel";
-    out.emplace_back("guide_pick", in.handWheel ? "Hold X: your powers around your left hand. Move the hand toward one and let go of "
-                                                  "X to equip it. A card then shows how to cast it. No power, the last tile, puts "
-                                                  "them away."
-                                                : "The power wheel at your hand is off ([PowerWheel] on): " + gameWheel + ".");
+    std::string const gameWheel = power == "r3" ? "удерживайте нажатие правого стика для колеса способностей игры"
+                                : power == "grip" ? "удерживайте правый захват для колеса способностей игры"
+                                : power == "none" || power.empty() ? "колесо способностей игры не назначено на кнопку (Управление)"
+                                                                   : "удерживайте " + Upper(power) + " для колеса способностей игры";
+    out.emplace_back("guide_pick", in.handWheel ? "Удерживайте X: способности вокруг левой руки. Подведите руку к нужной и "
+                                                  "отпустите X, чтобы взять её. Затем карточка покажет, как её применить. "
+                                                  "Пустая ячейка в конце убирает их."
+                                                : "Колесо способностей у руки выключено ([PowerWheel] on): " + gameWheel + ".");
     out.emplace_back("guide_cast", in.handWheel && in.castLock
-                                       ? std::string("Raise your left hand at an enemy: orange brackets lock on (or on the one you face). "
-                                                     "Push your open hand toward it to cast what you equipped. Powers that land somewhere "
-                                                     "go where your hand points. Your right hand can keep the gun.")
-                                       : "Cast from the game's power wheel: " + gameWheel + ".");
-    out.emplace_back("guide_self", !(in.handWheel && in.castLock) ? std::string("From the game's power wheel, like the others.")
-                                   : in.selfGestures ? std::string("Powers on yourself are gestures of the open left hand: flat on "
-                                                                   "your chest, held (Barrier, Shield Boost, Immunity, Adrenaline "
-                                                                   "Burst); slapped onto the gun (Marksman, Overkill, Carnage, "
-                                                                   "Assassination: each on its own gun); raised above your head, "
-                                                                   "held (Unity). The glowing target shows when it's ready.")
-                                                     : std::string("Pushed forward like the others."));
+                                       ? std::string("Поднимите левую руку на врага: оранжевые скобки захватывают его (или того, на "
+                                                     "кого вы смотрите). Толкните открытую руку к нему, чтобы применить взятую "
+                                                     "способность. Способности, действующие на месте, летят туда, куда указывает "
+                                                     "рука. Правая рука может держать оружие.")
+                                       : "Применяйте из колеса способностей игры: " + gameWheel + ".");
+    out.emplace_back("guide_self", !(in.handWheel && in.castLock) ? std::string("Из колеса способностей игры, как и остальные.")
+                                   : in.selfGestures ? std::string("Способности на себя — жесты открытой левой рукой: прижата к "
+                                                                   "груди и удерживается (Барьер, Усиление щита, Иммунитет, "
+                                                                   "Выброс адреналина); хлопок по оружию (Меткий стрелок, "
+                                                                   "Избыточный урон, Резня, Убийство: каждая на своём оружии); "
+                                                                   "поднята над головой и удерживается (Единство). Светящаяся "
+                                                                   "цель показывает, когда можно применить.")
+                                                     : std::string("Толкните вперёд, как и остальные."));
     return out;
 }
 
 std::string AboutBuild(std::string_view version, std::string_view commit, bool development) {
-    std::string text = "MEVR " + (version.empty() ? std::string("(no version)") : std::string(version));
+    std::string text = "MEVR " + (version.empty() ? std::string("(без версии)") : std::string(version));
     if (!commit.empty() && commit != "unknown") {
-        text += " \xC2\xB7 commit " + std::string(commit);
+        text += " \xC2\xB7 коммит " + std::string(commit);
     }
     if (development) {
-        text += " \xC2\xB7 development build";
+        text += " \xC2\xB7 отладочная сборка";
     }
     return text;
 }
@@ -765,23 +770,23 @@ float VoiceMeterStep(float shown, float target, float dtS, float fallPerS) {
 
 std::string VoiceStatusText(VoiceStatusInput const& in) {
     if (in.restarting) {
-        return "Restarting the recognizer with the new settings\xE2\x80\xA6";
+        return "Перезапускаю распознаватель с новыми настройками\xE2\x80\xA6";
     }
     if (!in.enabled) {
-        return "Voice orders are off.";
+        return "Голосовые приказы выключены.";
     }
     switch (in.status) {
     case 1:
-        return "Loading the recognizer\xE2\x80\xA6";
+        return "Загрузка распознавателя\xE2\x80\xA6";
     case 2: {
-        std::string text = in.listening ? "Listening" : "Ready";
+        std::string text = in.listening ? "Слушаю" : "Готов";
         if (!in.device.empty()) {
-            text += " \xC2\xB7 microphone: " + in.device;
+            text += " \xC2\xB7 микрофон: " + in.device;
         } else {
-            text += " \xC2\xB7 no microphone opened";
+            text += " \xC2\xB7 микрофон не открыт";
         }
         if (!in.model.empty()) {
-            text += " \xC2\xB7 " + in.model + " model";
+            text += " \xC2\xB7 модель " + in.model;
         }
         if (!in.error.empty()) {
             text += " \xC2\xB7 " + in.error;
@@ -789,14 +794,14 @@ std::string VoiceStatusText(VoiceStatusInput const& in) {
         return text;
     }
     case 3:
-        return "The recognizer failed: " + (in.error.empty() ? std::string("see LE1MEVR.log") : in.error);
+        return "Распознаватель не работает: " + (in.error.empty() ? std::string("см. LE1MEVR.log") : in.error);
     default:
         break;
     }
     if (in.error.find("MEVR-Voice.dll") != std::string::npos || in.error.find("models") != std::string::npos) {
-        return "Not installed: add Voice orders in Display > Optional content (" + in.error + ")";
+        return "Не установлено: добавьте голосовые приказы в «Экран > Дополнительное содержимое» (" + in.error + ")";
     }
-    return "Off" + (in.error.empty() ? std::string(".") : ": " + in.error);
+    return "Выкл." + (in.error.empty() ? std::string("") : ": " + in.error);
 }
 
 int VoiceKeyFromPress(int vk, int menuKey) {

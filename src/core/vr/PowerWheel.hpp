@@ -419,7 +419,7 @@ struct CoachText {
     char const* line2;
 };
 CoachText CoachLines(Coach coach);
-inline constexpr char kControlsCoach[] = "X: power wheel. Grenades: either hand at your left chest, grip, throw.";
+inline constexpr char kControlsCoach[] = "X: колесо способностей. Гранаты: любая рука к левой стороне груди, хват, бросок.";
 char const* Name(Coach coach);
 inline constexpr float kCoachS = 8.0f;
 

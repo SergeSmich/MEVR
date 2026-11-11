@@ -151,13 +151,13 @@ bool TonemapActive(Hdr const& h) {
 
 char const* Label(Profile p) {
     switch (p) {
-    case Profile::Auto: return "Automatic";
-    case Profile::Neutral: return "Neutral";
-    case Profile::Quest: return "Quest streamed";
-    case Profile::Vivid: return "Vivid";
-    case Profile::Custom: return "Custom";
+    case Profile::Auto: return "Авто";
+    case Profile::Neutral: return "Нейтрально";
+    case Profile::Quest: return "Quest (поток)";
+    case Profile::Vivid: return "Насыщенно";
+    case Profile::Custom: return "Свои";
     }
-    return "Automatic";
+    return "Авто";
 }
 
 std::optional<Profile> ParseProfile(std::string_view text) {
@@ -207,50 +207,61 @@ Detection Detect(std::string_view runtimeName, std::string_view systemName) {
         auto const colon = systemName.rfind(':');
         tracking = colon == std::string_view::npos ? std::string_view{} : Trim(systemName.substr(colon + 1));
     }
-    auto streamed = [&](std::string why) {
+    auto streamed = [&](std::string why, std::string whyRu) {
         d.display = Display::QuestStreamed;
         d.automatic = Profile::Quest;
         d.why = std::move(why);
+        d.whyRu = std::move(whyRu);
         return d;
     };
     if (Contains(systemName, "playstation_vr2") || Contains(systemName, "PlayStation VR2") ||
         Contains(systemName, "PS VR2") || Contains(systemName, "PSVR2")) {
         d.display = Display::Oled;
         d.why = "PS VR2 (OLED): neutral";
+        d.whyRu = "PS VR2 (OLED): нейтрально";
         return d;
     }
     if (Contains(systemName, "quest")) {
-        return streamed(std::string("a Quest (") + std::string(systemName) + "): streamed LCD");
+        return streamed(std::string("a Quest (") + std::string(systemName) + "): streamed LCD",
+            std::string("Quest (") + std::string(systemName) + "): потоковый LCD");
     }
     if (Contains(runtimeName, "VirtualDesktop")) {
-        return streamed("Virtual Desktop's runtime (a streamed standalone headset)");
+        return streamed("Virtual Desktop's runtime (a streamed standalone headset)",
+            "среда Virtual Desktop (потоковый автономный шлем)");
     }
     if (!tracking.empty()) {
         std::string const t = Lower(tracking);
         if (t == "oculus") {
-            return streamed("a Meta headset through SteamVR (Link, Air Link, Virtual Desktop or ALVR): streamed LCD");
+            return streamed("a Meta headset through SteamVR (Link, Air Link, Virtual Desktop or ALVR): streamed LCD",
+                "шлем Meta через SteamVR (Link, Air Link, Virtual Desktop или ALVR): потоковый LCD");
         }
         if (t == "vrlink" || t.find("steamlink") != std::string::npos) {
-            return streamed("Steam Link (a streamed Quest): streamed LCD");
+            return streamed("Steam Link (a streamed Quest): streamed LCD", "Steam Link (потоковый Quest): потоковый LCD");
         }
         if (t.find("virtualdesktop") != std::string::npos || t.find("alvr") != std::string::npos) {
-            return streamed("a streamed headset through SteamVR (" + std::string(tracking) + ")");
+            return streamed("a streamed headset through SteamVR (" + std::string(tracking) + ")",
+                "потоковый шлем через SteamVR (" + std::string(tracking) + ")");
         }
         if (t == "lighthouse" || t == "holographic" || t == "aapvr") {
             d.display = Display::Wired;
             d.why = "a PC headset through SteamVR (" + std::string(tracking) + "): neutral";
+            d.whyRu = "ПК-шлем через SteamVR (" + std::string(tracking) + "): нейтрально";
             return d;
         }
         d.why = "an unknown SteamVR headset (" + std::string(tracking) + "): neutral";
+        d.whyRu = "неизвестный шлем SteamVR (" + std::string(tracking) + "): нейтрально";
         return d;
     }
     if (Contains(systemName, "rift")) {
         d.display = Display::Wired;
         d.why = "a Rift (not streamed): neutral";
+        d.whyRu = "Rift (не потоковый): нейтрально";
         return d;
     }
     d.why = systemName.empty() ? std::string("headset not known yet: neutral")
                                : "unknown headset (" + std::string(systemName) + "): neutral";
+    d.whyRu = systemName.empty() ? std::string("шлем пока неизвестен: нейтрально")
+                                 : "неизвестный шлем (" + std::string(systemName) + "): нейтрально";
     return d;
 }
 

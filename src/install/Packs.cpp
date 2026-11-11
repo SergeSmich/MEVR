@@ -303,7 +303,7 @@ std::string MflFor(std::vector<fs::path> const& memFiles) {
 }
 
 bool TexturesMarked(fs::path const& gameRoot) {
-    fs::path const file = gameRoot / L"Game" / L"ME1" / L"BioGame" / L"CookedPCConsole" / L"SFXTest.pcc";
+    fs::path const file = Layout{gameRoot}.Full("Game/ME1/BioGame/CookedPCConsole/SFXTest.pcc");
     std::ifstream in(file, std::ios::binary | std::ios::ate);
     if (!in) {
         return false;

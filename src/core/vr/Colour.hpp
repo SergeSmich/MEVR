@@ -73,6 +73,7 @@ struct Detection {
     Display display = Display::Unknown;
     Profile automatic = Profile::Neutral;  // what Auto means for it
     std::string why;                       // for the log and the menu
+    std::string whyRu;                     // the menu's (the log and the test request keep why, in English)
 };
 // From xrGetInstanceProperties' runtimeName and xrGetSystemProperties' systemName. SteamVR names the system
 // "SteamVR/OpenXR : <tracking system>": playstation_vr2, oculus (a Meta headset through Link, Virtual Desktop's

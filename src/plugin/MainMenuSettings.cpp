@@ -330,8 +330,8 @@ void Settings::Read(menu::Values& v) {
         bool const melee = ini.Num("Throwables", "melee", 1.0f) != 0.0f;
         flag("throwables", grenades && melee);
         v.texts["throwables_note"] = grenades == melee ? std::string()
-                                   : grenades           ? std::string("Grenades on, melee off (set in the file): switching sets both")
-                                                        : std::string("Melee on, grenades off (set in the file): switching sets both");
+                                   : grenades           ? std::string("Гранаты вкл., ближний бой выкл. (задано в файле): переключатель меняет оба")
+                                                        : std::string("Ближний бой вкл., гранаты выкл. (задано в файле): переключатель меняет оба");
     }
     v.numbers["recoil_buzz"] = std::round(std::clamp(ini.Num("Hands", "recoilHaptic", 0.5f), 0.0f, 1.0f) * 100.0f);
     flag("aim_assist", ini.Num("Hands", "aimAssist", 0.0f) != 0.0f);
@@ -391,20 +391,20 @@ void Settings::Read(menu::Values& v) {
     }
     flag("calibrated", cal.calibrated);
     std::string const controllers = ms::ControllersLabel(cal.device);
-    v.texts["cal_status"] = cal.running      ? std::format("Calibrating now (step: {})", cal.step)
-                          : cal.calibrated   ? std::format("Calibrated {} \xC2\xB7 {}", cal.when, controllers)
-                          : controllers.empty() ? std::string("The controllers aren't known yet: calibrate once they're tracked")
-                                                : std::format("Not calibrated for {} yet: the guns follow the controller's aim pose", controllers);
-    v.texts["cal_action"] = cal.calibrated ? "Calibrate again" : "Start calibration";
+    v.texts["cal_status"] = cal.running      ? std::format("Калибровка (шаг: {})", cal.step)
+                          : cal.calibrated   ? std::format("Откалибровано {} \xC2\xB7 {}", cal.when, controllers)
+                          : controllers.empty() ? std::string("Контроллеры ещё не известны: откалибруйте, когда они начнут отслеживаться")
+                                                : std::format("Ещё не откалибровано для {}: оружие следует позе прицеливания контроллера", controllers);
+    v.texts["cal_action"] = cal.calibrated ? "Калибровать снова" : "Начать калибровку";
     v.texts["t_stand"] = Fixed(cal.standEyeM, 2);
-    v.texts["t_crouch"] = cal.seated ? "Off" : Fixed(cal.crouchEyeM, 2);
+    v.texts["t_crouch"] = cal.seated ? "Выкл." : Fixed(cal.crouchEyeM, 2);
     v.texts["t_arm"] = Fixed(ini.Text("Arms", "armLengthM", ""), 2);
-    v.texts["t_eye"] = cal.eye == "left" ? "Left" : cal.eye == "right" ? "Right" : "\xE2\x80\x93";
+    v.texts["t_eye"] = cal.eye == "left" ? "Левый" : cal.eye == "right" ? "Правый" : "\xE2\x80\x93";
     v.texts["t_pistol"] = Fixed(cal.pistolSpreadDeg, 1);
     v.texts["t_rifle"] = Fixed(cal.rifleSpreadDeg, 1);
     v.texts["measure_msg"] = measureMsg_;
     std::string const align = MELEVR::MevrBridge::CameraAlignResult();
-    v.texts["align_msg"] = MELEVR::MevrBridge::CameraAlignBusy() ? std::string("Armed: stand naturally and pull the left trigger") : align;
+    v.texts["align_msg"] = MELEVR::MevrBridge::CameraAlignBusy() ? std::string("Готово: встаньте естественно и нажмите левый курок") : align;
     // Display.
     colour::MenuState const colour = colour::GetMenuState();
     flag("steamvr_runtime", Lower(colour.runtime).find("steamvr") != std::string::npos);
@@ -415,18 +415,18 @@ void Settings::Read(menu::Values& v) {
     switch (colour.chosen) {
     case cv::Profile::Auto:
         v.texts["profile_info"] = colour.effective == cv::Profile::Quest
-            ? std::format("Detected {}: its profile deepens the mid-tones and lifts saturation, offsetting the flat look of the "
-                          "streamed picture.", headset.empty() ? std::string("a streamed Quest") : headset)
-            : std::format("Detected {}: no correction, the game's colours exactly as rendered.",
-                  headset.empty() ? std::string("no headset yet") : headset);
+            ? std::format("Обнаружено {}: его профиль углубляет средние тона и повышает насыщенность, компенсируя плоский вид "
+                          "транслируемой картинки.", headset.empty() ? std::string("транслируемый Quest") : headset)
+            : std::format("Обнаружено {}: без коррекции, цвета игры точно как отрисованы.",
+                  headset.empty() ? std::string("шлема пока нет") : headset);
         break;
-    case cv::Profile::Neutral: v.texts["profile_info"] = "No correction: the game's colours exactly as rendered. Right for OLED headsets such as PS VR2."; break;
-    case cv::Profile::Vivid: v.texts["profile_info"] = "Stronger contrast and colour than the headset profile."; break;
-    case cv::Profile::Quest: v.texts["profile_info"] = "The streamed-Quest profile (chosen in the settings file)."; break;
-    case cv::Profile::Custom: v.texts["profile_info"] = "Your own values, saved for this headset. Moving a slider makes them yours."; break;
+    case cv::Profile::Neutral: v.texts["profile_info"] = "Без коррекции: цвета игры точно как отрисованы. Подходит для OLED-шлемов, таких как PS VR2."; break;
+    case cv::Profile::Vivid: v.texts["profile_info"] = "Контраст и цвет сильнее, чем в профиле шлема."; break;
+    case cv::Profile::Quest: v.texts["profile_info"] = "Профиль транслируемого Quest (выбран в файле настроек)."; break;
+    case cv::Profile::Custom: v.texts["profile_info"] = "Ваши значения, сохранённые для этого шлема. Сдвиньте ползунок, и они станут вашими."; break;
     }
     if (colour.compareInFile) {
-        v.texts["profile_info"] += " ([Colour] compare = 1 in the file: shown uncorrected.)";
+        v.texts["profile_info"] += " ([Colour] compare = 1 в файле: показано без коррекции.)";
     }
     cv::Settings const shown = colourDirty_ ? colour_ : colour.settings;
     if (!colourDirty_) {
@@ -444,8 +444,8 @@ void Settings::Read(menu::Values& v) {
     int const recommendedH = static_cast<int>(resolution.recommendedEyeHeight);
     v.texts["quality"] = ms::ResolutionChoice(c.sfr2ResX, c.sfr2ResY, recommendedW, recommendedH);
     v.texts["quality_text"] = ms::SizeText(c.sfr2ResX, c.sfr2ResY);
-    v.texts["quality_note"] = noSave_ ? "not saved: the VR settings were reset this session (Advanced > Profiles > Save keeps it)"
-                                      : "applies after a restart";
+    v.texts["quality_note"] = noSave_ ? "не сохранено: настройки VR сброшены в этой сессии (Дополнительно > Профили > Сохранить сохранит их)"
+                                      : "применится после перезапуска";
     flag("headset_known", recommendedW > 0 && recommendedH > 0);
     v.texts["headset_text"] = ms::HeadsetSizesText(recommendedW, recommendedH);
     v.texts["upscale"] = ms::UpscaleChoice(ini.Text("Upscale", "method", "fsr"));
@@ -487,9 +487,9 @@ void Settings::Read(menu::Values& v) {
     flag("scope_grade", ini.Num("Sights", "scopeCapturePost", 1.0f) != 0.0f);
     // Advanced: Halcyon's.
     flag("recenter_key", c.recenterKeyEnabled);
-    v.texts["recenter_key_desc"] = std::format("{} on the keyboard recenters, with the game window in front (the right stick's "
-                                               "double-click works either way)", KeyName(c.recenterKey));
-    v.texts["classic_desc"] = std::format("The original MELE-VR settings menu, with expert settings these pages don't have (also: "
+    v.texts["recenter_key_desc"] = std::format("{} на клавиатуре центрирует вид, когда окно игры на переднем плане (двойной щелчок правого стика "
+                                               "работает в любом случае)", KeyName(c.recenterKey));
+    v.texts["classic_desc"] = std::format("Исходное меню настроек MELE-VR, с экспертными настройками, которых нет на этих страницах (также: "
                                           "Ctrl + {})", KeyName(c.menuKey));
     v.numbers["look_speed"] = c.lookSensitivity;
     v.numbers["look_smooth"] = c.headLookSmoothing;
@@ -530,7 +530,7 @@ void Settings::Read(menu::Values& v) {
     flag("reset_armed", resetArmedMs_ != 0);
     v.texts["diag_msg"] = diagMsg_;
     perf::Status const p = perf::GetStatus();
-    v.texts["perf_msg"] = p.pending ? std::format("Measuring: {:.0f} s of 20", p.seconds) : perfMsg_;
+    v.texts["perf_msg"] = p.pending ? std::format("Измеряю: {:.0f} с из 20", p.seconds) : perfMsg_;
     v.texts["content_installed"] = setup_request::InstalledPacksText();
     v.texts["content_msg"] = contentMsg_;
     // Report a problem (research/33 section 8): the last request's outcome, and the offer after a crash.
@@ -538,10 +538,10 @@ void Settings::Read(menu::Values& v) {
     v.texts["report_msg"] = reportStatus.empty() ? reportMsg_ : reportStatus;
     flag("crash_offer", report_request::CrashOffer());
     // The top bar.
-    v.texts["chip_headset"] = headset.empty() ? std::string("Headset not started") : headset;
-    v.texts["chip_controllers"] = controllers.empty() ? std::string("No controllers yet") : controllers;
-    v.texts["chip_calibrated"] = cal.calibrated ? "Calibrated" : "Not calibrated";
-    v.texts["save_msg"] = saveFailed_ ? "Can't save settings: the game's ASI folder is read-only" : "";
+    v.texts["chip_headset"] = headset.empty() ? std::string("Шлем не запущен") : headset;
+    v.texts["chip_controllers"] = controllers.empty() ? std::string("Контроллеров пока нет") : controllers;
+    v.texts["chip_calibrated"] = cal.calibrated ? "Откалибровано" : "Не откалибровано";
+    v.texts["save_msg"] = saveFailed_ ? "Не удаётся сохранить настройки: папка ASI игры только для чтения" : "";
     // Diagnostics > About: what a report needs (the log's attach line says the same).
 #if defined(MEVR_MONOLITHIC)
     v.texts["about_build"] = ms::AboutBuild(MEVR_VERSION, MEVR_GIT_COMMIT, false);
@@ -608,12 +608,12 @@ void Settings::ReadVoice(menu::Values& v, bool enabled, std::string const& model
     v.texts["mic"] = index == -1 ? "default" : index >= 0 && index < count ? std::to_string(index) : "missing";
     v.texts["mic_missing"] = index == -2 && view.listed ? device : std::string();
     v.texts["mic_default"] = view.defaultDevice >= 0 && view.defaultDevice < static_cast<int>(view.devices.size())
-                                 ? "Windows' default communications microphone: " + view.devices[static_cast<std::size_t>(view.defaultDevice)]
-                                 : std::string("Windows' default communications microphone");
-    v.texts["mic_note"] = view.listed ? (view.devices.empty() ? std::string("No microphone found: is the headset connected?") : std::string())
-                                      : view.listNote.empty() ? std::string("Listing the microphones\xE2\x80\xA6") : view.listNote;
+                                 ? "Микрофон связи Windows по умолчанию: " + view.devices[static_cast<std::size_t>(view.defaultDevice)]
+                                 : std::string("Микрофон связи Windows по умолчанию");
+    v.texts["mic_note"] = view.listed ? (view.devices.empty() ? std::string("Микрофон не найден: шлем подключён?") : std::string())
+                                      : view.listNote.empty() ? std::string("Ищу микрофоны\xE2\x80\xA6") : view.listNote;
     v.numbers["voice_key_wait"] = keyWaitMs_ != 0 ? 1.0f : 0.0f;
-    v.texts["voice_key"] = keyWaitMs_ != 0 ? std::string("Press a key\xE2\x80\xA6") : view.key != 0 ? KeyName(view.key) : std::string("None");
+    v.texts["voice_key"] = keyWaitMs_ != 0 ? std::string("Нажмите клавишу\xE2\x80\xA6") : view.key != 0 ? KeyName(view.key) : std::string("Нет");
 }
 
 void Settings::WriteVoiceDevice(std::string const& name) {
@@ -1043,9 +1043,9 @@ void Settings::Write(std::string const& key, menu::Values const& v, bool final) 
         if (!noSave_) {  // as the resolution: GamerSettings.ini only with the profile
             MELEVR::Config::ApplyResolutionForCurrentMode(&wx, &wy);
         }
-        modeNote_ = noSave_ ? std::string("Not saved: the VR settings were reset this session (Advanced > Profiles > Save keeps it).")
-                  : wx > 0 ? std::format("Resolution set to {} \xC3\x97 {}: restart the game to apply this mode.", wx, wy)
-                           : std::string("Restart the game to apply this mode.");
+        modeNote_ = noSave_ ? std::string("Не сохранено: настройки VR сброшены в этой сессии (Дополнительно > Профили > Сохранить сохранит их).")
+                  : wx > 0 ? std::format("Разрешение задано {} \xC3\x97 {}: перезапустите игру, чтобы применить этот режим.", wx, wy)
+                           : std::string("Перезапустите игру, чтобы применить этот режим.");
         log::Info("main menu: VR mode {} ({})", mode, modeNote_);
     } else if (key == "life_size") {
         c.sfr2Metric = v.Flag(key);  // life-size stereo (research/30)
@@ -1164,7 +1164,7 @@ void Settings::Command(std::string const& name, std::string const& argument, men
     } else if (name == "measure") {
         measure_ = Measure::WaitRelease;  // the click itself may be a trigger pull
         measureSinceMs_ = Now();
-        measureMsg_ = "Hold both arms straight out to the sides (a T) and pull either trigger.";
+        measureMsg_ = "Разведите прямые руки в стороны (буквой Т) и нажмите любой курок.";
     } else if (name == "place_hud") {
         MELEVR::MevrBridge::RequestHudPanelReplace();
         profMsg_.clear();
@@ -1187,7 +1187,7 @@ void Settings::Command(std::string const& name, std::string const& argument, men
                 MELEVR::Config::LoadProfile(slot);  // Halcyon's own: applies the slot and remembers it as active
                 halcyonDirty_ = false;
                 noSave_ = false;
-                profMsg_ = std::format("Loaded {}.", MELEVR::Config::ProfileName(slot));
+                profMsg_ = std::format("Загружено: {}.", MELEVR::Config::ProfileName(slot));
             } else {
                 MELEVR::Config::SaveProfile(slot);
                 halcyonDirty_ = false;
@@ -1196,7 +1196,7 @@ void Settings::Command(std::string const& name, std::string const& argument, men
                     int wx = 0, wy = 0;
                     MELEVR::Config::ApplyResolutionForCurrentMode(&wx, &wy);  // GamerSettings.ini follows the saved target
                 }
-                profMsg_ = std::format("Saved into {}.", MELEVR::Config::ProfileName(slot));
+                profMsg_ = std::format("Сохранено в {}.", MELEVR::Config::ProfileName(slot));
             }
             log::Info("main menu: {}", profMsg_);
         }
@@ -1216,7 +1216,7 @@ void Settings::Command(std::string const& name, std::string const& argument, men
     } else if (name == "reset") {
         if (resetArmedMs_ == 0) {
             resetArmedMs_ = Now();
-            diagMsg_ = "Press Confirm to put the VR view, stereo and HUD settings back to standard for this session.";
+            diagMsg_ = "Нажмите «Подтвердить», чтобы вернуть настройки вида VR, стерео и HUD к стандартным в этой сессии.";
         } else {
             // Halcyon's defaults, live, but what our deploy and the player chose stays: the menu key, no head aim, the
             // render resolution, the first-run notice. Not saved over the profile (Profiles > Save keeps it).
@@ -1244,7 +1244,7 @@ void Settings::Command(std::string const& name, std::string const& argument, men
             resetArmedMs_ = 0;
             noSave_ = true;
             halcyonDirty_ = false;
-            diagMsg_ = "Reset for this session. Not saved: Profiles > Save keeps it; otherwise your profile comes back next launch.";
+            diagMsg_ = "Сброшено для этой сессии. Не сохранено: Профили > Сохранить сохранит; иначе при следующем запуске вернётся ваш профиль.";
             log::Info("main menu: renderer settings reset to Halcyon's defaults for this session (menu key, head aim, resolution kept)");
         }
     }
@@ -1266,7 +1266,7 @@ void Settings::Tick(vr::controllers::State const& live, bool headValid, XrVector
         bool const noTrigger = live.left.trigger < 0.4f && live.right.trigger < 0.4f;
         if (now - measureSinceMs_ > kMeasureTimeoutMs) {
             measure_ = Measure::Idle;
-            measureMsg_ = "Timed out: no trigger pull within 30 seconds.";
+            measureMsg_ = "Время вышло: курок не нажат за 30 секунд.";
         } else if (measure_ == Measure::WaitRelease && noTrigger) {
             measure_ = Measure::WaitPull;
         } else if (measure_ == Measure::WaitPull && anyTrigger && live.active && live.left.gripValid && live.right.gripValid) {
@@ -1274,7 +1274,7 @@ void Settings::Tick(vr::controllers::State const& live, bool headValid, XrVector
                 "the main menu");
             XrVector3f const d{live.right.grip.position.x - live.left.grip.position.x, live.right.grip.position.y - live.left.grip.position.y,
                 live.right.grip.position.z - live.left.grip.position.z};
-            measureMsg_ = std::format("Measured: {:.2f} m between the controllers. The arm length updates in a few seconds.",
+            measureMsg_ = std::format("Измерено: {:.2f} м между контроллерами. Длина рук обновится через несколько секунд.",
                 std::sqrt(d.x * d.x + d.y * d.y + d.z * d.z));
             measure_ = Measure::Idle;
         }
@@ -1296,7 +1296,7 @@ void Settings::Tick(vr::controllers::State const& live, bool headValid, XrVector
     }
     perf::Status const p = perf::GetStatus();
     if (!p.pending && !p.lastCapture.empty()) {
-        perfMsg_ = "Saved in AppData\\Local\\MEVR\\perf. Switch on \"With the latest frame timing\" to put it in a report.";
+        perfMsg_ = "Сохранено в AppData\\Local\\MEVR\\perf. Включите «С последним временем кадра», чтобы добавить это в отчёт.";
     }
 }
 
@@ -1309,7 +1309,7 @@ bool Settings::CancelPending() {
     }
     if (measure_ != Measure::Idle) {
         measure_ = Measure::Idle;
-        measureMsg_ = "Measurement cancelled.";
+        measureMsg_ = "Измерение отменено.";
         cancelled = true;
     }
     if (keyWaitMs_ != 0) {

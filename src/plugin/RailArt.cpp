@@ -150,7 +150,7 @@ Status Load(ID3D11Device* device, menu::Renderer* renderer, Sizes const& sizes, 
                     continue;
                 }
                 std::string error;
-                auto ttf = gfx::FontAsTtf(*movie, info.id, face.family, {}, &error);
+                auto ttf = gfx::FontAsTtf(*movie, info.id, face.family, {.cyrillic = true}, &error);
                 if (!ttf) {
                     status.detail += std::format(" {} not converted ({});", info.name, error);
                     break;

@@ -10412,8 +10412,8 @@ void TestMenuSettings() {
     CHECK(ms::Clamp(*ms::Find("crouch"), 0.4f) == 1.0f);
     // About's build line (the version from CMake, the commit from tools/cmake/BuildInfo.cmake).
     CHECK(ms::Find("about_build") != nullptr && ms::Find("about_build")->type == ms::Type::Text);
-    CHECK(ms::AboutBuild("0.1.0", "1a0622c1f2", false) == "MEVR 0.1.0 \xC2\xB7 commit 1a0622c1f2");
-    CHECK(ms::AboutBuild("0.2.0", "1a0622c1f2-dirty", true) == "MEVR 0.2.0 \xC2\xB7 commit 1a0622c1f2-dirty \xC2\xB7 development build");
+    CHECK(ms::AboutBuild("0.1.0", "1a0622c1f2", false) == "MEVR 0.1.0 \xC2\xB7 коммит 1a0622c1f2");
+    CHECK(ms::AboutBuild("0.2.0", "1a0622c1f2-dirty", true) == "MEVR 0.2.0 \xC2\xB7 коммит 1a0622c1f2-dirty \xC2\xB7 отладочная сборка");
     CHECK(ms::AboutBuild("0.1.0", "unknown", false) == "MEVR 0.1.0");  // built without git
 
     // What a slider reads.
@@ -10423,18 +10423,18 @@ void TestMenuSettings() {
     CHECK(ms::FormatValue(ms::Format::SignedPercent, -0.2f) == "0%");
     CHECK(ms::FormatValue(ms::Format::Percent, 60.0f) == "60%");
     CHECK(ms::FormatValue(ms::Format::SignedDegrees, 4.0f) == "+4\xC2\xB0");
-    CHECK(ms::FormatValue(ms::Format::DegreesOrNever, 0.0f) == "Never");
+    CHECK(ms::FormatValue(ms::Format::DegreesOrNever, 0.0f) == "Никогда");
     CHECK(ms::FormatValue(ms::Format::DegreesOrNever, 35.0f) == "35\xC2\xB0");
     CHECK(ms::FormatValue(ms::Format::DegreesPerSec, 120.0f) == "120\xC2\xB0/s");
     CHECK(ms::FormatValue(ms::Format::Fixed2, 0.92f) == "0.92");
     CHECK(ms::FormatValue(ms::Format::SignedFixed3, -0.01f) == "-0.010");
     CHECK(ms::FormatValue(ms::Format::Fixed3, 0.012f) == "0.012");
     CHECK(ms::FormatValue(ms::Format::Times2, 1.0f) == "1.00\xC3\x97");
-    CHECK(ms::FormatValue(ms::Format::Meters1, 1.6f) == "1.6 m");
-    CHECK(ms::FormatValue(ms::Format::SignedMeters2, 0.125f) == "+0.13 m");
-    CHECK(ms::FormatValue(ms::Format::SignedDecibels, 3.0f) == "+3 dB");
-    CHECK(ms::FormatValue(ms::Format::SignedDecibels, 0.0f) == "0 dB");
-    CHECK(ms::FormatValue(ms::Format::SignedDecibels, -2.0f) == "-2 dB");
+    CHECK(ms::FormatValue(ms::Format::Meters1, 1.6f) == "1.6 м");
+    CHECK(ms::FormatValue(ms::Format::SignedMeters2, 0.125f) == "+0.13 м");
+    CHECK(ms::FormatValue(ms::Format::SignedDecibels, 3.0f) == "+3 дБ");
+    CHECK(ms::FormatValue(ms::Format::SignedDecibels, 0.0f) == "0 дБ");
+    CHECK(ms::FormatValue(ms::Format::SignedDecibels, -2.0f) == "-2 дБ");
     // The Sound page (research/69 A3): [Audio] spatial's words as plugin/OpenAlSoft reads them, and the row's note.
     CHECK(ms::AudioSpatialChoice("hrtf") == "hrtf");
     CHECK(ms::AudioSpatialChoice("") == "hrtf");             // missing: the host's default
@@ -10443,13 +10443,13 @@ void TestMenuSettings() {
     CHECK(ms::AudioSpatialChoice("off") == "game");
     CHECK(ms::AudioSpatialChoice("creative") == "game");
     CHECK(ms::AudioSpatialChoice("sideways") == "hrtf");     // unknown: what the host plays then
-    CHECK(ms::AudioNote("hrtf", 3.0f, "hrtf", 3.0f, true) == "In use now");
-    CHECK(ms::AudioNote("soft", 3.0f, "hrtf", 3.0f, true) == "Applies when the game next starts");
-    CHECK(ms::AudioNote("hrtf", 6.0f, "hrtf", 3.0f, true) == "Applies when the game next starts");  // a new level
-    CHECK(ms::AudioNote("game", 6.0f, "game", 0.0f, true) == "In use now");  // the game's own has no level of ours
-    CHECK(ms::AudioNote("game", 3.0f, "hrtf", 3.0f, true) == "Applies when the game next starts");
-    CHECK(ms::AudioNote("hrtf", 3.0f, "game", 0.0f, false).find("isn't installed") != std::string::npos);
-    CHECK(ms::AudioNote("game", 3.0f, "game", 0.0f, false) == "In use now");  // nothing to install for the game's own
+    CHECK(ms::AudioNote("hrtf", 3.0f, "hrtf", 3.0f, true) == "Используется сейчас");
+    CHECK(ms::AudioNote("soft", 3.0f, "hrtf", 3.0f, true) == "Применится при следующем запуске игры");
+    CHECK(ms::AudioNote("hrtf", 6.0f, "hrtf", 3.0f, true) == "Применится при следующем запуске игры");  // a new level
+    CHECK(ms::AudioNote("game", 6.0f, "game", 0.0f, true) == "Используется сейчас");  // the game's own has no level of ours
+    CHECK(ms::AudioNote("game", 3.0f, "hrtf", 3.0f, true) == "Применится при следующем запуске игры");
+    CHECK(ms::AudioNote("hrtf", 3.0f, "game", 0.0f, false).find("не установлен") != std::string::npos);
+    CHECK(ms::AudioNote("game", 3.0f, "game", 0.0f, false) == "Используется сейчас");  // nothing to install for the game's own
     CHECK(ms::Find("audio_gain") != nullptr && ms::Find("audio_gain")->number == ms::kAudioGainDefaultDb);
     CHECK(ms::Find("audio_spatial") != nullptr && std::string_view(ms::Find("audio_spatial")->text) == "hrtf");
     CHECK(ms::FormatValue(ms::Format::Fixed1, std::numeric_limits<float>::infinity()) == "?");
@@ -10497,8 +10497,8 @@ void TestMenuSettings() {
     CHECK(ms::ResolutionChoice(3000, 3112, 2824, 2880).empty());
     CHECK(ms::SizeText(2824, 2880) == "2824 \xC3\x97 2880");
     CHECK(ms::HeadsetSizesText(2824, 2880) ==
-          "Headset 2824 \xC3\x97 2880 \xC2\xB7 \xC3\x97 0.85: 2400 \xC3\x97 2448 \xC2\xB7 \xC3\x97 0.75: 2118 \xC3\x97 2160");
-    CHECK(ms::HeadsetSizesText(0, 2880).find("once VR starts") != std::string::npos);
+          "Шлем 2824 \xC3\x97 2880 \xC2\xB7 \xC3\x97 0,85: 2400 \xC3\x97 2448 \xC2\xB7 \xC3\x97 0,75: 2118 \xC3\x97 2160");
+    CHECK(ms::HeadsetSizesText(0, 2880).find("после запуска VR") != std::string::npos);
     // The upscale chip ([Upscale] method, read as core/vr/Upscale reads it).
     CHECK(ms::UpscaleChoice("fsr") == "fsr" && ms::UpscaleChoice(" FSR1 ") == "fsr" && ms::UpscaleChoice("on") == "fsr");
     CHECK(ms::UpscaleChoice("off") == "off" && ms::UpscaleChoice("bilinear") == "off" && ms::UpscaleChoice("") == "off");
@@ -10533,7 +10533,7 @@ void TestMenuSettings() {
     // The Game UI nudges and the original stereo's eye distance (2026-11-04).
     CHECK(ms::FormatValue(ms::Format::Signed0, 40.0f) == "+40" && ms::FormatValue(ms::Format::Signed0, -120.0f) == "-120");
     CHECK(ms::FormatValue(ms::Format::Signed0, -0.4f) == "0");
-    CHECK(ms::FormatValue(ms::Format::Centimeters1, 6.8f) == "6.8 cm");
+    CHECK(ms::FormatValue(ms::Format::Centimeters1, 6.8f) == "6.8 см");
 
     // The controller guide: what each control does with the shipped settings, and with the settings that change it.
     {
@@ -10548,76 +10548,76 @@ void TestMenuSettings() {
         ms::GuideInput const shipped;
         for (char const* id : {"lt", "lgrip", "lstick", "x", "y", "menu", "rt", "rgrip", "rstick", "a", "b"}) {
             std::string const label = text(shipped, std::string("guide_") + id);
-            CHECK(!label.empty() && label != "(missing)" && label.size() <= 22);  // fits the drawing's label in two lines
+            CHECK(!label.empty() && label != "(missing)" && std::count_if(label.begin(), label.end(), [](char c) { return (static_cast<unsigned char>(c) & 0xC0) != 0x80; }) <= 27);  // fits the drawing's label in two lines
             CHECK(text(shipped, std::string("guide_") + id + "_how").size() > 10);
         }
         for (auto const& [k, t] : ms::GuideTexts(shipped)) {
             CHECK(ms::Find(k) != nullptr && ms::Find(k)->type == ms::Type::Text);  // the page binds every one
         }
-        CHECK(text(shipped, "guide_lt") == "Weapon wheel" && text(shipped, "guide_rt") == "Fire");
-        CHECK(text(shipped, "guide_rstick") == "Turn, hold: powers");
-        CHECK(text(shipped, "guide_rstick_how").find("recenter") != std::string::npos);
-        CHECK(text(shipped, "guide_rgrip") == "Draw and holster");
-        CHECK(text(shipped, "guide_x") == "Power wheel" && text(shipped, "guide_y") == "Medi-gel" && text(shipped, "guide_b") == "Back (menus)");
+        CHECK(text(shipped, "guide_lt") == "Колесо оружия" && text(shipped, "guide_rt") == "Огонь");
+        CHECK(text(shipped, "guide_rstick") == "Поворот, удержание");
+        CHECK(text(shipped, "guide_rstick_how").find("центрир") != std::string::npos);
+        CHECK(text(shipped, "guide_rgrip") == "Достать и убрать");
+        CHECK(text(shipped, "guide_x") == "Колесо способностей" && text(shipped, "guide_y") == "Меди-гель" && text(shipped, "guide_b") == "Назад (меню)");
         // The powers (research/55, 2026-11-06): the wheel at the left hand, the lock and the push, the self-cast gestures.
-        CHECK(text(shipped, "guide_pick").find("Hold X") != std::string::npos);
-        CHECK(text(shipped, "guide_cast").find("Push your open hand") != std::string::npos);
-        CHECK(text(shipped, "guide_self").find("chest") != std::string::npos && text(shipped, "guide_self").find("Unity") != std::string::npos);
+        CHECK(text(shipped, "guide_pick").find("Удерживайте X") != std::string::npos);
+        CHECK(text(shipped, "guide_cast").find("Толкните открытую руку") != std::string::npos);
+        CHECK(text(shipped, "guide_self").find("груди") != std::string::npos && text(shipped, "guide_self").find("Единство") != std::string::npos);
         ms::GuideInput noHandWheel = shipped;
         noHandWheel.handWheel = false;
-        CHECK(text(noHandWheel, "guide_x") == "Nothing");
+        CHECK(text(noHandWheel, "guide_x") == "Ничего");
         noHandWheel.grenadeButton = true;  // a player's explicit fallback with the hand wheel off
-        CHECK(text(noHandWheel, "guide_x") == "Grenade");
-        CHECK(text(noHandWheel, "guide_cast").find("right stick click") != std::string::npos);
+        CHECK(text(noHandWheel, "guide_x") == "Граната");
+        CHECK(text(noHandWheel, "guide_cast").find("нажатие правого стика") != std::string::npos);
         noHandWheel.handWheel = true;
-        CHECK(text(noHandWheel, "guide_x") == "Power wheel");  // even with the old grenade default
+        CHECK(text(noHandWheel, "guide_x") == "Колесо способностей");  // even with the old grenade default
         ms::GuideInput noGestures = shipped;
         noGestures.selfGestures = false;
-        CHECK(text(noGestures, "guide_self").rfind("Pushed", 0) == 0);
-        CHECK(text(shipped, "guide_melee").find("right fist") != std::string::npos);  // [Throwables] meleeFist (2026-11-05)
+        CHECK(text(noGestures, "guide_self").rfind("Толкните", 0) == 0);
+        CHECK(text(shipped, "guide_melee").find("правым кулаком") != std::string::npos);  // [Throwables] meleeFist (2026-11-05)
         ms::GuideInput withB = shipped;
         withB.meleeButton = true;
-        CHECK(text(withB, "guide_b") == "Melee");
-        CHECK(text(shipped, "guide_lgrip_how").find("vent") != std::string::npos);
-        CHECK(text(shipped, "guide_grenade").rfind("Either hand", 0) == 0);  // [Throwables] hands = both
-        CHECK(text(shipped, "guide_lstick_how").find("where you look") != std::string::npos);
+        CHECK(text(withB, "guide_b") == "Ближний бой");
+        CHECK(text(shipped, "guide_lgrip_how").find("сбросить тепло") != std::string::npos);
+        CHECK(text(shipped, "guide_grenade").rfind("Любой рукой", 0) == 0);  // [Throwables] hands = both
+        CHECK(text(shipped, "guide_lstick_how").find("куда вы смотрите") != std::string::npos);
         ms::GuideInput seated = shipped;
         seated.seated = true;
-        CHECK(text(seated, "guide_lstick_how").find("Click to crouch or stand") != std::string::npos);
-        CHECK(text(seated, "guide_lstick_how").find("lowering your head never crouches") != std::string::npos);
-        CHECK(text(seated, "guide_lstick_how").find("or just crouch for real") == std::string::npos);
+        CHECK(text(seated, "guide_lstick_how").find("Нажмите, чтобы присесть или встать") != std::string::npos);
+        CHECK(text(seated, "guide_lstick_how").find("наклон головы никогда не приседает") != std::string::npos);
+        CHECK(text(seated, "guide_lstick_how").find("присядьте по-настоящему") == std::string::npos);
         // The power wheel moved to Y ([Holsters] powerWheel): Y is the powers, the stick click only recenters...
         ms::GuideInput y = shipped;
         y.powerWheel = " Y ";
-        CHECK(text(y, "guide_y") == "Powers" && text(y, "guide_rstick") == "Turn");
-        CHECK(text(y, "guide_rstick_how").find("recenter") != std::string::npos);
+        CHECK(text(y, "guide_y") == "Способности" && text(y, "guide_rstick") == "Поворот");
+        CHECK(text(y, "guide_rstick_how").find("центрир") != std::string::npos);
         // ...but only while the right grip holds the gun: without the holsters the grip is the game's RB again.
         ms::GuideInput noHolsters = y;
         noHolsters.holsters = false;
-        CHECK(text(noHolsters, "guide_rgrip") == "Powers" && text(noHolsters, "guide_y") == "Medi-gel");
+        CHECK(text(noHolsters, "guide_rgrip") == "Способности" && text(noHolsters, "guide_y") == "Меди-гель");
         ms::GuideInput noHold = shipped;
         noHold.gripHolds = false;
-        CHECK(text(noHold, "guide_rgrip") == "Draw, powers" && text(noHold, "guide_rstick") == "Turn");
+        CHECK(text(noHold, "guide_rgrip") == "Достать, способности" && text(noHold, "guide_rstick") == "Поворот");
         ms::GuideInput x = shipped;
         x.powerWheel = "x";
         x.handWheel = false;  // with the hand's power wheel on, X is that wheel
-        CHECK(text(x, "guide_x") == "Powers");
+        CHECK(text(x, "guide_x") == "Способности");
         ms::GuideInput b = shipped;
         b.powerWheel = "b";
-        CHECK(text(b, "guide_b") == "Powers");
+        CHECK(text(b, "guide_b") == "Способности");
         // The left trigger's choices; the wheel without the squad is the game's own (hold, tap); the custom squad menu.
         ms::GuideInput lt = shipped;
         lt.leftTrigger = "lt";
-        CHECK(text(lt, "guide_lt") == "Aim");
+        CHECK(text(lt, "guide_lt") == "Прицеливание");
         ms::GuideInput none = shipped;
         none.leftTrigger = "none";
-        CHECK(text(none, "guide_lt") == "Nothing");
+        CHECK(text(none, "guide_lt") == "Ничего");
         ms::GuideInput noSquad = shipped;
         noSquad.squad = false;
-        CHECK(text(noSquad, "guide_lt") == "Weapon wheel" && text(noSquad, "guide_lt_how").find("tap") != std::string::npos);
+        CHECK(text(noSquad, "guide_lt") == "Колесо оружия" && text(noSquad, "guide_lt_how").find("нажмите") != std::string::npos);
         ms::GuideInput custom = shipped;
         custom.squadStyle = "custom";
-        CHECK(text(custom, "guide_lt") == "Squad weapons");
+        CHECK(text(custom, "guide_lt") == "Оружие отряда");
         // X and B kept from the game, no vent, grenades in the left hand, walking toward the hand, snap turns.
         ms::GuideInput kept = shipped;
         kept.grenadeButton = false;
@@ -10627,20 +10627,20 @@ void TestMenuSettings() {
         kept.walk = "hand";
         kept.turn = "snap";
         kept.handWheel = false;  // X free of the hand's power wheel
-        CHECK(text(kept, "guide_x") == "Nothing" && text(kept, "guide_b") == "Back (menus)");
-        CHECK(text(kept, "guide_lgrip") == "Two-handed grip" && text(kept, "guide_lgrip_how").find("vent") == std::string::npos);
-        CHECK(text(kept, "guide_lgrip_how").find("grenade") != std::string::npos);
-        CHECK(text(kept, "guide_grenade").rfind("Left hand", 0) == 0);
-        CHECK(text(kept, "guide_lstick_how").find("left hand points") != std::string::npos);
-        CHECK(text(kept, "guide_rstick_how").find("steps") != std::string::npos);
+        CHECK(text(kept, "guide_x") == "Ничего" && text(kept, "guide_b") == "Назад (меню)");
+        CHECK(text(kept, "guide_lgrip") == "Двуручный хват" && text(kept, "guide_lgrip_how").find("сбросить тепло") == std::string::npos);
+        CHECK(text(kept, "guide_lgrip_how").find("гранату") != std::string::npos);
+        CHECK(text(kept, "guide_grenade").rfind("Левой рукой", 0) == 0);
+        CHECK(text(kept, "guide_lstick_how").find("куда указывает левая рука") != std::string::npos);
+        CHECK(text(kept, "guide_rstick_how").find("шагами") != std::string::npos);
         ms::GuideInput both = shipped;
         both.grenadeHands = "both";
-        CHECK(text(both, "guide_grenade").rfind("Either hand", 0) == 0);
+        CHECK(text(both, "guide_grenade").rfind("Любой рукой", 0) == 0);
         ms::GuideInput off = shipped;
         off.grenades = false;
         off.melee = false;
-        CHECK(text(off, "guide_grenade").rfind("Off", 0) == 0 && text(off, "guide_melee").rfind("Off", 0) == 0);
-        CHECK(text(off, "guide_lgrip_how").find("grenade") == std::string::npos);
+        CHECK(text(off, "guide_grenade").rfind("Выкл.", 0) == 0 && text(off, "guide_melee").rfind("Выкл.", 0) == 0);
+        CHECK(text(off, "guide_lgrip_how").find("гранату") == std::string::npos);
     }
 
     // A section as GetPrivateProfileSection gives it: lower-cased keys, trimmed values, comments skipped.

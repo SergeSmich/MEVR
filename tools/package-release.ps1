@@ -225,6 +225,7 @@ $licences = [ordered]@{
     'OpenXR-Loader-jsoncpp.txt'      = 'external\OpenXR-SDK\src\external\jsoncpp\LICENSE'
     'Rajdhani-OFL.txt'               = 'third_party\fonts\Rajdhani-OFL.txt'
     'TitilliumWeb-OFL.txt'           = 'third_party\fonts\TitilliumWeb-OFL.txt'
+    'Exo2-OFL.txt'                   = 'third_party\fonts\Exo2-OFL.txt'
     'Lucide-ISC.txt'                 = 'third_party\lucide\LICENSE.txt'
 }
 # MEVR-Voice.dll carries Moonshine Voice's static library (MIT, its LICENSE with its own third-party notices).

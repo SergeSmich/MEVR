@@ -44,7 +44,7 @@ bool VoiceFilesOnDisk(fs::path const& asi) {
 }
 
 std::mutex gMutex;
-std::string gText = "None yet";
+std::string gText = "Пока ничего";
 ULONGLONG gNextRead = 0;
 
 } // namespace
@@ -74,10 +74,10 @@ std::string InstalledPacksText() {
         }
     }
     if (!voiceRecorded && VoiceFilesOnDisk(asi)) {
-        names += (names.empty() ? "" : ", ") + std::string("Voice orders (the files are in ASI\\voice, not put there by Setup)");
+        names += (names.empty() ? "" : ", ") + std::string("Голосовые приказы (файлы лежат в ASI\\voice, установлены не через Setup)");
     }
     if (names.empty()) {
-        gText = bySetup ? "None yet" : "None (the mod wasn't installed with MEVR Setup)";
+        gText = bySetup ? "Пока ничего" : "Нет (мод установлен не через MEVR Setup)";
     } else {
         gText = names;
     }
@@ -106,12 +106,12 @@ bool Request(std::string& message) {
     std::ofstream out(file, std::ios::binary | std::ios::trunc);
     out << json::Write(request);
     if (!out) {
-        message = "Couldn't write the request.";
+        message = "Не удалось записать запрос.";
         return false;
     }
     bool const setup = fs::exists(AsiDir() / L"MEVR-Setup.exe", ec);
-    message = setup ? "MEVR Setup opens on Optional content when you quit the game."
-                    : "Quit the game, then run MEVR Setup: it opens on Optional content.";
+    message = setup ? "MEVR Setup откроется на «Дополнительном содержимом», когда вы выйдете из игры."
+                    : "Выйдите из игры и запустите MEVR Setup: он откроется на «Дополнительном содержимом».";
     log::Info("main menu: optional content requested for after exit ({})", setup ? "the setup starts then" : "no setup in the ASI folder");
     return true;
 }

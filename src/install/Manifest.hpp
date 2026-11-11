@@ -93,11 +93,19 @@ struct Manifest {
 };
 
 // Where things live for a game root.
+// The game normally sits in <root>\Game\ME1\... (the Steam and EA app layout). Another copy (a repack, or a hand-made
+// install) can hold ME1, ME2 and ME3 directly under <root>: `flat` records that, and every relative path keeps its
+// "Game/" prefix so manifests and the code's own paths look the same either way.
 struct Layout {
+    Layout() = default;
+    explicit Layout(std::filesystem::path root);
+
     std::filesystem::path root;  // ...\Mass Effect Legendary Edition
-    std::filesystem::path Win64() const { return root / L"Game" / L"ME1" / L"Binaries" / L"Win64"; }
+    bool flat = false;           // no Game folder: <root>\ME1\Binaries\Win64
+    std::filesystem::path Base() const { return flat ? root : root / L"Game"; }
+    std::filesystem::path Win64() const { return Base() / L"ME1" / L"Binaries" / L"Win64"; }
     std::filesystem::path Asi() const { return Win64() / L"ASI"; }
-    std::filesystem::path Config() const { return root / L"Game" / L"ME1" / L"BioGame" / L"Config"; }
+    std::filesystem::path Config() const { return Base() / L"ME1" / L"BioGame" / L"Config"; }
     std::filesystem::path ManifestFile() const { return Asi() / L"MEVR-install.json"; }
     std::filesystem::path BackupDir() const { return Asi() / L"MEVR-backup"; }
     // "Game/ME1/Binaries/Win64/ASI/LE1MEVR.asi" for a path under root.

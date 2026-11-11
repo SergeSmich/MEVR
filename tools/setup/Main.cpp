@@ -412,6 +412,7 @@ int Preview(fs::path const& output, bool warp, mevr::setup::Options const& real,
 // ---- The command line --------------------------------------------------------------------------------------------
 struct Cli {
     std::string command;
+    std::optional<fs::path> exe;  // this program's own path: a copy inside a game's ASI folder means that game
     std::optional<fs::path> game;
     std::optional<fs::path> payload;
     std::optional<fs::path> out;
@@ -523,6 +524,19 @@ int RunReport(Cli const& cli, std::optional<fs::path> const& root, std::string c
     return result.ok ? 0 : 1;
 }
 
+// The game this program sits in, if it was installed into one: <root>\Game\ME1\Binaries\Win64\ASI (Steam, EA app) or
+// <root>\ME1\Binaries\Win64\ASI (a repack). A setup run from a Downloads folder has no own game.
+std::optional<fs::path> OwnGameRoot(std::optional<fs::path> const& exe) {
+    if (!exe || exe->empty()) {
+        return std::nullopt;
+    }
+    fs::path const dir = exe->parent_path();
+    if (_wcsicmp(dir.filename().c_str(), L"ASI") != 0) {
+        return std::nullopt;
+    }
+    return detect::RootFromPicked(dir);
+}
+
 int RunCli(Cli const& cli) {
     std::string text;
     auto say = [&](std::string const& line) {
@@ -534,6 +548,9 @@ int RunCli(Cli const& cli) {
     if (cli.game) {
         root = detect::RootFromPicked(*cli.game);
         source = source.empty() ? "Folder" : source;
+    } else if (std::optional<fs::path> own = OwnGameRoot(cli.exe)) {
+        root = *own;
+        source = source.empty() ? "this copy's game folder" : source;
     } else if (auto const installs = detect::FindInstalls(); !installs.empty()) {
         root = installs.front().root;
         source = source.empty() ? installs.front().source : source;
@@ -568,7 +585,7 @@ int RunCli(Cli const& cli) {
         return code;
     }
     if (!root) {
-        say("game: not found");
+        say("игра не найдена");
         code = 2;
     } else {
         mevr::install::Layout const layout{*root};
@@ -587,18 +604,18 @@ int RunCli(Cli const& cli) {
             for (std::string const& line : o.log) {
                 say("  " + line);
             }
-            say(o.ok ? "ok" : "FAILED");
+            say(o.ok ? "готово" : "ОШИБКА");
             code = o.ok ? 0 : 1;
         };
         if (cli.command == "apply-update") {
             auto const payload = mevr::install::FindPayload(ExePath().parent_path());
-            if (!payload) { say("payload: not found"); code = 1; }
+            if (!payload) { say("payload не найден"); code = 1; }
             else report(mevr::install::updates::Apply(layout,*payload,ExePath(),[&](std::string const& line,int) { say(line); },nullptr));
         } else if (cli.command == "install") {
             auto const payload = cli.payload ? std::optional<mevr::install::Payload>(mevr::install::Payload{*cli.payload})
                                              : mevr::install::FindPayload(ExePath().parent_path());
             if (!payload || !payload->Valid()) {
-                say("payload: not found or incomplete");
+                say("payload не найден или неполон");
                 code = 1;
             } else {
                 mevr::install::InstallOptions options;
@@ -616,7 +633,7 @@ int RunCli(Cli const& cli) {
             auto const payload = cli.payload ? std::optional<mevr::install::Payload>(mevr::install::Payload{*cli.payload})
                                              : mevr::install::FindPayload(ExePath().parent_path());
             if (!payload) {
-                say("payload: not found");
+                say("payload не найден");
                 code = 1;
             } else {
                 report(mevr::install::Repair(layout, *payload));
@@ -624,7 +641,7 @@ int RunCli(Cli const& cli) {
         } else if (cli.command == "launch") {
             // The Launch button's start (SteamVR first when it's the runtime, then the game): for a desktop shortcut, and to test it.
             if (detect::GameRunningIn(*root)) {
-                say("Mass Effect is already running.");
+                say("Mass Effect уже запущена.");
             } else {
                 std::wstring lower = root->wstring();
                 std::transform(lower.begin(), lower.end(), lower.begin(), ::towlower);
@@ -641,7 +658,7 @@ int RunCli(Cli const& cli) {
                 hooks.post = [&](std::string const& line, bool warning) { say(std::string(warning ? "  ! " : "  ") + line); };
                 mevr::install::launch::Result const r = mevr::install::launch::StartLe1WithVr(*root, steam, xr.kind, xr.manifest, hooks);
                 // Through Steam there's no pid of ours: Steam starts the launcher, which starts the game.
-                say(!r.started ? std::string("FAILED") : r.pid != 0 ? std::format("started (pid {})", r.pid) : std::string("started (through Steam)"));
+                say(!r.started ? std::string("ОШИБКА") : r.pid != 0 ? std::format("запущено (pid {})", r.pid) : std::string("запущено (через Steam)"));
                 code = r.started ? 0 : 1;
             }
         } else if (cli.command == "apply-settings") {
@@ -688,36 +705,37 @@ int RunCli(Cli const& cli) {
             }
         }
         mevr::install::Status const s = mevr::install::ReadStatus(*root, source);
-        say("game: " + detect::Utf8(s.root.wstring()) + " (" + source + ")");
-        say("version: " + (s.version ? s.version->ToString() : std::string("unknown")) +
-            (s.versionCheck == detect::VersionCheck::Supported ? " (supported)" : " (NOT supported)"));
-        say(std::string("loader: ") + detect::BinkStateText(s.bink));
+        say("игра: " + detect::Utf8(s.root.wstring()) + " (" +
+            (source == "Folder" ? "Папка" : source == "this copy's game folder" ? "папка этой копии" : source) + ")");
+        say("версия: " + (s.version ? s.version->ToString() : std::string("неизвестна")) +
+            (s.versionCheck == detect::VersionCheck::Supported ? " (поддерживается)" : " (НЕ поддерживается)"));
+        say(std::string("загрузчик: ") + detect::BinkStateText(s.bink));
         // The launcher's (research/33 section 12): what lets Launch start Mass Effect 1 without the launcher's picker.
-        say(std::string("launcher: ") + (s.launcherBink == detect::BinkState::Ours            ? "our loader starts Mass Effect 1 for Launch"
-                                         : s.launcherBink == detect::BinkState::LEBinkProxy ? "ME3Tweaks' LEBinkProxy starts Mass Effect 1 for Launch"
-                                         : s.launcherBink == detect::BinkState::Original    ? "the launcher's own Bink: Launch shows its game picker"
-                                                                                            : "no loader of ours: Launch shows the launcher's game picker"));
-        say("installed: " + (s.installed ? "yes, " + s.installedVersion + ", loader " + s.loader : std::string("no")));
-        say(std::string("game settings applied: ") + (s.gameSettings ? "yes" : "no"));
-        say(std::string("game started once (GamerSettings.ini): ") + (s.hasGamerSettings ? "yes" : "no"));
+        say(std::string("лаунчер: ") + (s.launcherBink == detect::BinkState::Ours            ? "наш загрузчик запускает Mass Effect 1 для «Запустить»"
+                                         : s.launcherBink == detect::BinkState::LEBinkProxy ? "LEBinkProxy от ME3Tweaks запускает Mass Effect 1 для «Запустить»"
+                                         : s.launcherBink == detect::BinkState::Original    ? "собственный Bink лаунчера: «Запустить» покажет его выбор игры"
+                                                                                            : "нашего загрузчика нет: «Запустить» покажет выбор игры в лаунчере"));
+        say("установлен: " + (s.installed ? "да, " + s.installedVersion + ", загрузчик " + s.loader : std::string("нет")));
+        say(std::string("настройки игры применены: ") + (s.gameSettings ? "да" : "нет"));
+        say(std::string("игра запускалась (GamerSettings.ini есть): ") + (s.hasGamerSettings ? "да" : "нет"));
         if (s.pendingSettings) {
-            say(std::format("game settings waiting for the game's first start: {} x {}", s.pendingSettings->width, s.pendingSettings->height));
+            say(std::format("настройки ждут первого запуска игры: {} x {}", s.pendingSettings->width, s.pendingSettings->height));
         }
         if (s.installed) {
             std::string list;
             for (std::string const& f : s.needsRepair) {
                 list += (list.empty() ? "" : ", ") + f;
             }
-            say("needs repair: " + (list.empty() ? std::string("nothing") : list));
+            say("требует исправления: " + (list.empty() ? std::string("ничего") : list));
         }
-        say(std::string("textures marked by MEM: ") + (s.texturesMarked ? "yes" : "no"));
+        say(std::string("текстуры отмечены MEM: ") + (s.texturesMarked ? "да" : "нет"));
         std::string packList;
         for (mevr::install::PackRecord const& p : s.packs) {
             if (p.method == "mem") {
                 packList += (packList.empty() ? "" : ", ") + p.name + " (" + p.id + ", " + p.method + ", " + p.installedAt + ")";
             }
         }
-        say("texture packs installed: " + (packList.empty() ? std::string("none") : packList));
+        say("наборы текстур установлены: " + (packList.empty() ? std::string("нет") : packList));
         {
             namespace voice = mevr::install::voice;
             voice::State const v = voice::ReadState(layout);
@@ -725,15 +743,15 @@ int RunCli(Cli const& cli) {
             for (std::string const& id : v.parts) {
                 parts += (parts.empty() ? "" : ", ") + id;
             }
-            say(std::string("voice orders: ") + (v.parts.empty() ? "not installed" : parts) + (v.recorded ? "" : v.parts.empty() ? "" : " (not recorded as complete)") +
-                (v.damaged.empty() ? "" : std::format(", {} files missing or changed", v.damaged.size())) +
-                (v.dll ? "; MEVR-Voice.dll present" : "; no MEVR-Voice.dll"));
+            say(std::string("голосовые приказы: ") + (v.parts.empty() ? "не установлены" : parts) + (v.recorded ? "" : v.parts.empty() ? "" : " (не записаны как полные)") +
+                (v.damaged.empty() ? "" : std::format(", файлов нет или они изменены: {}", v.damaged.size())) +
+                (v.dll ? "; MEVR-Voice.dll на месте" : "; MEVR-Voice.dll нет"));
         }
         std::error_code memEc;
-        say(std::string("Mass Effect Modder: ") + (fs::exists(mevr::install::packs::MemExe(), memEc) ? "downloaded" : "not downloaded"));
+        say(std::string("Mass Effect Modder: ") + (fs::exists(mevr::install::packs::MemExe(), memEc) ? "скачан" : "не скачан"));
         detect::XrRuntime const xr = detect::ActiveRuntime();
-        say("VR runtime: " + (xr.kind.empty() ? std::string("none") : xr.kind + " (" + xr.manifest + ")"));
-        say("before launch: " + mevr::install::launch::runtime_start::PlanFor(xr.kind, xr.manifest).advice);
+        say("среда VR: " + (xr.kind.empty() ? std::string("нет") : xr.kind + " (" + xr.manifest + ")"));
+        say("перед запуском: " + mevr::install::launch::runtime_start::PlanFor(xr.kind, xr.manifest).advice);
     }
     if (cli.out) {
         std::ofstream(*cli.out, std::ios::binary) << text;
@@ -1104,6 +1122,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     Cli cli;
     mevr::setup::Options options;
     options.exe = ExePath();
+    cli.exe = options.exe;
     options.repo = RepoSetting(options.exe.parent_path());
     std::optional<fs::path> preview;
     bool warp = false;

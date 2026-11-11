@@ -401,12 +401,33 @@ std::optional<Manifest> Manifest::FromJson(json::Value const& v) {
 
 // ---- Layout --------------------------------------------------------------------------------------------------------
 
+Layout::Layout(fs::path root_) : root(std::move(root_)) {
+    std::error_code ec;
+    if (!root.empty() && !fs::exists(root / L"Game" / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe", ec)) {
+        flat = fs::exists(root / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe", ec);
+    }
+}
+
 std::string Layout::Relative(fs::path const& full) const {
-    return ToUtf8(full.lexically_normal().lexically_relative(root.lexically_normal()).generic_wstring());
+    std::string const rel = ToUtf8(full.lexically_normal().lexically_relative(root.lexically_normal()).generic_wstring());
+    // A flat install's entries keep the "Game/" prefix the code and the manifests spell.
+    return flat && !rel.empty() ? "Game/" + rel : rel;
 }
 
 fs::path Layout::Full(std::string_view relative) const {
-    return (root / fs::path(FromUtf8(relative))).lexically_normal();
+    std::string path(relative);
+    if (flat) {
+        std::replace(path.begin(), path.end(), '\\', '/');
+        // Drop the "Game" the game root doesn't have here.
+        if (path.size() >= 5) {
+            std::string head = path.substr(0, 5);
+            std::transform(head.begin(), head.end(), head.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            if (head == "game/") {
+                path.erase(0, 5);
+            }
+        }
+    }
+    return (root / fs::path(FromUtf8(path))).lexically_normal();
 }
 
 // ---- Transaction ---------------------------------------------------------------------------------------------------

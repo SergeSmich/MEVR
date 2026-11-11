@@ -740,7 +740,7 @@ bool Hold(XrPosef const& head, bool right, bool left, cal::StillSettings const& 
     XrPosef const poses[cal::Stillness::kMaxPoses] = {head, gControllers.right.grip, gControllers.left.grip};
     bool const used[cal::Stillness::kMaxPoses] = {true, right, left};
     gRun.held = gRun.still.Update(poses, used, dt, settings);
-    gRun.status = "Hold still";
+    gRun.status = "Не двигайтесь";
     gRun.statusWarn = false;
     return gRun.held >= settings.seconds;
 }
@@ -754,7 +754,7 @@ void NotNow(std::string status, bool warn = true) {
 }
 
 std::string Degrees(float value) {
-    return std::format("{:.1f} degrees", value);
+    return std::format("{:.1f}°", value);
 }
 
 void SolveAgain() {
@@ -781,12 +781,12 @@ void LogStance(char const* name, cal::Stance const& s) {
 std::string StanceSummary(bool rifle) {
     cal::Stance const& s = rifle ? gRun.rifle : gRun.pistol;
     std::string const& note = rifle ? gRun.rifleNote : gRun.pistolNote;
-    char const* name = rifle ? "Rifle" : "Pistol";
+    char const* name = rifle ? "Винтовка" : "Пистолет";
     if (!s.valid) {
-        return std::format("{}: skipped", name);
+        return std::format("{}: пропущено", name);
     }
-    return s.samples >= cal::kTargets ? std::format("{}: three aims within {}", name, Degrees(s.spreadDeg))
-                                      : std::format("{}: two aims within {} ({})", name, Degrees(s.spreadDeg), note);
+    return s.samples >= cal::kTargets ? std::format("{}: три прицеливания в пределах {}", name, Degrees(s.spreadDeg))
+                                      : std::format("{}: два прицеливания в пределах {} ({})", name, Degrees(s.spreadDeg), note);
 }
 
 // All three aims taken: judged (cal::AimSet::Finish): kept, one aimed again, or all three again.
@@ -818,37 +818,37 @@ void FinishAims(bool rifle, XrPosef const& head) {
         (rifle ? gRun.rifle : gRun.pistol) = r.stance;
         (rifle ? gRun.rifleUsed : gRun.pistolUsed) = std::move(used);
         std::string& note = rifle ? gRun.rifleNote : gRun.pistolNote;
-        note = pair ? std::format("aim {} left out, {:.1f} degrees off", r.outlier + 1, r.outlierDeg) : std::string();
+        note = pair ? std::format("прицел {} отброшен, отклонение {:.1f}°", r.outlier + 1, r.outlierDeg) : std::string();
         LogStance(name, r.stance);
         if (pair) {
             log::Info("calibration: {}: after {} tries aim {} was still {:.2f} deg off the other two: kept the other two (spread "
                       "{:.2f} deg); the results say so",
                 name, r.failures, r.outlier + 1, r.outlierDeg, r.stance.spreadDeg);
-            Say(std::format("{}: aim {} stayed {} off after two tries, so the other two were kept (within {}).", rifle ? "Rifle" : "Pistol",
+            Say(std::format("{}: прицел {} после двух попыток всё ещё отклонён на {}, поэтому оставлены два других (в пределах {}).", rifle ? "Винтовка" : "Пистолет",
                     r.outlier + 1, Degrees(r.outlierDeg), Degrees(r.stance.spreadDeg)),
                 false, kNoteMs);
         } else {
-            Say(std::format("{}: three aims within {}.", rifle ? "Rifle" : "Pistol", Degrees(r.stance.spreadDeg)));
+            Say(std::format("{}: три прицеливания в пределах {}.", rifle ? "Винтовка" : "Пистолет", Degrees(r.stance.spreadDeg)));
         }
         Next(rifle ? Step::Check : Step::RifleGrab, head);
         return;
     }
     case cal::Review::Result::RedoOne:
         gRun.target = r.outlier;
-        Say(std::format("Aim {} was {} off the other two: aim it again.", r.outlier + 1, Degrees(r.outlierDeg)), true, kNoteMs);
-        Note(std::format("AIM {} AGAIN: {:.0f} DEGREES OFF", r.outlier + 1, r.outlierDeg));
+        Say(std::format("Прицел {} отклонён от двух других на {}: прицельтесь ещё раз.", r.outlier + 1, Degrees(r.outlierDeg)), true, kNoteMs);
+        Note(std::format("ПРИЦЕЛ {} СНОВА: ОТКЛОНЕНИЕ {:.0f}°", r.outlier + 1, r.outlierDeg));
         return;
     case cal::Review::Result::RedoAll:
         gRun.target = 0;
         if (r.spreadDeg <= 0.0f) {
             log::Warn("calibration: the {} aims couldn't be measured (a degenerate sight line): all three again", name);
-            Say("Those aims couldn't be measured: once more, please.", true, kNoteMs);
+            Say("Эти прицеливания не удалось измерить: пожалуйста, ещё раз.", true, kNoteMs);
         } else {
-            Say(std::format("Those aims were {} apart (even the closest two {}): all three again, the same way each time.",
+            Say(std::format("Эти прицеливания разошлись на {} (даже две ближайшие — на {}): все три заново, каждый раз одинаково.",
                     Degrees(r.spreadDeg), Degrees(r.pairSpreadDeg)),
                 true, kNoteMs);
         }
-        Note("ALL THREE AGAIN, THE SAME WAY EACH TIME");
+        Note("ВСЕ ТРИ ЗАНОВО, КАЖДЫЙ РАЗ ОДИНАКОВО");
         return;
     }
 }
@@ -876,6 +876,16 @@ char const* PoseName(int pose) {
     case 1: return "right hand";
     case 2: return "left hand";
     default: return "?";
+    }
+}
+
+// The same for the panel's status line (the log keeps PoseName: it is English).
+char const* PoseNameRu(int pose) {
+    switch (pose) {
+    case 0: return "голова";
+    case 1: return "правая рука";
+    case 2: return "левая рука";
+    default: return "рука";
     }
 }
 
@@ -919,19 +929,19 @@ void StepAim(bool rifle, XrPosef const& head, XrVector3f const eyes[2], float dt
     std::string logWhy;
     std::string numbers;
     if (!tracked) {
-        why = "The controllers aren't tracked";
-        board = "CONTROLLERS NOT TRACKED";
+        why = "Контроллеры не отслеживаются";
+        board = "КОНТРОЛЛЕРЫ НЕ ОТСЛЕЖИВАЮТСЯ";
         logWhy = "untracked";
     } else if (!rifle && !gRun.weaponVisible) {
         why = "The training weapon isn't visible. Wait, or Skip to keep your previous aim.";
         board = "WAITING FOR TRAINING WEAPON";
         logWhy = "weapon not visible";
     } else if (!gRun.rightHeld || (rifle && !gRun.leftHeld)) {
-        why = !rifle             ? "Squeeze the right grip: hold the pistol"
-            : !gRun.rightHeld && !gRun.leftHeld ? "Squeeze both grips: hold the rifle"
-            : !gRun.rightHeld    ? "Squeeze the right grip again"
-                                 : "Squeeze the left grip again";
-        board = rifle ? "SQUEEZE BOTH GRIPS" : "SQUEEZE THE GRIP";
+        why = !rifle             ? "Сожмите правый хват: держите пистолет"
+            : !gRun.rightHeld && !gRun.leftHeld ? "Сожмите оба хвата: держите винтовку"
+            : !gRun.rightHeld    ? "Сожмите правый хват снова"
+                                 : "Сожмите левый хват снова";
+        board = rifle ? "СОЖМИТЕ ОБА ХВАТА" : "СОЖМИТЕ ХВАТ";
         logWhy = "grip released";
     } else {
         cal::AimCheck const c = rifle ? cal::CheckRifleAim(head, right.grip.position, left.grip.position, target)
@@ -941,28 +951,28 @@ void StepAim(bool rifle, XrPosef const& head, XrVector3f const eyes[2], float dt
         switch (c.problem) {
         case cal::AimProblem::None: break;
         case cal::AimProblem::LookAtTarget:
-            why = std::format("Look at target {}", n);
-            board = std::format("LOOK AT TARGET {}", n);
+            why = std::format("Посмотрите на цель {}", n);
+            board = std::format("ПОСМОТРИТЕ НА ЦЕЛЬ {}", n);
             break;
         case cal::AimProblem::PistolOffLine:
-            why = "Bring the pistol up onto your line of sight";
-            board = "PISTOL UP TO YOUR EYE LINE";
+            why = "Поднимите пистолет на линию взгляда";
+            board = "ПИСТОЛЕТ НА ЛИНИЮ ГЛАЗ";
             break;
         case cal::AimProblem::PistolTooClose:
-            why = "Hold the pistol out in front of you";
-            board = "HOLD THE PISTOL OUT";
+            why = "Держите пистолет перед собой";
+            board = "ДЕРЖИТЕ ПИСТОЛЕТ ПЕРЕД СОБОЙ";
             break;
         case cal::AimProblem::NotShouldered:
-            why = "Bring your right hand near your cheek in your natural rifle pose";
-            board = "RIGHT HAND NEAR YOUR CHEEK";
+            why = "Прижмите правую руку к щеке в естественной стойке с винтовкой";
+            board = "ПРАВАЯ РУКА У ЩЕКИ";
             break;
         case cal::AimProblem::HandsTooClose:
-            why = "Move your left hand farther forward for a two-handed pose";
-            board = "LEFT HAND FURTHER OUT";
+            why = "Отведите левую руку дальше вперёд для стойки двумя руками";
+            board = "ЛЕВАЯ РУКА ДАЛЬШЕ";
             break;
         case cal::AimProblem::NotPointing:
-            why = std::format("Point the rifle at target {}: it's {:.0f} degrees off", n, c.pointDeg);
-            board = std::format("POINT THE RIFLE AT TARGET {}", n);
+            why = std::format("Направьте винтовку в цель {}: отклонение {:.0f}°", n, c.pointDeg);
+            board = std::format("НАПРАВЬТЕ ВИНТОВКУ В ЦЕЛЬ {}", n);
             break;
         }
     }
@@ -976,7 +986,7 @@ void StepAim(bool rifle, XrPosef const& head, XrVector3f const eyes[2], float dt
     cal::StillSettings settings = rifle ? cal::kRifleStill : cal::StillSettings{};
     settings.seconds = kHoldSeconds;
     bool const done = Hold(head, true, rifle, settings, dt);
-    gRun.boardHint = "HOLD STILL";
+    gRun.boardHint = "НЕ ДВИГАЙТЕСЬ";
     gRun.boardHintWarn = false;
     if (!done) {
         // The hold broke: say what moved (and log it, rate-limited).
@@ -993,7 +1003,7 @@ void StepAim(bool rifle, XrPosef const& head, XrVector3f const eyes[2], float dt
             }
         }
         if (moved >= 0 && gRun.held < 0.5f && gRun.holdBreaks > 0) {
-            gRun.status = std::format("Hold still: your {} moved", PoseName(moved));
+            gRun.status = std::format("Не двигайтесь: {} сдвинулась", PoseNameRu(moved));
         }
         gRun.lastHeld = gRun.held;
         gRun.aimLogWhy.clear();  // a reason that comes back after a hold is logged again
@@ -1083,19 +1093,19 @@ void StepGrab(bool rifle, XrPosef const& head) {
         return d > reach ? std::optional<float>(d) : std::nullopt;
     };
     if (auto const d = !gRun.rightHeld ? short_(1, rear, cal::kGrabReach) : std::nullopt) {
-        gRun.status = std::format("Right hand: the {} is {:.0f} cm away (the ring is your hand)", rifle ? "orb" : "handle", *d * 100.0f);
+        gRun.status = std::format("Правая рука: до {} {:.0f} см (кольцо — ваша рука)", rifle ? "сферы" : "рукояти", *d * 100.0f);
         gRun.statusWarn = true;
         return;
     }
     if (auto const d = rifle && !gRun.leftHeld ? short_(0, front, cal::kForegripGrabReach) : std::nullopt) {
-        gRun.status = std::format("Left hand: the orb is {:.0f} cm away (the ring is your hand)", *d * 100.0f);
+        gRun.status = std::format("Левая рука: до сферы {:.0f} см (кольцо — ваша рука)", *d * 100.0f);
         gRun.statusWarn = true;
         return;
     }
-    gRun.status = rifle ? (gRun.rightHeld ? "Now take the far orange orb with your left hand"
-                                          : gRun.leftHeld ? "Now take the near orange orb with your right hand"
-                                                          : "Squeeze each grip at its orange orb")
-                        : "Squeeze the right grip at the orange handle";
+    gRun.status = rifle ? (gRun.rightHeld ? "Теперь дальняя оранжевая сфера — левый хват"
+                                          : gRun.leftHeld ? "Теперь ближняя оранжевая сфера — правый хват"
+                                                          : "Сожмите каждый хват у его оранжевой сферы")
+                        : "Сожмите правый хват у оранжевой рукояти";
 }
 
 void StepBody(XrPosef const& head, float dt) {
@@ -1109,7 +1119,7 @@ void StepBody(XrPosef const& head, float dt) {
     switch (gRun.step) {
     case Step::Stand: {
         if (!cal::LookingAhead(head.orientation)) {
-            NotNow("Look straight ahead");
+            NotNow("Смотрите прямо вперёд");
             return;
         }
         if (!Hold(head, false, false, settings, dt)) {
@@ -1128,15 +1138,15 @@ void StepBody(XrPosef const& head, float dt) {
             gRun.standEye ? std::format("{:.3f} m above the {} floor", *gRun.standEye, vr::floor::Name(floor.source))
                           : std::string(gRun.seated ? "Shepard's standing eyes (no personal standing measurement)"
                                                    : "no floor height (the runtime offers no floor space)"));
-        Say(gRun.seated ? "Seated neutral captured. Physical crouch is off; L3 still crouches."
-                          : gRun.standEye ? std::format("Standing eye height {:.2f} m.", *gRun.standEye)
-                          : std::string("No floor from the runtime: the crouch will use how far your head drops."));
+        Say(gRun.seated ? "Положение сидя записано. Физический присед отключён; L3 всё равно приседает."
+                          : gRun.standEye ? std::format("Высота глаз стоя {:.2f} м.", *gRun.standEye)
+                          : std::string("Среда не сообщает уровень пола: присед будет считаться по опусканию головы."));
         Next(Step::TPose, head);
         return;
     }
     case Step::TPose: {
         if (!hands || !cal::TPose(head.position, left.grip.position, right.grip.position)) {
-            NotNow(hands ? "Waiting for the T pose" : "Both controllers must be tracked");
+            NotNow(hands ? "Ждём Т-позу" : "Оба контроллера должны отслеживаться");
             return;
         }
         if (!Hold(head, true, true, settings, dt)) {
@@ -1151,14 +1161,14 @@ void StepBody(XrPosef const& head, float dt) {
         gRun.haveT = true;
         Captured({0, 1});
         log::Info("calibration: T pose: grips {:.3f} m apart", gRun.tSpan);
-        Say(std::format("Arms {:.2f} m from hand to hand.", gRun.tSpan));
+        Say(std::format("Руки {:.2f} м от кисти до кисти.", gRun.tSpan));
         Next(Step::Forward, head);
         return;
     }
     case Step::Forward: {
         XrVector3f const forward = cal::AnchorForward(gRun.anchor);
         if (!hands || !cal::ArmsForward(head.position, left.grip.position, right.grip.position, forward)) {
-            NotNow(hands ? "Waiting for both arms ahead" : "Both controllers must be tracked");
+            NotNow(hands ? "Ждём обе руки впереди" : "Оба контроллера должны отслеживаться");
             return;
         }
         if (!Hold(head, true, true, settings, dt)) {
@@ -1171,8 +1181,8 @@ void StepBody(XrPosef const& head, float dt) {
         Captured({0, 1});
         log::Info("calibration: arms forward: shoulders {:.3f} m; arm length {}", width,
             gRun.armLength ? std::format("{:.3f} m", *gRun.armLength) : std::string("not measured (no T pose, or implausible)"));
-        Say(gRun.armLength ? std::format("Arms {:.2f} m, shoulders {:.2f} m.", *gRun.armLength, width)
-                           : std::format("Shoulders {:.2f} m.", width));
+        Say(gRun.armLength ? std::format("Руки {:.2f} м, плечи {:.2f} м.", *gRun.armLength, width)
+                           : std::format("Плечи {:.2f} м.", width));
         Next(Step::Crouch, head);
         return;
     }
@@ -1181,11 +1191,11 @@ void StepBody(XrPosef const& head, float dt) {
         bool const down = useFloor ? cal::Crouched(*gRun.standEye, floor.eyeHeight)
                                    : gRun.haveStand && cal::Crouched(gRun.standHeadY, head.position.y);
         if (!gRun.haveStand) {
-            NotNow("Needs step 1 (stand tall): skip, or redo the body");
+            NotNow("Нужен шаг 1 («стойте прямо»): пропустите или повторите корпус");
             return;
         }
         if (!down) {
-            NotNow("Lower");
+            NotNow("Ниже");
             return;
         }
         cal::StillSettings crouch = settings;
@@ -1201,7 +1211,7 @@ void StepBody(XrPosef const& head, float dt) {
         Captured({0, 1});
         log::Info("calibration: crouched {:.3f} m below standing{}", drop,
             gRun.crouchEye ? std::format(", eyes {:.3f} m above the floor", *gRun.crouchEye) : std::string());
-        Say(gRun.crouchEye ? std::format("Crouched eye height {:.2f} m.", *gRun.crouchEye) : std::format("Crouched {:.2f} m down.", drop));
+        Say(gRun.crouchEye ? std::format("Высота глаз в приседе {:.2f} м.", *gRun.crouchEye) : std::format("Присед на {:.2f} м.", drop));
         Next(Step::PistolGrab, head);
         return;
     }
@@ -1259,7 +1269,7 @@ std::string ResultsLine() {
 
 void Save() {
     if (gKey.empty()) {
-        Say("The controllers' type isn't known yet: not saved.", true);
+        Say("Тип контроллеров ещё неизвестен: не сохранено.", true);
         return;
     }
     std::string const section = Section(gKey);
@@ -1387,7 +1397,7 @@ void Press(int button, XrPosef const& head) {
         gRun.crouchDrop.reset();
         if (gRun.step == Step::Crouch && gRun.seated) Next(Step::PistolGrab, head);
         else Enter(Step::Stand, head);
-        Say(gRun.seated ? "Seated play: no physical crouch. L3 still toggles crouch." : "Standing play: stand tall to measure your height.");
+        Say(gRun.seated ? "Игра сидя: физического приседа нет. L3 всё равно переключает присед." : "Игра стоя: встаньте прямо, чтобы измерить рост.");
         return;
     case draw::kCancel:
         Stop("cancelled on the panel");
@@ -1419,7 +1429,7 @@ void Press(int button, XrPosef const& head) {
         cal::Stance const& any = gRun.pistol.valid ? gRun.pistol : gRun.rifle;
         gRun.eye = any.valid ? 1 - any.eye : (gRun.eye == 0 ? 1 : 0);
         SolveAgain();
-        Say(std::format("The sight lines now run from your {} eye.", gRun.eye == 0 ? "left" : "right"));
+        Say(std::format("Линии прицела теперь идут от {} глаза.", gRun.eye == 0 ? "левого" : "правого"));
         log::Info("calibration: the {} eye chosen", gRun.eye == 0 ? "left" : "right");
         if (gRun.pistol.valid) {
             LogStance("pistol", gRun.pistol);
@@ -1457,7 +1467,7 @@ void Back(XrPosef const& head) {
         gRun.held = 0.0f;
         gRun.lastHeld = 0.0f;
         gRun.noteUntil = 0;
-        Say(std::format("Target {} again.", gRun.target + 1));
+        Say(std::format("Цель {} снова.", gRun.target + 1));
         return;
     }
     switch (gRun.step) {
@@ -1534,20 +1544,20 @@ draw::PanelView PanelFor(Step step, std::uint64_t now) {
     if (step == Step::Check) {
         cal::Stance const& any = gRun.pistol.valid ? gRun.pistol : gRun.rifle;
         if (any.valid) {
-            v.summary.push_back(std::format("Aiming eye: {} ({})", any.eye == 0 ? "left" : "right", any.eyeMeasured ? "measured" : "your choice"));
+            v.summary.push_back(std::format("Прицельный глаз: {} ({})", any.eye == 0 ? "левый" : "правый", any.eyeMeasured ? "измерен" : "ваш выбор"));
         }
         v.summary.push_back(StanceSummary(false));
         v.summary.push_back(StanceSummary(true));
         std::string body;
-        if (gRun.seated) body = "Seated; L3 crouch; ";
+        if (gRun.seated) body = "Сидя; присед на L3; ";
         if (gRun.standEye) {
-            body += std::format("Eye height {:.2f} m standing", *gRun.standEye);
+            body += std::format("Высота глаз {:.2f} м стоя", *gRun.standEye);
             if (gRun.crouchEye) {
-                body += std::format(", {:.2f} m crouched", *gRun.crouchEye);
+                body += std::format(", {:.2f} м в приседе", *gRun.crouchEye);
             }
         }
         if (gRun.armLength && gRun.shoulderWidth) {
-            body += std::format("{}arms {:.2f} m, shoulders {:.2f} m", body.empty() ? "" : "; ", *gRun.armLength, *gRun.shoulderWidth);
+            body += std::format("{}руки {:.2f} м, плечи {:.2f} м", body.empty() ? "" : "; ", *gRun.armLength, *gRun.shoulderWidth);
         }
         if (!body.empty()) {
             v.summary.push_back(body);
@@ -1560,7 +1570,7 @@ draw::PanelView PanelFor(Step step, std::uint64_t now) {
         v.buttons.push_back(draw::kSave);
     } else if (step == Step::Saved) {
         v.status.clear();
-        v.message = "Saved for " + (gLabel.empty() ? std::string("these controllers") : gLabel) + ".";
+        v.message = "Сохранено для " + (gLabel.empty() ? std::string("этих контроллеров") : gLabel) + ".";
         v.warn = false;
         v.hints = false;
     } else {
@@ -1902,7 +1912,7 @@ unsigned Layers(Frame const& frame, XrCompositionLayerQuad const** out, unsigned
             add(Quad(frame.appSpace, kBoardChain, cal::BoardPose(gRun.anchor), cal::kBoardSize, cal::kBoardSize));
         } else if (aimingNow && gChains[kBoardChain].failed && now >= gRun.noteUntil) {
             // No board: the aims can't be taken. Say so (Skip keeps the last calibration's aims, Save keeps them too).
-            Say("The targets can't be shown (the headset's runtime has no room for another layer). Skip: your last aims are kept.", true);
+            Say("Цели не удалось показать (в среде шлема нет места для ещё одного слоя). Пропустите: ваши прошлые прицеливания сохранятся.", true);
         }
     }
     // A real stereo shape in the hand, without a sight picture during capture. Submit both eyes or neither;
@@ -2104,9 +2114,10 @@ Summary GetSummary() {
             std::string const rifle = ReadIni(Section(gKey), "rifleSpreadDeg");
             std::string const stand = ReadIni(Section(gKey), "standEyeM");
             std::string const crouch = ReadIni(Section(gKey), "crouchEyeM");
-            s.results = std::format("{} eye; pistol {}; rifle {}; eyes {} m, crouched {} m", eye.empty() ? "?" : eye,
-                pistol.empty() ? "skipped" : pistol + " deg", rifle.empty() ? "skipped" : rifle + " deg", stand.empty() ? "?" : stand,
-                crouch.empty() ? "?" : crouch);
+            std::string const eyeRu = eye == "left" ? "левый" : eye == "right" ? "правый" : eye;
+            s.results = std::format("Глаз: {}; пистолет: {}; винтовка: {}; глаза: {} м; присед: {} м", eyeRu.empty() ? "?" : eyeRu,
+                pistol.empty() ? "—" : pistol + "°", rifle.empty() ? "—" : rifle + "°", stand.empty() ? "?" : stand,
+                crouch.empty() ? "—" : crouch);
             s.eye = eye;
             s.pistolSpreadDeg = pistol;
             s.rifleSpreadDeg = rifle;

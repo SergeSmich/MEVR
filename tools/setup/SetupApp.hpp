@@ -167,7 +167,7 @@ private:
     bool voiceInstalled_ = false, voiceSmall_ = false, voiceMedium_ = false, voiceLlm_ = true, voiceReady_ = false, voiceWarn_ = false;
     bool voiceUpToDate_ = false, voiceChoicesRead_ = false;
     std::string voiceState_, voiceSize_, voiceSources_, voiceLicences_, voiceButton_ = "Install", voiceModelText_, voiceParts_;
-    std::string cancelText_ = "Stop waiting";  // the progress row's stop button
+    std::string cancelText_ = "Остановить ожидание";  // the progress row's stop button
     std::vector<LogLine> log_;
     std::string progressText_;
     int progress_ = 0;

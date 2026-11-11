@@ -386,14 +386,17 @@ std::vector<std::uint8_t> GlyphRecord(TtGlyph const& g) {
     return b.bytes;
 }
 
-bool Wanted(std::uint16_t code, bool everyGlyph) {
+bool Wanted(std::uint16_t code, TtfOptions const& options) {
     if (code == 0xFFFF) {
         return false;
     }
-    if (everyGlyph) {
+    if (options.everyGlyph) {
         return code >= 0x20;
     }
-    return (code >= 0x20 && code <= 0x7E) || (code >= 0xA0 && code <= 0x17F);
+    if ((code >= 0x20 && code <= 0x7E) || (code >= 0xA0 && code <= 0x17F)) {
+        return true;
+    }
+    return options.cyrillic && code >= 0x0400 && code <= 0x04FF;
 }
 
 } // namespace
@@ -416,7 +419,7 @@ std::optional<std::vector<std::uint8_t>> FontAsTtf(Movie const& movie, std::uint
     // Glyph 0 is .notdef (empty); then the font's glyphs in code order.
     std::vector<std::pair<std::uint16_t, Glyph const*>> picked;
     for (Glyph const& g : font->glyphs) {
-        if (Wanted(g.code, options.everyGlyph)) {
+        if (Wanted(g.code, options)) {
             picked.emplace_back(g.code, &g);
         }
     }
@@ -637,6 +640,8 @@ std::optional<std::vector<std::uint8_t>> FontAsTtf(Movie const& movie, std::uint
             ranges1 |= 1u << 1;
         } else if (code < 0x180) {
             ranges1 |= 1u << 2;
+        } else if (code >= 0x400 && code <= 0x4FF) {
+            ranges1 |= 1u << 9;  // Cyrillic
         }
     }
     Be os2;

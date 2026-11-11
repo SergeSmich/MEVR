@@ -5,13 +5,13 @@
      sectors; `held` in the "omnipad" model names the arm the game has pressed ("up", "down", "left", "right" or ""). -->
 <rml>
 <head>
-	<title>MEVR omni-tool d-pad</title>
+	<title>MEVR: крестовина омни-тула</title>
 	<link type="text/rcss" href="omnipad.rcss"/>
 </head>
 <body data-model="omnipad">
 	<div class="ring"/>
-	<div class="arm up" data-class-held="held == 'up'"><div class="arrow a-up"/><div class="cap">In</div></div>
-	<div class="arm down" data-class-held="held == 'down'"><div class="cap">Out</div><div class="arrow a-down"/></div>
+	<div class="arm up" data-class-held="held == 'up'"><div class="arrow a-up"/><div class="cap">Внутрь</div></div>
+	<div class="arm down" data-class-held="held == 'down'"><div class="cap">Наружу</div><div class="arrow a-down"/></div>
 	<div class="arm left" data-class-held="held == 'left'"><div class="arrow a-left"/></div>
 	<div class="arm right" data-class-held="held == 'right'"><div class="arrow a-right"/></div>
 	<div class="hub"><div class="dot"/></div>

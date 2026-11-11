@@ -228,7 +228,8 @@ Result RequestSteamLaunch(fs::path const& steamExe, bool boots, SteamLaunchHooks
 }
 
 bool LauncherBoots(fs::path const& gameRoot) {
-    fs::path const dir = gameRoot / L"Game" / L"Launcher";
+    Layout const layout{gameRoot};
+    fs::path const dir = layout.Full(paths::kLauncherExe).parent_path();
     std::error_code ec;
     detect::BinkState const state =
         detect::ClassifyBink(detect::ReadIdentity(dir / L"bink2w64.dll"), fs::exists(dir / L"bink2w64_original.dll", ec));
@@ -324,16 +325,16 @@ bool Finished(Phase phase) {
 
 char const* PhaseText(Phase phase) {
     switch (phase) {
-    case Phase::Starting: return "Starting Mass Effect 1 (Steam or the EA app may show first)";
-    case Phase::WaitingForFile: return "Waiting for Mass Effect 1 to make its settings file (it does on its first start)";
+    case Phase::Starting: return "Запуск Mass Effect 1 (сначала может появиться Steam или EA app)";
+    case Phase::WaitingForFile: return "Ждём, пока Mass Effect 1 создаст файл настроек (это происходит при первом запуске)";
     case Phase::WaitingForQuit:
-        return "Mass Effect 1 made its settings file. Quit the game now (main menu > Quit): the setup then applies the VR game settings";
-    case Phase::Apply: return "Mass Effect 1 has closed: applying the VR game settings";
+        return "Mass Effect 1 создала файл настроек. Выйдите из игры (главное меню > «Выход»): затем установщик применит настройки VR";
+    case Phase::Apply: return "Mass Effect 1 закрылась: применяем настройки VR";
     case Phase::Closed:
-        return "Mass Effect 1 closed (or never started) without making its settings file. Start it once from Steam or the EA app, quit at its "
-               "main menu, then come back: Repair (or Settings > Apply) puts the VR game settings on";
+        return "Mass Effect 1 закрылась (или не запускалась), так и не создав файл настроек. Запустите её один раз из Steam или EA app, выйдете в её "
+               "главном меню и вернитесь: «Исправить» (или «Настройки» → «Применить») включит настройки VR";
     case Phase::TimedOut:
-        return "Stopped waiting. Once you've started Mass Effect 1 once and quit it, Repair (or Settings > Apply) puts the VR game settings on";
+        return "Ожидание остановлено. Когда вы запустите Mass Effect 1 один раз и выйдете, «Исправить» (или «Настройки» → «Применить») включит настройки VR";
     }
     return "";
 }
@@ -354,34 +355,34 @@ fs::path SteamVrStartup(std::string_view manifestPath) {
 Plan PlanFor(std::string_view kind, std::string_view manifestPath) {
     Plan p;
     if (kind.empty()) {
-        p.advice = "No OpenXR runtime is active: install SteamVR, the Meta Quest Link app or Virtual Desktop and make it the active runtime, or the "
-                   "game starts flat.";
+        p.advice = "Активная среда OpenXR не найдена: установите SteamVR, приложение Meta Quest Link или Virtual Desktop и сделайте её активной, иначе "
+                   "игра запустится без VR.";
         return p;
     }
     p.action = Action::AskPlayer;
     if (kind == "SteamVR") {
         p.action = Action::StartSteamVr;
         p.exe = SteamVrStartup(manifestPath);
-        p.advice = "Launch starts SteamVR first and waits for it (up to a minute): VR has to be up before the game starts, or it stays off for that "
-                   "run. Turn the headset on before you press it.";
+        p.advice = "Запуск сначала поднимет SteamVR и подождёт его (до минуты): VR должен работать до старта игры, иначе на этот запуск он останется "
+                   "выключенным. Включите шлем до нажатия.";
     } else if (kind == "Meta") {
-        p.advice = "Start the Meta Quest Link app and connect the headset (Link cable or Air Link) before you press Launch: VR has to be up before "
-                   "the game starts, or it stays off for that run.";
+        p.advice = "Запустите приложение Meta Quest Link и подключите шлем (кабель Link или Air Link) до нажатия «Запустить»: VR должен работать до "
+                   "старта игры, иначе на этот запуск он останется выключенным.";
     } else if (kind == "Virtual Desktop") {
-        p.advice = "Connect Virtual Desktop first (the Streamer on this PC, the app in the headset), then press Launch: VR has to be up before the "
-                   "game starts, or it stays off for that run.";
+        p.advice = "Сначала подключите Virtual Desktop (Streamer на этом ПК, приложение в шлеме), затем нажмите «Запустить»: VR должен работать до "
+                   "старта игры, иначе на этот запуск он останется выключенным.";
     } else if (kind == "Windows Mixed Reality") {
-        p.advice = "Connect the headset and let Mixed Reality Portal come up before you press Launch: VR has to be up before the game starts, or it "
-                   "stays off for that run.";
+        p.advice = "Подключите шлем и дождитесь запуска Mixed Reality Portal до нажатия «Запустить»: VR должен работать до старта игры, иначе на этот "
+                   "запуск он останется выключенным.";
     } else if (kind == "Pimax") {
-        p.advice = "Start Pimax Play and connect the headset before you press Launch: VR has to be up before the game starts, or it stays off for "
-                   "that run.";
+        p.advice = "Запустите Pimax Play и подключите шлем до нажатия «Запустить»: VR должен работать до старта игры, иначе на этот запуск он останется "
+                   "выключенным.";
     } else if (kind == "Varjo") {
-        p.advice = "Start Varjo Base and connect the headset before you press Launch: VR has to be up before the game starts, or it stays off for "
-                   "that run.";
+        p.advice = "Запустите Varjo Base и подключите шлем до нажатия «Запустить»: VR должен работать до старта игры, иначе на этот запуск он останется "
+                   "выключенным.";
     } else {
-        p.advice = "Start your VR runtime and connect the headset before you press Launch: VR has to be up before the game starts, or it stays off "
-                   "for that run.";
+        p.advice = "Запустите среду VR и подключите шлем до нажатия «Запустить»: VR должен работать до старта игры, иначе на этот запуск он останется "
+                   "выключенным.";
     }
     return p;
 }

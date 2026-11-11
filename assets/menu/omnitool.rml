@@ -4,23 +4,23 @@
      stands beside it, and pick('<id>') asks for an entry (the ids are core/vr/OmniRail's). -->
 <rml>
 <head>
-	<title>MEVR omni-tool</title>
+	<title>MEVR: омни-тул</title>
 	<link type="text/rcss" href="omnitool.rcss"/>
 </head>
 <body data-model="omnitool" data-class-art="art">
 	<div class="panel">
 		<div class="head" data-if="alone || art">
-			<div class="kicker">Omni-Tool</div>
-			<div class="sub">Touch a screen to open it</div>
+			<div class="kicker">Омни-тул</div>
+			<div class="sub">Коснитесь экрана, чтобы открыть его</div>
 			<div class="rule"/>
 		</div>
-		<div class="entry" data-class-on="active == 'squad'" data-event-click="pick('squad')"><div class="box"><div class="ico i-squad"/></div><div class="label">Squad</div></div>
-		<div class="entry" data-class-on="active == 'equipment'" data-event-click="pick('equipment')"><div class="box"><div class="ico i-equipment"/></div><div class="label">Equipment</div></div>
-		<div class="entry" data-class-on="active == 'map'" data-event-click="pick('map')"><div class="box"><div class="ico i-map"/></div><div class="label">Map</div></div>
-		<div class="entry" data-class-on="active == 'journal'" data-event-click="pick('journal')"><div class="box"><div class="ico i-journal"/></div><div class="label">Journal</div></div>
-		<div class="entry" data-class-on="active == 'codex'" data-event-click="pick('codex')"><div class="box"><div class="ico i-codex"/></div><div class="label">Codex</div></div>
-		<div class="entry" data-class-on="active == 'computer'" data-event-click="pick('computer')"><div class="box"><div class="ico i-computer"/></div><div class="label">Computer</div></div>
-		<div class="entry close" data-event-click="pick('close')"><div class="box"><div class="ico i-close"/></div><div class="label">Close</div></div>
+		<div class="entry" data-class-on="active == 'squad'" data-event-click="pick('squad')"><div class="box"><div class="ico i-squad"/></div><div class="label">Отряд</div></div>
+		<div class="entry" data-class-on="active == 'equipment'" data-event-click="pick('equipment')"><div class="box"><div class="ico i-equipment"/></div><div class="label">Снаряжение</div></div>
+		<div class="entry" data-class-on="active == 'map'" data-event-click="pick('map')"><div class="box"><div class="ico i-map"/></div><div class="label">Карта</div></div>
+		<div class="entry" data-class-on="active == 'journal'" data-event-click="pick('journal')"><div class="box"><div class="ico i-journal"/></div><div class="label">Журнал</div></div>
+		<div class="entry" data-class-on="active == 'codex'" data-event-click="pick('codex')"><div class="box"><div class="ico i-codex"/></div><div class="label">Кодекс</div></div>
+		<div class="entry" data-class-on="active == 'computer'" data-event-click="pick('computer')"><div class="box"><div class="ico i-computer"/></div><div class="label">Компьютер</div></div>
+		<div class="entry close" data-event-click="pick('close')"><div class="box"><div class="ico i-close"/></div><div class="label">Закрыть</div></div>
 	</div>
 	<div class="touchring" data-if="ring" data-style-left="ringLeft" data-style-top="ringTop" data-style-width="ringSize" data-style-height="ringSize" data-style-opacity="ringAlpha"/>
 </body>

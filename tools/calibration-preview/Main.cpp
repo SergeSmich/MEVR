@@ -288,39 +288,39 @@ int main(int argc, char** argv) {
     }
     {
         draw::PanelView v = base(draw::Screen::Stand);
-        v.status = "Hold still";
+        v.status = "Не двигайтесь";
         v.progress = 0.62f;
         shots.push_back({"stand", v});
     }
     {
         draw::PanelView v = base(draw::Screen::SeatedStand);
-        v.status = "Hold still";
+        v.status = "Не двигайтесь";
         v.progress = 0.4f;
         shots.push_back({"stand-seated", v});
     }
     {
         draw::PanelView v = base(draw::Screen::TPose);
-        v.status = "Arms straight out, level with your shoulders";
+        v.status = "Ждём Т-позу";
         v.progress = 0.0f;
-        v.message = "Standing eye height 1.68 m. Got it.";
+        v.message = "Высота глаз стоя 1.68 м.";
         shots.push_back({"tpose", v});
     }
     {
         draw::PanelView v = base(draw::Screen::Crouch);
-        v.status = "Lower"; 
+        v.status = "Ниже";
         v.progress = 0.0f;
         shots.push_back({"crouch", v});
     }
     {
         draw::PanelView v = base(draw::Screen::PistolGrab);
-        v.status = "Squeeze the right grip at the orb";
+        v.status = "Сожмите правый хват у сферы";
         v.progress = -1.0f;
         shots.push_back({"pistol-grab", v});
     }
     std::size_t const pistolGrabShot = shots.size() - 1;
     {
         draw::PanelView v = base(draw::Screen::PistolAim);
-        v.status = "Hold still";
+        v.status = "Не двигайтесь";
         v.targets = 3;
         v.targetTaken[0] = true;
         v.targetCurrent = 1;
@@ -347,19 +347,19 @@ int main(int argc, char** argv) {
         }
         shots.push_back({name, v});
     };
-    rifleAim("rifle-aim-look", "Look at target 1", true, 0.0f, false, false, false, 0, nullptr);
-    rifleAim("rifle-aim-shoulder", "Bring the stock to your shoulder: right hand by your cheek", true, 0.0f, true, false, false, 1, nullptr);
-    rifleAim("rifle-aim-point", "Point the rifle at target 2: it's 31 degrees off", true, 0.0f, true, false, false, 1, nullptr);
-    rifleAim("rifle-aim-grip", "Squeeze the left grip again", true, 0.0f, true, false, false, 1, nullptr);
-    rifleAim("rifle-aim-hold", "Hold still: your left hand moved", false, 0.35f, true, false, false, 1, nullptr);
-    rifleAim("rifle-aim-redo-one", "Hold still", false, 0.6f, true, false, true, 1,
-        "Aim 2 was 6.1 degrees off the other two: aim it again.");
-    rifleAim("rifle-aim-again", "Look at target 1", true, 0.0f, false, false, false, 0,
-        "Those aims were 7.4 degrees apart (even the closest two 5.2 degrees): all three again, the same way each time.");
+    rifleAim("rifle-aim-look", "Посмотрите на цель 1", true, 0.0f, false, false, false, 0, nullptr);
+    rifleAim("rifle-aim-shoulder", "Прижмите приклад к плечу: правая рука у щеки", true, 0.0f, true, false, false, 1, nullptr);
+    rifleAim("rifle-aim-point", "Направьте винтовку в цель 2: отклонение 31°", true, 0.0f, true, false, false, 1, nullptr);
+    rifleAim("rifle-aim-grip", "Сожмите левый хват снова", true, 0.0f, true, false, false, 1, nullptr);
+    rifleAim("rifle-aim-hold", "Не двигайтесь: левая рука сдвинулась", false, 0.35f, true, false, false, 1, nullptr);
+    rifleAim("rifle-aim-redo-one", "Не двигайтесь", false, 0.6f, true, false, true, 1,
+        "Прицел 2 отклонён от двух других на 6.1°: прицельтесь ещё раз.");
+    rifleAim("rifle-aim-again", "Посмотрите на цель 1", true, 0.0f, false, false, false, 0,
+        "Эти прицеливания разошлись на 7.4° (даже две ближайшие — на 5.2°): все три заново, каждый раз одинаково.");
     std::size_t const rifleAimShot = shots.size() - 2;  // redo-one, for the eye view
     {
         draw::PanelView v = base(draw::Screen::RifleGrab);
-        v.status = "Left hand: the orb is 27 cm away (the ring is your hand)";
+        v.status = "Левая рука: до сферы 27 см (кольцо — ваша рука)";
         v.statusWarn = true;
         v.progress = -1.0f;
         shots.push_back({"rifle-grab-reach", v});
@@ -367,9 +367,9 @@ int main(int argc, char** argv) {
     std::size_t const rifleGrabShot = shots.size() - 1;
     {
         draw::PanelView v = base(draw::Screen::Check);
-        v.summary = {"Aiming eye: right (measured)", "Pistol: three aims within 1.2 degrees",
-            "Rifle: two aims within 1.1 degrees (aim 3 left out, 6.4 degrees off)",
-            "Eye height 1.68 m standing, 1.06 m crouched; arms 0.66 m, shoulders 0.39 m"};
+        v.summary = {"Прицельный глаз: правый (измерен)", "Пистолет: три прицеливания в пределах 1.2°",
+            "Винтовка: два прицеливания в пределах 1.1° (прицел 3 отброшен, отклонение 6.4°)",
+            "Высота глаз 1.68 м стоя, 1.06 м в приседе; руки 0.66 м, плечи 0.39 м"};
         v.buttons = {draw::kRedoBody, draw::kRedoPistol, draw::kRedoRifle, draw::kRowBreak, draw::kSwitchEye, draw::kSave};
         v.pointer = true;
         auto const buttons = draw::LayoutButtons(v);
@@ -387,7 +387,7 @@ int main(int argc, char** argv) {
         draw::PanelView v = base(draw::Screen::Saved);
         v.buttons.clear();
         v.hints = false;
-        v.message = "Saved for " + device + ".";
+        v.message = "Сохранено для " + device + ".";
         shots.push_back({"saved", v});
     }
     std::vector<composite::Image> panels;
@@ -420,9 +420,9 @@ int main(int argc, char** argv) {
         Save(out / name, Over(image, backdrop));
         return image;
     };
-    boardWith("board-hint-shoulder.png", 1, true, false, "STOCK TO YOUR SHOULDER", true);
-    boardWith("board-hint-hold.png", 1, true, false, "HOLD STILL", false);
-    composite::Image const redoBoard = boardWith("board-hint-redo.png", 1, true, true, "AIM 2 AGAIN: 6 DEGREES OFF", true);
+    boardWith("board-hint-shoulder.png", 1, true, false, "ПРИКЛАД К ПЛЕЧУ", true);
+    boardWith("board-hint-hold.png", 1, true, false, "НЕ ДВИГАЙТЕСЬ", false);
+    composite::Image const redoBoard = boardWith("board-hint-redo.png", 1, true, true, "ПРИЦЕЛ 2 СНОВА: ОТКЛОНЕНИЕ 6°", true);
     draw::BoardView checkBoard;
     composite::Image const checkBoardImage =
         RenderCanvas(gpu, draw::kBoardSize, draw::kBoardSize, [&](ImDrawList* dl) { draw::DrawBoard(dl, gpu.fonts, checkBoard); });

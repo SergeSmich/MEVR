@@ -863,12 +863,12 @@ Coach CoachFor(Aim aim, SelfGesture gesture) {
 
 CoachText CoachLines(Coach coach) {
     switch (coach) {
-    case Coach::Target: return {"Raise your left hand at an enemy until it locks on,", "then push your open hand toward it."};
-    case Coach::Place: return {"Point your left hand at an enemy or a spot,", "then push your open hand toward it."};
-    case Coach::Forward: return {"Push your open left hand forward to cast it.", "Your right hand can keep the gun."};
-    case Coach::Chest: return {"Hold your open left hand flat on your chest", "for a moment to cast it."};
-    case Coach::Gun: return {"Slap your open left hand onto the top", "of the gun in your right hand."};
-    case Coach::Raise: return {"Raise your open left hand above your head", "and hold it there for a moment."};
+    case Coach::Target: return {"Поднимите левую руку к врагу, пока не захватится,", "затем толкните раскрытую ладонь к нему."};
+    case Coach::Place: return {"Наведите левую руку на врага или на точку,", "затем толкните раскрытую ладонь к ней."};
+    case Coach::Forward: return {"Толкните раскрытую левую ладонь вперёд, чтобы применить.", "Оружие остаётся в правой руке."};
+    case Coach::Chest: return {"Прижмите раскрытую левую ладонь к груди", "и задержите на миг, чтобы применить."};
+    case Coach::Gun: return {"Хлопните раскрытой левой ладонью по верху", "оружия в правой руке."};
+    case Coach::Raise: return {"Поднимите раскрытую левую ладонь над головой", "и задержите её там ненадолго."};
     case Coach::None: break;
     }
     return {"", ""};

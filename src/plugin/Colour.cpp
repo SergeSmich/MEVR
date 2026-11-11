@@ -523,7 +523,7 @@ void SetCustom(cv::Settings const& settings, bool save) {
 
 void MenuSection() {
     Tick();
-    ImGui::SeparatorText("Colour (the game's picture and its HUD)");
+    ImGui::SeparatorText("Цвет (картинка игры и её HUD)");
     std::string system;
     cv::Detection detection;
     cv::Resolved r;
@@ -535,8 +535,8 @@ void MenuSection() {
         r = gResolved;
         cost = gAverageMs;
     }
-    ImGui::Text("Headset: %s", system.empty() ? "not known yet (VR hasn't started)" : system.c_str());
-    ImGui::TextDisabled("Automatic: %s, for %s", cv::Label(detection.automatic), detection.why.c_str());
+    ImGui::Text("Шлем: %s", system.empty() ? "пока неизвестен (VR не запущен)" : system.c_str());
+    ImGui::TextDisabled("Авто: %s, для %s", cv::Label(detection.automatic), (detection.whyRu.empty() ? detection.why : detection.whyRu).c_str());
     static constexpr cv::Profile kProfiles[] = {cv::Profile::Auto, cv::Profile::Neutral, cv::Profile::Quest, cv::Profile::Vivid,
         cv::Profile::Custom};
     for (cv::Profile const p : kProfiles) {
@@ -557,14 +557,14 @@ void MenuSection() {
         done |= ImGui::IsItemDeactivatedAfterEdit();
     };
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.55f);
-    slider("Brightness", &s.brightness, 0.5f, 1.5f, "%.2f");
-    slider("Contrast", &s.contrast, 0.5f, 1.5f, "%.2f");
-    slider("Saturation", &s.saturation, 0.0f, 2.0f, "%.2f");
-    slider("Mid-tones (gamma; below 1 darker)", &s.gamma, 0.5f, 2.0f, "%.2f");
-    slider("Black level (below 0 deeper)", &s.black, -0.2f, 0.2f, "%.3f");
-    slider("Red", &s.gain[0], 0.5f, 1.5f, "%.2f");
-    slider("Green", &s.gain[1], 0.5f, 1.5f, "%.2f");
-    slider("Blue", &s.gain[2], 0.5f, 1.5f, "%.2f");
+    slider("Яркость", &s.brightness, 0.5f, 1.5f, "%.2f");
+    slider("Контраст", &s.contrast, 0.5f, 1.5f, "%.2f");
+    slider("Насыщенность", &s.saturation, 0.0f, 2.0f, "%.2f");
+    slider("Средние тона (гамма; ниже 1 — темнее)", &s.gamma, 0.5f, 2.0f, "%.2f");
+    slider("Уровень чёрного (ниже 0 — глубже)", &s.black, -0.2f, 0.2f, "%.3f");
+    slider("Красный", &s.gain[0], 0.5f, 1.5f, "%.2f");
+    slider("Зелёный", &s.gain[1], 0.5f, 1.5f, "%.2f");
+    slider("Синий", &s.gain[2], 0.5f, 1.5f, "%.2f");
     ImGui::PopItemWidth();
     if (changed) {
         SetCustomLive(s);
@@ -572,24 +572,24 @@ void MenuSection() {
     if (done) {
         SaveCustom();
     }
-    ImGui::Button("Hold to compare");
+    ImGui::Button("Удерживайте для сравнения");
     if (ImGui::IsItemActive()) {
         HoldCompare();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Custom: back to neutral")) {
+    if (ImGui::Button("Свои: вернуть нейтраль")) {
         SetCustomLive(cv::Settings{});
         SaveCustom();
     }
     if (r.compare) {
-        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.3f, 1.0f), "[Colour] compare = 1 in the file: shown uncorrected.");
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.3f, 1.0f), "[Colour] compare = 1 в файле: показано без коррекции.");
     } else if (Correcting() && gEye.ready) {
-        ImGui::TextDisabled("Correcting the world and the HUD (%s).",
-            cost[kEyeCorrected] >= 0.0 ? std::format("eye blit {:.3f} ms on the GPU", cost[kEyeCorrected]).c_str() : "cost not measured yet");
+        ImGui::TextDisabled("Коррекция мира и HUD (%s).",
+            cost[kEyeCorrected] >= 0.0 ? std::format("блит глаза {:.3f} мс на GPU", cost[kEyeCorrected]).c_str() : "стоимость пока не измерена");
     } else if (!cv::IsNeutral(r.settings) && !gEye.ready) {
-        ImGui::TextDisabled("Waiting for the eye shaders (VR not started, or they failed: see the log).");
+        ImGui::TextDisabled("Ждём шейдеры глаз (VR не запущен или они не загрузились: смотрите лог).");
     } else {
-        ImGui::TextDisabled("No correction (neutral: the picture as the game makes it).");
+        ImGui::TextDisabled("Без коррекции (нейтраль: картинка такая, как её делает игра).");
     }
 }
 
