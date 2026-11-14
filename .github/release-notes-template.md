@@ -21,6 +21,9 @@ Install changes, optional texture packs, uninstalling.
 
 {{changes}}
 
+What comes next, and what in this release still needs testing in a headset:
+[the roadmap](https://github.com/dnehring/MEVR/blob/main/ROADMAP.md).
+
 ## Problems?
 
 - [The troubleshooting guide](https://github.com/dnehring/MEVR/blob/main/docs/troubleshooting.md) covers the common ones.

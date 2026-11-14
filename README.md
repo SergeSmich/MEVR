@@ -10,11 +10,13 @@ pistol from your hip, steady a rifle with both hands, throw grenades from your c
 open hand, order your squad by pointing or by voice, and drive the Mako from its cockpit.
 
 **[Download MEVR-Setup.exe](https://github.com/dnehring/MEVR/releases/latest)** ·
-[Website](https://dnehring.github.io/MEVR/) · [Controls](docs/controls.md) · [Report a problem](#report-a-problem) ·
+[Website](https://dnehring.github.io/MEVR/) · [Controls](docs/controls.md) · [Roadmap](ROADMAP.md) ·
+[Report a problem](#report-a-problem) ·
 [Discord](https://discord.gg/flat2vr)
 
 > **Development preview.** Mass Effect 1 only for now; Mass Effect 2 and 3 come later. Much of it has been played
-> in a headset only a few times, so your reports are very welcome.
+> in a headset only a few times, so your reports are very welcome. What comes next, and what needs testing, is in the
+> [roadmap](ROADMAP.md).
 
 <!-- Screenshot: holding a pistol, hand reticle and wrist status visible -->
 <!-- Screenshot: the power wheel at the left palm -->
