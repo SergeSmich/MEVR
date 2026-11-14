@@ -1,7 +1,57 @@
 <!-- SPDX-License-Identifier: MIT -->
 # LE2 validation tooling evidence
 
-Checkpoint: 2026-11-14 UTC. **The resource edit/load/save/fresh-reload cycle now has native proof: all eight edited values survived normal saving, independent Trilogy Save Editor decoding and a fresh normal load. The reload run closed normally and restored all four protected roots. The earlier save run recovered its test changes while preserving intervening ME1/shared-profile changes. The three gameplay scenarios, general console calls and VR acceptance remain pending.**
+Checkpoint: 2026-11-14 UTC. **All eight edited resources survived normal saving, independent Trilogy Save Editor decoding and a fresh normal load. Freedom's Progress Save 4 now supplies a native PC partial-reload baseline for the heavy pistol. Full gameplay scenario coverage, general console calls and VR acceptance remain pending.**
+
+## Freedom's Progress Save 4 pistol baseline, 2026-11-14 UTC
+
+Protected run `f5b90d10-323d-4fed-9813-cf582b0e08f6` reused diagnostic
+candidate `5190e3dd` below. The pinned Trilogy Save Editor adapter verified
+the owner's natural Save 4 and prepared a byte-identical copy with SHA-256
+`999c652465e40364bc447a2501960d77fd386640698d8302b8fbe822a122e2f6`.
+The protected session staged it as Save 99. The file channel advanced the
+splash and opened Load Game. The new career had no reviewed descriptor
+binding, so the copy was selected through the normal game menu.
+
+The checkpoint opened on `BioP_ProFre` in unpaused default gameplay, facing
+a closed door with the heavy pistol already drawn. The native
+`observe-resources` request `26d5975c-99bd-40bb-a791-375486ac546d` confirmed
+the map, the matching saved X/Y coordinates and all eight live resource fields.
+The weapon selected by the live pawn was `SFXGameContent_Inventory.SFXWeapon_HeavyPistol`,
+despite the grenade launcher marked selected in the serialized save. The pad
+bridge was off. One normal left mouse click fired toward the closed door, and
+the normal `R` binding (`PC_Reload` in the protected `BIOInput.ini`) reloaded.
+The same player-owned pistol (session-local index `123217`) appeared in all
+three read-only `observe-weapon` samples.
+
+| Sample | Loaded | Used | Stored reserve | Archived request ID |
+| --- | ---: | ---: | ---: | --- |
+| After normal load | 12 | 0 | 60 | `7f401b2b-99a4-4b7f-a2c3-faebf11be8a9` |
+| After one shot | 11 | 1 | 60 | `fd33f18c-f322-4a92-98e0-bf2e6564a665` |
+| After pressing `R` | 12 | 0 | 59 | `4426ddcd-038c-45fd-8bbe-a9d078824b6c` |
+
+Use those three checkpoints as the baseline for the next Halcyon reload test.
+This run established the ordinary partial-reload ammo outcome. Reload event
+order, native save persistence for this checkpoint, scripted controller input,
+VR gestures and the other scenario variants still need their own evidence.
+
+The owned process closed normally, all four protected roots passed restoration
+verification, and the invitation was removed. A separate check confirmed the
+original Save 4 hash, the absence of staged Save 99, and the restored stock LE2
+Bink DLL. Private fixture recipe and receipt are in `local-tools/le2-freedoms-progress-save4`.
+The raw responses and restoration context are in
+`local-tools/le2-diagnostic-handoff/run-freedoms-progress-save4-01`.
+
+### Offline ammo variants from the same save
+
+The existing [`prepare-variants.py` workflow](../tools/qa-le2/variant-usage.md)
+produced six distinct cases for the pistol at save record 3. The partial
+case uses two missing rounds to distinguish zero, insufficient and exact
+reserves. `surplus-reserve` reuses `partial`. The pinned Trilogy Save Editor
+oracle verified all six save/recipe/receipt triples. The private batch is in
+`local-tools/le2-freedoms-progress-save4/reload-ammo`. Its `index.json` SHA-256
+is `76445c3926e4779018d7e4744b01be73047319e937dec0f8904e1c10fd99bbac`.
+Native starting-state and gameplay checks for the edited saves are pending.
 
 ## Offline dialogue recorder, 2026-11-14 UTC
 

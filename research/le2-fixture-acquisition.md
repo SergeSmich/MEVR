@@ -16,9 +16,13 @@ it does not require an enemy target. Establish normal drawing, firing, partial
 reload and saving at the chosen location before preparing variants. A map name,
 populated inventory or successful load alone does not establish those actions.
 
-The owner confirmed on 2026-11-14 that no earlier save is known. Plan the
-separate protected new-game route below; do not leave acquisition waiting for
-an unidentified Lazarus/Freedom's Progress save.
+The owner supplied Freedom's Progress Save 4 on 2026-11-14. Use the verified
+byte-identical private copy for ordinary heavy-pistol reload tests. The
+[protected native baseline](le2-validation-evidence.md#freedoms-progress-save-4-pistol-baseline-2026-11-14-utc)
+loaded directly at a closed door and confirmed `12/60 → 11/60 → 12/59` with
+one shot and a normal reload. Start each ammo variant from the immutable
+copy. Document a separate normal save/reload trial before claiming persistence
+for this fixture. Preserve the Lazarus route below for tutorial-specific tests.
 
 The first protected New Game attempt reached the Normandy evacuation corridor.
 There the current pawn was `SFXGame.BioPawn`, outside the existing scripted
@@ -41,7 +45,7 @@ that blocked scripted movement. Consider the mod for acquisition only if the
 checkpoint can subsequently be loaded and verified on the stock test install.
 No external save or mod was installed during the search.
 
-1. **Preferred reusable route: normal Lazarus/ProCer progression.** Installed
+1. **Tutorial route: normal Lazarus/ProCer progression.** Installed
    base and Patch01 content includes `BioP_ProCer` and
    `BioD_ProCer_100RezRoom`. Existing sequence inspection identifies pistol
    acquisition, `LS10_Reload_Heatsink`, the tutorial reload event and a save

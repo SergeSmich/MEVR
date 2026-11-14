@@ -85,6 +85,13 @@ reload of those exact bytes also matched all eight live values and the reviewed
 scene, followed by verified restoration. Earlier deferred cleanup preserved
 intervening ME1/shared-profile changes through qualified recovery. Gameplay
 costs and the three end-to-end scenarios remain pending.
+
+The [Freedom's Progress Save 4 baseline](../research/le2-validation-evidence.md#freedoms-progress-save-4-pistol-baseline-2026-11-14-utc)
+established ordinary PC partial reload on the live heavy pistol: `12/60 →
+11/60 → 12/59` (loaded/reserve). Reuse this checkpoint for the first Halcyon
+comparison. The complete reload scenario still needs its remaining variants and
+identity-bound acceptance artifacts.
+
 The read-only [weapon observer](../research/le2-weapon-observation.md) now exposes
 selected-weapon identity, capacity, used/derived loaded count and stored reserve
 through `observe-weapon`. Protected runs `1722Z-loadout` and `1749Z-neutral-focus`
