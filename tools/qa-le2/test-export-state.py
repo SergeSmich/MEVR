@@ -97,6 +97,19 @@ class ExportTests(unittest.TestCase):
     def state(self):
         return e.read(self.run / f'artifacts/state-{self.token}.json')
 
+    def test_reload_verifies_projection_against_archived_response_without_writing(self):
+        observation, _ = e.read_observation(self.run, self.token, self.case)
+        e.scenario.verify_reload_observation(self.run, observation)
+        self.assertFalse((self.run / 'artifacts').exists())
+        self.assertEqual(self.invoke(), 0)
+        e.scenario.verify_reload_observation(self.run, self.state())
+        observation['state']['resources']['probes'] += 1
+        with self.assertRaisesRegex(ValueError, 'differs from its archived response'):
+            e.scenario.verify_reload_observation(self.run, observation)
+        (self.run / 'control/consumed-1.request').unlink()
+        with self.assertRaisesRegex(ValueError, 'consumed request evidence'):
+            e.scenario.verify_reload_observation(self.run, self.state())
+
     def use_dialogue_history(self, verb='observe-dialogue-history'):
         self.request.update(verb=verb, sequence='2')
         self.payload.pop('resourceObservation', None)

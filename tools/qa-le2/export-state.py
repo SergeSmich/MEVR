@@ -691,7 +691,8 @@ def dialogue_history_start(run, request, payload, consumed):
                 consumedRequest=matches[0].name)
 
 
-def export(run_path, request_id, case_id):
+def read_observation(run_path, request_id, case_id):
+    """Reconstruct an observation from its protected archive without publishing files."""
     require(control.valid_uuid(request_id), 'Canonical nonzero request UUID required')
     run = session.safe_path(Path(run_path).absolute())
     # Strict JSON first; lifecycle helper remains the shared source of session/root rules.
@@ -699,9 +700,6 @@ def export(run_path, request_id, case_id):
     checked_run, checked_context = session.load_context(run, require_lock=False)
     require(checked_run == run and checked_context == context and context.get('backupComplete') is True,
             'Protected context is incomplete or changed')
-    output = session.safe_path(run / 'artifacts' / ('state-' + request_id + '.json'))
-    report_path = session.safe_path(run / 'artifacts' / ('state-' + request_id + '.check.json'))
-    require(not output.exists() and not report_path.exists(), 'Export output already exists')
     descriptor = read(run / 'control' / 'identity.json')
     wire_identity = descriptor.get('identity')
     require(type(descriptor.get('schemaVersion')) is int and descriptor['schemaVersion'] == 1 and descriptor.get('source') == 'diagnostic-host'
@@ -778,9 +776,19 @@ def export(run_path, request_id, case_id):
         artifact['provenance']['normalizedSemantics'] = {
             'dialogueHistory': 'bounded sampled history; raw counters and adjacent intervals, not accepted input or complete event history',
             'dialogueHistory.adjacentSamples': 'differences between serialized rows only; omitted rows may lie between them; no interpolation'}
+    return artifact, frozen
+
+
+def export(run_path, request_id, case_id):
+    require(control.valid_uuid(request_id), 'Canonical nonzero request UUID required')
+    run = session.safe_path(Path(run_path).absolute())
+    output = session.safe_path(run / 'artifacts' / ('state-' + request_id + '.json'))
+    report_path = session.safe_path(run / 'artifacts' / ('state-' + request_id + '.check.json'))
+    require(not output.exists() and not report_path.exists(), 'Export output already exists')
+    artifact, frozen = read_observation(run, request_id, case_id)
     failures = scenario.check_start(frozen, artifact)
-    failures.extend('unavailable observation: ' + key for key in unavailable)
-    report = dict(schemaVersion=1, identity=identity, sourceRequestId=request_id,
+    failures.extend('unavailable observation: ' + key for key in artifact['unavailable'])
+    report = dict(schemaVersion=1, identity=artifact['identity'], sourceRequestId=request_id,
                   status='matched-observed-start-only' if not failures else 'starting-state-check-failed',
                   failures=failures, scope='No scene, fixture-load, persistence, input or VR acceptance')
     state_bytes = (json.dumps(artifact, indent=2, allow_nan=False) + '\n').encode('utf-8')

@@ -402,7 +402,9 @@ evidence manifest, add `reloadLink` with the original run-relative
 `saveReport` path and its SHA-256 as `saveReportSha256`. Pass
 `--reload-session <fresh-run-directory>` alongside `--session` when auditing.
 The auditor checks report, save, fixture and runtime identities along with
-restoration of the fresh run. Keep the normal Load Game selection and rendered
+restoration of the fresh run. It rebuilds the fresh observation from the
+archived request and response to check the normalized values. Keep the
+normal Load Game selection and rendered
 scene evidence in the persistence review. When the original run only has a
 qualified recovery, its separate restoration requirement stays open.
 

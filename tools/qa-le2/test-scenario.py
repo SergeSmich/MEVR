@@ -211,7 +211,7 @@ class ScenarioTests(unittest.TestCase):
     def test_fresh_reload_requires_exact_outcome_and_preserves_second_run_identity(self):
         source, reload = self.root / 'primary-run', self.root / 'reload-run'
         (source / 'artifacts').mkdir(parents=True)
-        (reload / 'control').mkdir(parents=True)
+        reload.mkdir()
         report_path = source / 'artifacts/save-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.json'
         save_path = report_path.with_suffix('.pcsav')
         spec = importlib.util.spec_from_file_location('reload_save_fixture', HERE.parents[1] / 'tests/Le2SaveTests.py')
@@ -228,11 +228,13 @@ class ScenarioTests(unittest.TestCase):
         self.write(reload / 'scenario.json', {'variants': ['empty']})
         identity = dict(self.identity, runId='RELOAD-RUN', baseSaveSha256=scenario.sha(save_path),
                         preparedSaveSha256=scenario.sha(save_path), scenarioSha256=scenario.sha(reload / 'scenario.json'))
-        wire = {'run': identity['runId'], 'exe': identity['gameExeSha256'], 'mod': identity['loadedModSha256'], 'pid': '42'}
-        self.write(reload / 'control/identity.json', {'identity': wire})
-        observation = {'identity': identity, 'provenance': {'wireIdentity': wire}}
-        with mock.patch.object(scenario, 'bind_session', return_value={'processBound': True, 'restorationVerified': True}):
+        observation = {'identity': identity}
+        with (
+            mock.patch.object(scenario, 'bind_session', return_value={'processBound': True, 'restorationVerified': True}),
+            mock.patch.object(scenario, 'verify_reload_observation') as verify,
+        ):
             bound = scenario.bind_reload(self.identity, source, reload, link, observation)
+            verify.assert_called_once_with(reload, observation)
             self.assertEqual(bound['runId'], 'RELOAD-RUN')
             self.assertFalse(bound['normalLoadVerified'])
             self.assertEqual(bound['savedResources']['probes'], 7)

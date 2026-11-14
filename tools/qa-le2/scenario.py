@@ -488,15 +488,24 @@ def bind_reload(primary, primary_path, reload_path, link, observation):
         raise ValueError('reload case is missing from the frozen reload scenario')
     if datetime.fromisoformat(target_process['started']) <= datetime.fromisoformat(source_process['started']):
         raise ValueError('reload run must use a newer game process')
-    wire = observation['provenance']['wireIdentity']
-    descriptor = read_json(target / 'control' / 'identity.json')
-    if (wire.get('run') != identity['runId'] or wire.get('exe') != identity['gameExeSha256']
-            or wire.get('mod') != identity['loadedModSha256'] or wire.get('pid') != str(target_process['pid'])
-            or wire != descriptor.get('identity')):
-        raise ValueError('reload observation wire identity differs')
+    verify_reload_observation(target, observation)
     resources = {key: save.data['player'][field] for key, field in SAVED_RESOURCES.items()}
     return dict(binding, **outcome, runId=identity['runId'], savedOutcomeSha256=save_sha,
                 savedResources=resources, normalLoadVerified=False)
+
+
+def verify_reload_observation(run, observation):
+    spec = importlib.util.spec_from_file_location('le2_reload_export', Path(__file__).with_name('export-state.py'))
+    exporter = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(exporter)
+    provenance = observation['provenance']
+    rebuilt, _ = exporter.read_observation(run, provenance['requestId'], observation['identity']['caseId'])
+    keys = ('requestId', 'wireIdentity', 'requestSha256', 'responseSha256', 'consumedRequest',
+            'gameTick', 'gameThreadId', 'sampleMonotonicMs', 'deadline', 'deploymentSha256', 'runtimeObservation')
+    if (observation['identity'] != rebuilt['identity'] or observation['source'] != rebuilt['source']
+            or any(provenance[key] != rebuilt['provenance'][key] for key in keys)
+            or json.dumps(observation['state'], sort_keys=True) != json.dumps(rebuilt['state'], sort_keys=True)):
+        raise ValueError('reload observation differs from its archived response')
 
 
 def check_saved_reload_resources(saved, observed):
