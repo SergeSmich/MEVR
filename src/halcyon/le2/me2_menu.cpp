@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
+// Modified for ME VR Attempt (GPL-3.0) since 2026-11-14: changes are marked [MEVR].
+// Upstream: jrush64/MassEffect2-VR @ 4784e90 (Copyright (C) 2026 Halcyon).
 #include "me2_menu.h"
 
 #include "calcview_hook.h"
@@ -8,6 +10,7 @@
 #include "logger.h"
 #include "pchud.h"
 #include "me2_xr.h"
+#include "mevr_bridge.h"  // [MEVR]
 
 #include <cstdint>
 
@@ -249,7 +252,10 @@ inline void RotateMoveStickByHeadLook(XINPUT_GAMEPAD* pad) noexcept
 
 DWORD WINAPI HookedXInputGetState(DWORD idx, XINPUT_STATE* state) noexcept
 {
-    const DWORD r = g_origXInput ? g_origXInput(idx, state) : ERROR_DEVICE_NOT_CONNECTED;
+    DWORD r = g_origXInput ? g_origXInput(idx, state) : ERROR_DEVICE_NOT_CONNECTED;
+#if defined(MEVR_ASI)
+    r = ::ME2VR::MevrBridge::MergeMotionControllers(idx, state, r);  // [MEVR] Touch -> Xbox pad 0
+#endif
     CaptureLeftStick(state, r, idx);
     CheckR3Recenter(state, r, idx);
     if (state != nullptr)
@@ -266,8 +272,11 @@ DWORD WINAPI HookedXInputGetState(DWORD idx, XINPUT_STATE* state) noexcept
 
 DWORD WINAPI HookedXInputGetStateEx(DWORD idx, XINPUT_STATE* state) noexcept
 {
-    const DWORD r = g_origXInputEx ? g_origXInputEx(idx, state)
-                                   : (g_origXInput ? g_origXInput(idx, state) : ERROR_DEVICE_NOT_CONNECTED);
+    DWORD r = g_origXInputEx ? g_origXInputEx(idx, state)
+                             : (g_origXInput ? g_origXInput(idx, state) : ERROR_DEVICE_NOT_CONNECTED);
+#if defined(MEVR_ASI)
+    r = ::ME2VR::MevrBridge::MergeMotionControllers(idx, state, r);  // [MEVR] Touch -> Xbox pad 0
+#endif
     CaptureLeftStick(state, r, idx);
     CheckR3Recenter(state, r, idx);
     if (state != nullptr)

@@ -10,6 +10,9 @@
 #include "plugin/PresentHook.hpp"
 #include "plugin/ProcessEventHook.hpp"
 
+#if defined(MEVR_WITH_HALCYON_LE2)
+#include "core/vr/Controllers.hpp"
+#endif
 #if defined(MEVR_WITH_HALCYON)
 #include "halcyon/le1/pchud.h"
 #include "core/vr/Controllers.hpp"
@@ -418,6 +421,16 @@ void ForgetModState() {
     halcyon::ForgetHaptics();
     vignette::Forget();
 }
+#elif defined(MEVR_WITH_HALCYON_LE2)
+// LE2 with Halcyon's ME2 renderer (plugin/HalcyonLe2): the host owns VR and has the motion controllers, so the mod does no
+// VR output, scene view hook or XInput hook of its own (game/GamepadBridge). No view, aim ray or other service yet.
+void HostControllersLe2(vr::controllers::State* out) {
+    *out = vr::controllers::Latest(UINT64_MAX);  // raw sample: the mod ages it itself
+}
+HostServices const gServices = WithCrashBreadcrumbs({kHostServicesVersion, kHostLog, &HostControllersLe2, nullptr, nullptr,
+    static_cast<std::uint32_t>(sizeof(vr::controllers::State)), 0, &HostSetProcessEventCallback, &HostProcessExiting,
+    &HostKeepLoaded, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, static_cast<std::uint32_t>(sizeof(HostServices))});
+void ForgetModState() {}
 #else
 HostServices const gServices = WithCrashBreadcrumbs({kHostServicesVersion, kHostLog, nullptr, nullptr, nullptr, 0, 0,
     &HostSetProcessEventCallback, &HostProcessExiting, &HostKeepLoaded, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,

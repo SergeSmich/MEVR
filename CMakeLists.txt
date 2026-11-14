@@ -214,6 +214,42 @@ target_compile_definitions(halcyon-le1 PRIVATE WIN32 _WINDOWS UNICODE _UNICODE _
 target_compile_options(halcyon-le1 PRIVATE /W3 /utf-8 /Zi)
 target_link_libraries(halcyon-le1 PUBLIC mevr-minhook d3d11 dxgi Shell32 Ole32)
 
+# Halcyon's LE2 VR renderer (GPL-3.0, src/halcyon/le2, upstream jrush64/MassEffect2-VR 4784e90): the LE2 host's
+# renderer when MEVR_HALCYON is on (not in the diagnostic host). Upstream's dllmain.cpp stays out (our ASI entry starts
+# it, plugin/HalcyonLe2); dxgi_proxy.cpp is built with its proxy exports compiled out (MEVR_ASI). The same vendored
+# MinHook and Dear ImGui as LE1 (byte-identical to upstream's; research/le2-renderer-integration.md).
+set(HALCYON_LE2_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/halcyon/le2)
+add_library(halcyon-le2 STATIC
+    ${HALCYON_LE2_DIR}/allocviewstate_finder.cpp
+    ${HALCYON_LE2_DIR}/calcview_finder.cpp
+    ${HALCYON_LE2_DIR}/calcview_hook.cpp
+    ${HALCYON_LE2_DIR}/convo_fp.cpp
+    ${HALCYON_LE2_DIR}/d3d_capture.cpp
+    ${HALCYON_LE2_DIR}/dxgi_proxy.cpp
+    ${HALCYON_LE2_DIR}/engine_probe.cpp
+    ${HALCYON_LE2_DIR}/logger.cpp
+    ${HALCYON_LE2_DIR}/me2_menu.cpp
+    ${HALCYON_LE2_DIR}/me2_xr.cpp
+    ${HALCYON_LE2_DIR}/pchud.cpp
+    third_party/imgui/imgui.cpp
+    third_party/imgui/imgui_draw.cpp
+    third_party/imgui/imgui_tables.cpp
+    third_party/imgui/imgui_widgets.cpp
+    third_party/imgui/backends/imgui_impl_dx11.cpp
+)
+target_include_directories(halcyon-le2 PUBLIC
+    ${HALCYON_LE2_DIR}
+    third_party/imgui
+    third_party/imgui/backends
+)
+target_include_directories(halcyon-le2 PRIVATE third_party/minhook/src/hde)  # its finders' disassembler (upstream's vcxproj)
+# Upstream's settings (MELE2VR.vcxproj): C++17, Unicode, its defines. MEVR_ASI selects our changes.
+set_target_properties(halcyon-le2 PROPERTIES CXX_STANDARD 17)
+target_compile_definitions(halcyon-le2 PRIVATE WIN32 _WINDOWS UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS
+    ME2VR_M0_PASSIVE_DXGI_PROBE MEVR_ASI)
+target_compile_options(halcyon-le2 PRIVATE /W3 /utf-8 /Zi)
+target_link_libraries(halcyon-le2 PUBLIC mevr-minhook d3d11 dxgi dxguid Shell32 Ole32)
+
 set(MEVR_CORE_SOURCES
     src/core/Exe.cpp
     src/core/Ini.cpp
@@ -875,6 +911,15 @@ function(mevr_add_plugin game)
             src/core/qa/BoundedUtf16.cpp src/core/qa/BoundedUtf16.hpp
             src/core/qa/ControlProtocol.cpp src/core/qa/ControlProtocol.hpp src/core/Json.cpp src/core/Json.hpp)
     endif ()
+    # LE2: Halcyon's ME2 renderer in the host (src/halcyon/le2, plugin/HalcyonLe2; docs/le2-from-le1.md 3.1). Not in the
+    # diagnostic host, which has no Present path.
+    set(with_halcyon_le2 OFF)
+    if (MEVR_HALCYON AND game STREQUAL "LE2" AND NOT MEVR_LE2_DIAGNOSTIC)
+        set(with_halcyon_le2 ON)
+        list(APPEND host_sources src/plugin/HalcyonLe2.cpp src/plugin/HalcyonLe2.hpp src/plugin/HalcyonLe2Bridge.cpp
+            src/halcyon/le2/mevr_bridge.h src/core/CallQueue.hpp src/game/GamepadMapping.cpp src/game/GamepadMapping.hpp
+            src/core/vr/Controllers.cpp src/core/vr/Controllers.hpp src/core/xr/Input.cpp src/core/xr/Input.hpp)
+    endif ()
     if (MEVR_HALCYON AND game STREQUAL "LE1")
         set(with_halcyon ON)
         list(APPEND host_sources ${MEVR_HALCYON_HOST_SOURCES} ${MEVR_FSR_EMBEDDED})
@@ -917,6 +962,10 @@ function(mevr_add_plugin game)
         # windowscodecs: WIC, the test loop's PNG snapshots (plugin/TestLoop).
         target_link_libraries(${host} PRIVATE halcyon-le1 OpenXR::openxr_loader windowscodecs)
         target_compile_definitions(${host} PRIVATE MEVR_WITH_HALCYON)
+    endif ()
+    if (with_halcyon_le2)
+        target_link_libraries(${host} PRIVATE halcyon-le2 OpenXR::openxr_loader)
+        target_compile_definitions(${host} PRIVATE MEVR_WITH_HALCYON_LE2)
     endif ()
     if (MEVR_LE2_DIAGNOSTIC AND game STREQUAL "LE2")
         target_link_libraries(${host} PRIVATE bcrypt shell32 ole32)

@@ -258,7 +258,10 @@ inline constexpr std::uint32_t kUpdateSelection = 0;
 inline constexpr std::uint32_t kConversationSetPositionRotator = 0;
 inline constexpr std::uint32_t kInterruptConversation = 0;
 inline constexpr std::uint32_t kMoveWithInterpMoveTrack = 0;
-inline constexpr std::uint32_t kGObjects = 0;  // LE2's reflection layout: stage 5
+// GObjects (TArray<UObject*>): Halcyon's ME2 code uses it (engine_probe.cpp, pchud.cpp) and LExSDKv2's LE2 build agrees
+// (research/le2-engine-access-discovery.md); the host's queue for Halcyon's off-thread ProcessEvent calls checks objects
+// against it (plugin/HalcyonLe2). No pattern yet (no LE2 .text dump): the gate checks only that it is in a data section.
+inline constexpr std::uint32_t kGObjects = 0x173CC48;
 inline constexpr std::uint32_t kNamePools = 0;
 inline constexpr std::uint32_t kGMalloc = 0;
 inline constexpr std::uint32_t kAppMalloc = 0;
@@ -272,6 +275,7 @@ inline constexpr Entry kTable[] = {
     {"ULocalPlayer::CalcSceneView", kCalcSceneView, Kind::Function, nullptr, 0, 0, "mod (scene view)"},
     {"FViewportClient::Draw", kViewportDraw, Kind::Function, nullptr, 0, 0, "mod (scene view)"},
     {"FViewportClient::Draw (end)", kViewportDrawEnd, Kind::End, nullptr, 0, 0, "mod (scene view)"},
+    {"GObjects", kGObjects, Kind::Data, nullptr, 0, 0, "host (Halcyon LE2's game-thread queue)"},
 };
 
 } // le2

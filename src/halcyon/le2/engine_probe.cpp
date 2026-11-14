@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
+// Modified for ME VR Attempt (GPL-3.0) since 2026-11-14: changes are marked [MEVR].
+// Upstream: jrush64/MassEffect2-VR @ 4784e90 (Copyright (C) 2026 Halcyon).
+#include "mevr_bridge.h"  // [MEVR] OnGameThread, QueueProcessEvent
 #include "engine_probe.h"
 
 #include "calcview_hook.h"   // [AIMSEED] HeadLookYawUU/PitchUU (applied render-side look) for the look->aim handoff
@@ -586,6 +589,23 @@ void FpStraightenBlend(std::uintptr_t interpMode, bool fpActive) noexcept
 // SetOwnerNoSee UFunction (flips bOwnerNoSee AND marks the render proxy dirty - direct flag writes
 // don't, which is why nothing hid). The UFunction is found once by name and cached.
 using tProcessEvent = void(__fastcall*)(void* ctx, void* fn, void* parms, void* res);
+
+// [MEVR] Script calls on the game thread only (research/36: UnrealScript's VM keeps its state in process-wide globals,
+// so a ProcessEvent from the Present thread races the game thread's script; LE1's 2026-10-23 crash). These calls come
+// from Present (ApplyFirstPerson, ConvoFp): off the game thread each is queued with a copy of its `size`-byte parameter
+// block for the next engine tick (MevrBridge::QueueProcessEvent). All are setters: nothing reads a result.
+bool MevrCallProcessEvent(void* object, void* fn, void* parms, std::uint32_t size) noexcept
+{
+#if defined(MEVR_ASI)
+    if (!::ME2VR::MevrBridge::OnGameThread())
+        return ::ME2VR::MevrBridge::QueueProcessEvent(object, fn, parms, size);
+#endif
+    (void)size;
+    const auto base = reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
+    reinterpret_cast<tProcessEvent>(base + 0xD8D50)(object, fn, parms, nullptr);
+    return true;
+}
+
 void* g_setOwnerNoSeeFn = nullptr;
 bool g_fnSearched = false;
 
@@ -626,10 +646,8 @@ void FpSetOwnerNoSee(std::uintptr_t comp, bool on) noexcept
     if (fn == nullptr || comp < 0x10000) return;
     __try
     {
-        const auto base = reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
-        auto pe = reinterpret_cast<tProcessEvent>(base + 0xD8D50);
         unsigned long parm = on ? 1ul : 0ul;
-        pe(reinterpret_cast<void*>(comp), fn, &parm, nullptr);
+        MevrCallProcessEvent(reinterpret_cast<void*>(comp), fn, &parm, sizeof parm);  // [MEVR]
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {}
 }
@@ -717,10 +735,8 @@ void CallActorSetHidden(std::uintptr_t actor, bool hidden) noexcept
     if (fn == nullptr || actor < 0x10000) return;
     __try
     {
-        const auto base = reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
-        auto pe = reinterpret_cast<tProcessEvent>(base + 0xD8D50);
         unsigned long parm = hidden ? 1ul : 0ul;
-        pe(reinterpret_cast<void*>(actor), fn, &parm, nullptr);
+        MevrCallProcessEvent(reinterpret_cast<void*>(actor), fn, &parm, sizeof parm);  // [MEVR]
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {}
 }
@@ -768,10 +784,8 @@ void CallPrimSetHidden(std::uintptr_t comp, bool hidden) noexcept
     if (fn == nullptr || comp < 0x10000) return;
     __try
     {
-        const auto base = reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
-        auto pe = reinterpret_cast<tProcessEvent>(base + 0xD8D50);
         unsigned long parm = hidden ? 1ul : 0ul;
-        pe(reinterpret_cast<void*>(comp), fn, &parm, nullptr);
+        MevrCallProcessEvent(reinterpret_cast<void*>(comp), fn, &parm, sizeof parm);  // [MEVR]
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {}
 }
@@ -1476,10 +1490,7 @@ bool ConvoFpDisableDof() noexcept
     if (!SafeReadPtr(lp + 0x68, &pc) || pc < 0x10000) return false;
     __try
     {
-        const auto base = reinterpret_cast<std::uintptr_t>(GetModuleHandleW(nullptr));
-        auto pe = reinterpret_cast<tProcessEvent>(base + 0xD8D50);
-        pe(reinterpret_cast<void*>(pc), fn, nullptr, nullptr);   // DisableDOF() takes no parameters
-        return true;
+        return MevrCallProcessEvent(reinterpret_cast<void*>(pc), fn, nullptr, 0);   // DisableDOF() takes no parameters [MEVR]
     }
     __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
 }

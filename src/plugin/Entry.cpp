@@ -31,6 +31,9 @@
 #include "plugin/RenderLevers.hpp"
 #include "plugin/MotionBlurGuard.hpp"
 #endif
+#if defined(MEVR_WITH_HALCYON_LE2)
+#include "plugin/HalcyonLe2.hpp"
+#endif
 #if defined(MEVR_WITH_MAIN_MENU)
 #include "plugin/SetupRequest.hpp"
 #endif
@@ -85,6 +88,9 @@ void GameEngineTickHook(void* self, float deltaSeconds) {
     // Halcyon's ProcessEvent calls from the Present thread, queued for here (script on the game thread only).
     mevr::host::perf::QueueDrainBegin();
     mevr::host::game_thread::Drain();
+#endif
+#if defined(MEVR_WITH_HALCYON_LE2)
+    mevr::host::halcyon_le2::Tick();  // its Present-thread ProcessEvent calls, queued for here
 #endif
 #if defined(MEVR_WITH_HALCYON)
     mevr::host::perf::EngineTickBegin();
@@ -148,7 +154,7 @@ void WINAPI ExitProcessHook(UINT exitCode) {
 #else
         "");
 #endif
-#if defined(MEVR_WITH_HALCYON)
+#if defined(MEVR_WITH_HALCYON) || defined(MEVR_WITH_HALCYON_LE2)
     TerminateProcess(GetCurrentProcess(), exitCode);
 #endif
     mevr::log::Close();
@@ -215,6 +221,10 @@ extern "C" __declspec(dllexport) bool SpiOnAttach(spi::Interface* InterfacePtr) 
     // Before anything else: it has to hook the system dxgi.dll before the game creates its device.
     mevr::host::halcyon::Attach();
 #endif
+#if defined(MEVR_WITH_HALCYON_LE2)
+    // Halcyon's ME2 renderer, likewise first (plugin/HalcyonLe2).
+    mevr::host::halcyon_le2::Attach();
+#endif
     if (InterfacePtr == nullptr) {
         mevr::log::Warn("no SPI interface from the loader: hooking with our own MinHook");
     }
@@ -238,7 +248,7 @@ extern "C" __declspec(dllexport) bool SpiOnAttach(spi::Interface* InterfacePtr) 
         mevr::host::Stop();
         return true;
     }
-#if !defined(MEVR_WITH_HALCYON) && !defined(MEVR_LE2_DIAGNOSTIC)  // diagnostic host has no Present path
+#if !defined(MEVR_WITH_HALCYON) && !defined(MEVR_WITH_HALCYON_LE2) && !defined(MEVR_LE2_DIAGNOSTIC)  // Halcyon's own, or none
     // Owned by the host so the render thread never runs code from an unloading mod DLL.
     if (!mevr::host::present::Install(init)) {
         mevr::log::Error("present hook failed; VR output disabled");

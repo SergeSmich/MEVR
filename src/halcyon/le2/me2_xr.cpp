@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
+// Modified for ME VR Attempt (GPL-3.0) since 2026-11-14: changes are marked [MEVR].
+// Upstream: jrush64/MassEffect2-VR @ 4784e90 (Copyright (C) 2026 Halcyon).
 #include "me2_xr.h"
 
 #include "calcview_hook.h"
@@ -11,6 +13,8 @@
 
 #include <Windows.h>
 #include <d3d11.h>
+
+#include "mevr_bridge.h"  // [MEVR]
 
 #include <atomic>
 #include <cmath>
@@ -374,9 +378,15 @@ bool BringUp(ID3D11Device* device) noexcept
     g_device = device;
     g_device->GetImmediateContext(&g_ctx);
 
+#if defined(MEVR_ASI)
+    // [MEVR] our ASI's statically linked loader (no openxr_loader.dll in the game folder); our controller actions come
+    // from the same loader instance.
+    g_getProc = reinterpret_cast<PFN_xrGetInstanceProcAddr>(::ME2VR::MevrBridge::StaticXrGetInstanceProcAddr());
+#else
     g_loader = LoadLibraryW(L"openxr_loader.dll");
     if (g_loader == nullptr) { XLog("openxr_loader.dll not found. Skipping VR."); return false; }
     g_getProc = reinterpret_cast<PFN_xrGetInstanceProcAddr>(GetProcAddress(g_loader, "xrGetInstanceProcAddr"));
+#endif
     if (g_getProc == nullptr) { XLog("xrGetInstanceProcAddr missing"); return false; }
 
     PFN_xrVoidFunction createInstanceRaw = nullptr;
@@ -493,6 +503,10 @@ bool BringUp(ID3D11Device* device) noexcept
     if (!ChooseSwapchainFormat()) { XLog("no swapchain format"); return false; }
     if (!CreateEyeSwapchains()) { XLog("eye swapchain creation failed"); return false; }
 
+#if defined(MEVR_ASI)
+    // [MEVR] our controller actions, created and attached on this session
+    ::ME2VR::MevrBridge::OnSessionCreated(reinterpret_cast<void*>(g_instance), reinterpret_cast<void*>(g_session));
+#endif
     g_initOk = true;
     XLog("VR session ready; starting frame submission.");
     return true;
@@ -1455,7 +1469,14 @@ void RunFrame() noexcept
     if (aerMode || stereoMode || sfrMode) UpdateAerPaceWarmup(fs.predictedDisplayTime, ME2VR::CalcViewHook::GetAerFramePacingHz());
 
     XrFrameBeginInfo fbi = {}; fbi.type = XR_TYPE_FRAME_BEGIN_INFO_VALUE;
+#if defined(MEVR_ASI)
+    // [MEVR] after a begun frame: our controller actions synced, their poses in the LOCAL app space (the head's).
+    if (XrSucceeded(g_fn.beginFrame(g_session, &fbi)))
+        ::ME2VR::MevrBridge::OnFrameBegun(reinterpret_cast<void*>(g_session), reinterpret_cast<void*>(g_localSpace),
+                                          static_cast<std::int64_t>(fs.predictedDisplayTime));
+#else
     g_fn.beginFrame(g_session, &fbi);
+#endif
 
     // B2b stereo: project the two SBS halves to the two eyes. Each eye declares the GAME's rendered
     // FOV (not the headset FOV -> no zoom) and the runtime's located eye pose (head tracking).

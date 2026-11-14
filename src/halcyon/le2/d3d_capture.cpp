@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
+// Modified for ME VR Attempt (GPL-3.0) since 2026-11-14: changes are marked [MEVR].
+// Upstream: jrush64/MassEffect2-VR @ 4784e90 (Copyright (C) 2026 Halcyon).
+#include "mevr_bridge.h"  // [MEVR]
 #include "d3d_capture.h"
 
 #include "allocviewstate_finder.h"
@@ -4300,6 +4303,12 @@ bool SvrIsSteamVrActiveRuntime() noexcept
     static int cached = -1;
     if (cached >= 0) return cached != 0;
     cached = 0;
+#if defined(MEVR_ASI)
+    // [MEVR] the runtime this process uses: XR_RUNTIME_JSON (our [Debug] openxrRuntime, the fake headset) first
+    cached = ::ME2VR::MevrBridge::XrRuntimeIsSteamVr() ? 1 : 0;
+    ME2VR::Log::Line(std::string("[SVRFIX2] this process's OpenXR runtime is SteamVR [MEVR]: ") + (cached ? "yes" : "no"));
+    return cached != 0;
+#endif
     HKEY key = nullptr;
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Khronos\\OpenXR\\1", 0, KEY_READ, &key) == ERROR_SUCCESS)
     {
