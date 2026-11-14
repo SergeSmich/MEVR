@@ -125,8 +125,9 @@ external code candidates. Read these before sequel work. The current scope is pr
   since 2026-11-14 (`src/halcyon/le2`, library `halcyon-le2`, `MEVR_WITH_HALCYON_LE2`, not the diagnostic host; started by
   `plugin/HalcyonLe2`, seams in `src/halcyon/le2/mevr_bridge.h` implemented in `plugin/HalcyonLe2Bridge.cpp`: static loader,
   our actions on its session, Touch as pad 0, its Present-thread ProcessEvents queued for the game thread; its log
-  `MELE2VR_Log.txt`, its settings `MELE2VR.ini` next to `MassEffect2.exe`; built, not yet run in the game;
-  research/le2-renderer-integration.md "Imported and linked").
+  `MELE2VR_Log.txt`, its settings `MELE2VR.ini` next to `MassEffect2.exe`; run once on the fake headset 2026-11-14:
+  stereo and the queue work, first person is off until that ini has `[FirstPerson] Enabled=1` (K toggles it), the eyes
+  take the monitor's shape; research/le2-renderer-integration.md "The first run on the fake headset").
 - **Never call ProcessEvent (or anything that runs UnrealScript) off the game thread** (the engine tick's).
   The script VM keeps its state in process-wide globals (GPropAddr, GRuntimeUCFlags...), so a call from the
   Present/render thread races the game thread's script. That caused the 2026-10-23 crash (Halcyon's

@@ -291,8 +291,9 @@ to a deployed binary path while ME1 is in use.
 
 ## Imported and linked into the LE2 host (2026-11-14)
 
-Done by the LE1 conversations session (docs/le2-from-le1.md section 3.1, LE1's recipe of 2026-10-08). **Built, not yet
-run in the game:** `build-trilogy`'s `LE2MEVR.asi` links it; `build-trilogy`, `build` and `build-mono` build with no
+Done by the LE1 conversations session (docs/le2-from-le1.md section 3.1, LE1's recipe of 2026-10-08). **Built, and run
+once on the fake headset** (below: stereo, our controllers on its session, the queued ProcessEvents, clean quits; first
+person needs upstream's `MELE2VR.ini`): `build-trilogy`'s `LE2MEVR.asi` links it; `build-trilogy`, `build` and `build-mono` build with no
 warnings and the 53 offline tests pass.
 
 1. **Provenance.** `a21fc14e` imports upstream `4784e90649a0398c6812b89fc09f4a0dbcce6441` verbatim into
@@ -330,13 +331,81 @@ warnings and the 53 offline tests pass.
    `DriveHeadAim` (head aim: the owner's rule is no head aim, but LE2 has no hand aim yet); its 50 units per metre with
    the 3x forward emphasis (LE1's metric stereo, research/30, is the later fix); its two full renders a present.
 
-Not checked yet, in this order (one native owner, the fake headset; `tools/fake-headset.ps1` writes the runtime key into
-LE1's ini only, so set `[Debug] openxrRuntime` in `ASI\LE2MEVR.ini` by hand): the host's log shows `halcyon le2:
-renderer attached` and `[DXGIHOOK] real dxgi ... hook installed [MEVR]`; Halcyon's `MELE2VR_Log.txt` shows its device
-capture, `xrCreateSession` and `VR session ready`; ours shows `our controller actions are attached` and `first
-controller sync`; `halcyon le2: a ProcessEvent from another thread ... was queued` appears at the first first-person hide
-and no `process event: off the game thread` lines; a clean quit. The LE1 test loop's snapshots need a
-`WrapSessionFunctions` seam in `me2_xr.cpp` (not added yet), so look at the desktop mirror until then.
+### The first run on the fake headset (2026-11-14)
+
+The owner's VR Shepard career, Save 4 at Freedom's Progress (`BioP_ProFre`), three launches, about 20 minutes; session
+folder `%LOCALAPPDATA%\MEVR\sessions\20261114-154422-le2-halcyon-first` (logs, the mirror's picture, the backups).
+
+**ME2's own runner is `tools/qa-le2`** (docs/le2-scripted-testing.md, the ME2 validation session's work): `session.py`
+backs up and restores the protected roots, `launch.ps1` forwards `-game 2` through Steam and binds the process,
+`control.py` loads a save through the game's own Load screen on the game thread (`advance-splash`, `open-load-menu`, one
+guarded `LoadGame` on a staged fixture), observes resources and weapons, and submits normal saves, and
+`prepare-variants.py` / `save-evidence.py` make and verify edited saves (Trilogy Save Editor as the oracle). **Use it for
+the next Halcyon run.** It could not drive this one: its responder (`engine/Le2DiagnosticHost`, `Le2ControlHost`, the
+bounded pad) is compiled only into the isolated, monolithic `MEVR_LE2_DIAGNOSTIC` build, and Halcyon's renderer only into
+the other LE2 host (`CMakeLists.txt`: `MEVR_HALCYON AND NOT MEVR_LE2_DIAGNOSTIC`). So this run did by hand what
+`session.py` does, and loaded the save with computer use, the handoff's fallback when no channel exists. **The next step
+for scripted VR runs** is one LE2 host with both, agreed with the validation session: its pad output and Halcyon's XInput
+merge (`MergeMotionControllers`) both touch XInput, and the diagnostic build is monolithic while the renderer's
+development host hot-reloads.
+
+**How this run was done** (by hand; for the record, not the route to repeat):
+1. Check that no game, launcher or SteamVR runs and that `tools/game-slot.ps1 status` says free.
+2. Back up `Documents\BioWare\Mass Effect Legendary Edition` (the saves), `Game\ME2\BioGame\Config` and
+   `Game\ME2\Binaries\Win64` with robocopy, plus a hash manifest of each (`Get-FileHash` per file).
+3. ME2 has the stock Bink DLL: rename `Game\ME2\Binaries\Win64\bink2w64.dll` to `bink2w64_original.dll` and copy ME1's
+   LEBinkProxy (`Game\ME1\Binaries\Win64\bink2w64.dll`, ProductName "LEBinkProxy (RELEASE)") in its place. Our own
+   loader starts only ME1 from the launcher.
+4. `tools/deploy-asi.ps1 -Game LE2 -BuildDir build-trilogy` (the hot-reload host and `.modpath`), then write
+   `[Debug] openxrRuntime = C:\Program Files (x86)\Steam\steamapps\common\SteamVR\steamxr_win64.json` into
+   `ASI\LE2MEVR.ini`.
+5. `tools/fake-headset.ps1 -On`; 16 s after vrserver starts, `steam.exe -applaunch 1328670 -game 2 -autoterminate`
+   (the launcher's LEBinkProxy starts ME2 at once, no launcher menu).
+6. With computer use (grant `MassEffect2.exe`; `open_application "Masseffect2"` brings it forward): Enter on the title,
+   click Load Game then Enter, click "Save 4 - Freedom's Progress" then Enter. The first screenshot after a focus change
+   can show the desktop: take another.
+7. Quit: Esc, Exit Game, Yes. Then copy the logs out, `tools/fake-headset.ps1 -Off`, and put the three roots back from
+   the manifests (changed files copied back, added files moved aside). All three matched, hash for hash.
+
+**What worked** (host log `Win64\Logs\LE2MEVR.log`, Halcyon's `%LOCALAPPDATA%\MELE2VR\MELE2VR_Log.txt`):
+- `halcyon le2: renderer attached`, `[DXGIHOOK] real dxgi CreateDXGIFactory/1/2 hook installed [MEVR]`, `[SVRFIX2]
+  this process's OpenXR runtime is SteamVR [MEVR]: yes`, `xrCreateInstance: 0`, `VR session ready` 17 s after start.
+- `our controller actions are attached to Halcyon's session`, `first controller sync (session not focused)`.
+- Menus on its flat panel at 11.2 ms a frame (90 Hz); in gameplay `[VRSTATE] gm 0 -> VR`, SFR stereo (pass 0 the left
+  eye, the second eye a draw replay) at 12.4-14.3 ms a frame, the game thread at 78-81 fps.
+- Every ProcessEvent from Halcyon's Present thread went through our queue: `game thread calls: 26 queued from other
+  threads, 26 run, 0 skipped`; no `process event: off the game thread` line.
+- First person (after K, below): `[ME2FP] state=Combat (weapon out) mode=SFXCameraMode_Combat eye=(-60,5,25)`, the
+  head hidden, the heavy pistol in view on the mirror.
+- Two quits through the Mission Computer: the process gone in 8 s, the launcher with it, no crash report.
+
+**What it found:**
+1. **First person is off without upstream's ini.** Halcyon reads `[FirstPerson] Enabled` from `MELE2VR.ini` (next to
+   `MassEffect2.exe`) with a default of 0 (`me2_menu.cpp`), and upstream ships `runtime/MELE2VR.ini` with `Enabled=1`
+   and `FpToggleKey=75` (K). Our deploy writes no such file, so the mirror showed the over-the-shoulder camera until K
+   was pressed. To do: deploy-asi installs an `MELE2VR.ini` for LE2 when there is none, as it does `MELEVR.ini` for LE1
+   (first compare upstream's `runtime/` and `release/` files).
+2. **The eyes are the monitor's shape.** `Rendering 5120x1440 (2560x1440 per eye). Headset suggests 1912x1952`: the game
+   renders at the desktop's 32:9 size, so each eye is 16:9 against a square-ish headset. Upstream's `ArmResolutionSpoof`
+   takes `[VR] RenderW/RenderH` from the same missing ini. To do with item 1, like `tools/vr-game-settings.ps1` for LE1.
+3. **The second launch crashed in our mod, not in Halcyon** (fixed the same day in `engine/Legacy.cpp` and
+   `engine/ReflectCheck.cpp`): LExSDKv2 finds the exe's base with `CreateToolhelp32Snapshot`, which fails now and then
+   while another DLL loads (EA's overlay `IGO64.dll` was injecting on that launch), and its checks compile out in
+   release, so every `BUILTIN_*_RVA` resolved to the bare offset and the first `SFXName` called `0x78640` (LE2's SFXName
+   init RVA) from `TryInstallScriptHooks`. Our code now gives the initializer the exe's base from `exe::Base()` (log
+   `LExSDKv2's module snapshot gave the exe's base as ...` when the snapshot was wrong).
+4. **The mod sees no view from this host**: `host state sizes differ from the mod's (controllers 200 vs 200, view 0 vs
+   136): ... controllers and the view ignored`. Expected: LE2's host publishes controllers but no view service yet, so
+   the mod's hand aim and the rest stay off on LE2 (Wave B).
+5. Halcyon writes `DepthOfField=False` into `GamerSettings.ini` and `BIOEngine.ini` at attach (`[DOFOFF]`); the backup
+   put both back.
+6. Harmless first-chance access violations: `PcHud::ReadFString` (its HUD discovery, inside `__try`) and the F3 dump's
+   reads.
+
+**Diagnostics:** `[VR] Diagnostics=1` in `MELE2VR.ini` (read at launch) lets the `[ME2FP]`, `[ME2DISC]` and other
+diagnostic tags through its logger (`logger.cpp kDiagnosticTags`); F3 held about 0.3 s dumps the controller's and the
+camera's object graph (`cam+0x580` is `SFXCameraMode_Combat` in combat). The LE1 test loop's snapshots still need a
+`WrapSessionFunctions` seam in `me2_xr.cpp`, so the desktop mirror is the only picture.
 
 ## Native verification after explicit handoff
 

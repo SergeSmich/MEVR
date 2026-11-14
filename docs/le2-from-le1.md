@@ -55,8 +55,9 @@ Ranked by how much they block. Each lists what ME1 has, the step, and how to che
 ### 3.1 No VR renderer: import Halcyon's ME2 the way LE1 did
 
 **Status 2026-11-14:** steps 1-3 done (`a21fc14e`, `c1a6d183`, `2b6900d3`; the LE2 host links it in `build-trilogy`, all
-three builds and the offline tests pass; not yet run in the game): research/le2-renderer-integration.md "Imported and
-linked into the LE2 host". Step 4's native session is next.
+three builds and the offline tests pass): research/le2-renderer-integration.md "Imported and linked into the LE2 host".
+Step 4's first session ran on the fake headset the same day ("The first run on the fake headset" there): stereo, our
+controllers and the queue work; next, install upstream's `MELE2VR.ini` (first person, the eye size) with the deploy.
 
 **ME1 has:** the recipe, in four commits on 2026-10-08:
 1. `af23acaa` imported Halcyon's source verbatim into `src/halcyon/le1` (upstream `3c51514`), alone in its commit, so
@@ -150,17 +151,26 @@ FString. `game/ConsoleRequest` has run `PlayerController.ConsoleCommand` that wa
 research/le2-runtime-observer.md correctly found the LE1 wrapper hardcodes ME1. **It also found a real LE1 bug:**
 `fake-headset-session.ps1` deploys before it backs up (lines 98-110).
 
+**ME2 has since** (docs/le2-scripted-testing.md): its own protected runner in `tools/qa-le2`. `session.py` backs up and
+restores, `launch.ps1` selects ME2 through Steam, `control.py` loads a staged save through the game's Load screen on the
+game thread and submits normal saves, and `prepare-variants.py` makes edited saves. That is the LE2 runner; don't port
+`fake-headset-session.ps1` to it. Its responder is compiled only into the renderer-less diagnostic build, so the first
+Halcyon run (2026-11-14, research/le2-renderer-integration.md "The first run on the fake headset") had to load by hand.
+
 **Steps:**
-1. Make `fake-headset.ps1` and `fake-headset-session.ps1` take `-Game LE1|LE2`: the game folder, the save folder, the ASI
-   ini name, the log name, the build to deploy. Back up before deploying. Keep one script, not two.
+1. One LE2 host with both Halcyon's renderer and the diagnostic responder (today `MEVR_HALCYON AND NOT
+   MEVR_LE2_DIAGNOSTIC`), agreed with the validation session: the responder's bounded pad and Halcyon's controller merge
+   both write XInput. `tools/fake-headset.ps1` pins the runtime in LE1's ini only: give it the LE2 ini too
+   (`ASI\LE2MEVR.ini [Debug] openxrRuntime`), or let `session.py`'s plan carry it.
 2. With 3.1's seam, the test loop runs unchanged in ME2. Use snapshots for every visual assertion, never a desktop capture.
    Use recordings with inputs for VR interaction: poses, triggers and grips go through the same path the player's
    controllers do.
 3. One ownership mechanism. Today `tools/game-slot.ps1` (`game-slot\lock.json`) and `qa-cafeteria.lock` (qa-le2,
    qa-cafeteria) coexist, and `session.py` refuses when the other exists. Agree on one lock file with a game field.
 
-**Check:** `tools/fake-headset-session.ps1 -Game LE2` loads a protected fixture and takes a snapshot whose left and right
-PNGs show the Normandy in stereo, and the saves and inis are restored hash for hash afterwards.
+**Check:** a `tools/qa-le2` protected session with the Halcyon host on the fake headset loads its staged fixture through
+`control.py` and takes a snapshot whose left and right PNGs show the scene in stereo, and `session.py reset` verifies the
+roots afterwards.
 
 ### 3.4 Input without focus: why the pulses got zero polls
 
