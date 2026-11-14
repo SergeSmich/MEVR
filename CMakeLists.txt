@@ -217,7 +217,9 @@ target_link_libraries(halcyon-le1 PUBLIC mevr-minhook d3d11 dxgi Shell32 Ole32)
 # Halcyon's LE2 VR renderer (GPL-3.0, src/halcyon/le2, upstream jrush64/MassEffect2-VR 4784e90): the LE2 host's
 # renderer when MEVR_HALCYON is on (not in the diagnostic host). Upstream's dllmain.cpp stays out (our ASI entry starts
 # it, plugin/HalcyonLe2); dxgi_proxy.cpp is built with its proxy exports compiled out (MEVR_ASI). The same vendored
-# MinHook and Dear ImGui as LE1 (byte-identical to upstream's; research/le2-renderer-integration.md).
+# MinHook and Dear ImGui as LE1 (byte-identical to upstream's; research/le2-renderer-integration.md). Only where an LE2
+# host links it (the host's with_halcyon_le2 below): LE1-only builds don't compile it.
+if (MEVR_BUILD_LE2 AND MEVR_HALCYON AND NOT MEVR_LE2_DIAGNOSTIC)
 set(HALCYON_LE2_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/halcyon/le2)
 add_library(halcyon-le2 STATIC
     ${HALCYON_LE2_DIR}/allocviewstate_finder.cpp
@@ -249,6 +251,7 @@ target_compile_definitions(halcyon-le2 PRIVATE WIN32 _WINDOWS UNICODE _UNICODE _
     ME2VR_M0_PASSIVE_DXGI_PROBE MEVR_ASI)
 target_compile_options(halcyon-le2 PRIVATE /W3 /utf-8 /Zi)
 target_link_libraries(halcyon-le2 PUBLIC mevr-minhook d3d11 dxgi dxguid Shell32 Ole32)
+endif ()
 
 set(MEVR_CORE_SOURCES
     src/core/Exe.cpp

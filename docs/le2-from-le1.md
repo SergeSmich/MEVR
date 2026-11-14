@@ -54,6 +54,10 @@ Ranked by how much they block. Each lists what ME1 has, the step, and how to che
 
 ### 3.1 No VR renderer: import Halcyon's ME2 the way LE1 did
 
+**Status 2026-11-14:** steps 1-3 done (`a21fc14e`, `c1a6d183`, `2b6900d3`; the LE2 host links it in `build-trilogy`, all
+three builds and the offline tests pass; not yet run in the game): research/le2-renderer-integration.md "Imported and
+linked into the LE2 host". Step 4's native session is next.
+
 **ME1 has:** the recipe, in four commits on 2026-10-08:
 1. `af23acaa` imported Halcyon's source verbatim into `src/halcyon/le1` (upstream `3c51514`), alone in its commit, so
    `git log -p -- src/halcyon` shows every change since.

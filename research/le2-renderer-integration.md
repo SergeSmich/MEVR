@@ -289,6 +289,55 @@ does not claim that ASI timing captures the game device, that hooks install, or
 that the game can render stereo. Do not build a main hot-reload target or write
 to a deployed binary path while ME1 is in use.
 
+## Imported and linked into the LE2 host (2026-11-14)
+
+Done by the LE1 conversations session (docs/le2-from-le1.md section 3.1, LE1's recipe of 2026-10-08). **Built, not yet
+run in the game:** `build-trilogy`'s `LE2MEVR.asi` links it; `build-trilogy`, `build` and `build-mono` build with no
+warnings and the 53 offline tests pass.
+
+1. **Provenance.** `a21fc14e` imports upstream `4784e90649a0398c6812b89fc09f4a0dbcce6441` verbatim into
+   `src/halcyon/le2`: the 12 units, 12 headers and `MELE2VR.vcxproj` of `src/`, `docs/ME2_UI_STEREO_FIX.md`,
+   `runtime/MELE2VR.ini`, and `README.md`/`BUILD.md` as `UPSTREAM_*.md`. Its `third_party/` MinHook and Dear ImGui are
+   byte-identical to ours (`diff -r`: only our `imgui/LICENSE.txt` extra) and were not imported again; `builds/` and
+   `release/` were left out. `c1a6d183` adds only the GPL-3.0 SPDX lines and the rows in `src/halcyon/README.md` and
+   `NOTICE.md`.
+2. **Compile.** `halcyon-le2` (CMake; defined only in a build with `MEVR_BUILD_LE2` and `MEVR_HALCYON`, not the diagnostic
+   host, so LE1-only builds don't compile it) builds 11 units unchanged at upstream's settings (C++17, Unicode, its
+   `ME2VR_M0_PASSIVE_DXGI_PROBE`, `third_party/minhook/src/hde` for the finders' disassembler) plus `MEVR_ASI`:
+   `dllmain.cpp` out, `dxgi_proxy.cpp` in with its exports compiled out. No warnings at `/W3`.
+3. **Host.** `2b6900d3`: with `MEVR_HALCYON` on and not `MEVR_LE2_DIAGNOSTIC`, the LE2 host links it
+   (`MEVR_WITH_HALCYON_LE2`). `plugin/HalcyonLe2::Attach` runs at the host's attach, first, what upstream's DllMain and
+   startup thread did: `ArmResolutionSpoof` (its `[VR] RenderW/H` and `DisableDof` writes to GamerSettings.ini, so as for
+   LE1 they may apply only from the next launch), `InstallDisplayQueryHooks`, `Dxgi::EnsureLoaded`, and a new `[MEVR]`
+   `Dxgi::InstallRealFactoryHooks` (LE1 upstream's function, rewritten for ME2's names: MinHook on the system dxgi.dll's
+   `CreateDXGIFactory`/`1`/`2`, each factory to `D3DCapture::TryInstallFactoryHooks` as the proxy exports did). Not
+   `InstallBreakpointProbes` nor the finders' probes. The host's own Present hook is not installed for this renderer.
+   `HostServices::controllers` is set on LE2 now, so the mod stands its own VR output, scene view and XInput hooks down.
+4. **Seams** (`src/halcyon/le2/mevr_bridge.h`, implemented in `plugin/HalcyonLe2Bridge.cpp` and `plugin/HalcyonLe2.cpp`):
+   `me2_xr.cpp` takes `xrGetInstanceProcAddr` from our static loader (no `openxr_loader.dll`); `OnSessionCreated` after its
+   spaces and swapchains (our `core/xr/Input` action set on its session); `OnFrameBegun` after a successful `xrBeginFrame`
+   (sync in `g_localSpace`, `vr::controllers::Publish`); `me2_menu.cpp`'s two XInput hooks call `MergeMotionControllers`
+   right after the real read (`game/GamepadMapping`'s default mapping, Touch to Xbox pad 0); `d3d_capture.cpp`'s
+   `SvrIsSteamVrActiveRuntime` asks `XrRuntimeIsSteamVr` (XR_RUNTIME_JSON first: the fake headset's SteamVR while the
+   machine's active runtime is another's); `engine_probe.cpp`'s four ProcessEvent calls (`SetOwnerNoSee`, `Actor.SetHidden`,
+   `PrimitiveComponent.SetHidden`, `DisableDOF`, all reached from Present) go through `MevrCallProcessEvent`: off the game
+   thread each is queued with its parameter block for the next engine tick (`halcyon_le2::Tick`, at the start of the
+   host's tick hook), run only if the object and the function are still in GObjects at their index and the object's
+   class is unchanged. LE2's GObjects (`0x173CC48`, the address Halcyon's own code and LExSDKv2 use) is now a data row of
+   `engine/Addresses.hpp`'s LE2 table. `[Debug] openxrRuntime` in `ASI\LE2MEVR.ini` sets XR_RUNTIME_JSON at attach.
+5. **Left as upstream for the first session** (each a later `[MEVR]` change, after a native look): its own ProcessEvent hook
+   in `pchud.cpp` (on top of ours, as LE1's Halcyon hooks it); its `[EXITKILL]` ExitProcess hook (our hook terminates too);
+   `DriveHeadAim` (head aim: the owner's rule is no head aim, but LE2 has no hand aim yet); its 50 units per metre with
+   the 3x forward emphasis (LE1's metric stereo, research/30, is the later fix); its two full renders a present.
+
+Not checked yet, in this order (one native owner, the fake headset; `tools/fake-headset.ps1` writes the runtime key into
+LE1's ini only, so set `[Debug] openxrRuntime` in `ASI\LE2MEVR.ini` by hand): the host's log shows `halcyon le2:
+renderer attached` and `[DXGIHOOK] real dxgi ... hook installed [MEVR]`; Halcyon's `MELE2VR_Log.txt` shows its device
+capture, `xrCreateSession` and `VR session ready`; ours shows `our controller actions are attached` and `first
+controller sync`; `halcyon le2: a ProcessEvent from another thread ... was queued` appears at the first first-person hide
+and no `process event: off the game thread` lines; a clean quit. The LE1 test loop's snapshots need a
+`WrapSessionFunctions` seam in `me2_xr.cpp` (not added yet), so look at the desktop mirror until then.
+
 ## Native verification after explicit handoff
 
 Use the protected LE2 session workflow and recheck shared ownership, profiles,

@@ -121,7 +121,12 @@ external code candidates. Read these before sequel work. The current scope is pr
 - **UObject::ProcessEvent is hooked by the host at attach and never removed** (all games); the
   mod's handlers run through `HostServices::setProcessEventCallback`. Halcyon hooks it too, with
   its own MinHook, on top of ours: never uninstall a hook another hooker may sit on.
-  LE2/LE3 still use our own renderer until Halcyon's ME2/ME3 code is brought in.
+  LE3 still uses our own renderer until Halcyon's ME3 code is brought in. **LE2's host runs Halcyon's ME2 renderer**
+  since 2026-11-14 (`src/halcyon/le2`, library `halcyon-le2`, `MEVR_WITH_HALCYON_LE2`, not the diagnostic host; started by
+  `plugin/HalcyonLe2`, seams in `src/halcyon/le2/mevr_bridge.h` implemented in `plugin/HalcyonLe2Bridge.cpp`: static loader,
+  our actions on its session, Touch as pad 0, its Present-thread ProcessEvents queued for the game thread; its log
+  `MELE2VR_Log.txt`, its settings `MELE2VR.ini` next to `MassEffect2.exe`; built, not yet run in the game;
+  research/le2-renderer-integration.md "Imported and linked").
 - **Never call ProcessEvent (or anything that runs UnrealScript) off the game thread** (the engine tick's).
   The script VM keeps its state in process-wide globals (GPropAddr, GRuntimeUCFlags...), so a call from the
   Present/render thread races the game thread's script. That caused the 2026-10-23 crash (Halcyon's

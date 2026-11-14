@@ -710,6 +710,9 @@ Turn it on: the menu's Voice page > Thespian mode > Speak Shepard's lines (or `[
 
 ## 7. Claude checks these alone on the fake headset (no need to wear it)
 Ask Claude to run them when the machine is free; each is a console command, a snapshot, a replay or a probe.
+- ME2's first VR session (2026-11-14, Halcyon's ME2 renderer inside the LE2 host, research/le2-renderer-integration.md
+  "Imported and linked"): one XR session, stereo in Halcyon's mirror, our controller actions synced, the queued
+  first-person hides, a clean quit; then the same in the headset (head tracking, the pad from the controllers).
 - Powers: the glow's render-thread cost; the self-cast powers (Barrier...) with the weapon away. (research/55)
 - Melee: `mevr melee punch` with the weapon away: the pistol whip plays and hurts, no holster draw logged. (research/20)
 - Right stick hold: the game's power wheel opens and closes from an input replay. (research/19 "Hold only")
