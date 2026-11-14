@@ -512,7 +512,8 @@ Not built: the hover look from gaze or a pointer (the `hover` class exists; noth
   a wheel with nothing to read or whose text isn't English (`LooksEnglish`: under one common English word in twelve).
 - Console: `mevr thespian on | off | auto` (this session), `status`, `feed <wav>`.
 - Tier 2 ("said in your own words") is not built: with five to ten differently worded replies the alignment decides
-  (the owner, 2026-11-12), and the label is the short way.
+  (the owner, 2026-11-12), and the label is the short way. Not planned either (the owner, 2026-11-14): free speech leads to
+  characters answering what they were never written to hear, which would take generated dialogue and voices.
 
 ## 9. Log
 

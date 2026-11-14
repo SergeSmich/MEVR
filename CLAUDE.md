@@ -1393,7 +1393,7 @@ switching frameworks.
   `tools/conversation-scan --wheels` / `--vo-extract`, `tools/thespian-census.py` (3,072 wheels, 4,493 distinct lines,
   none said without a wheel), `mevr-thespian-bench` (text: 11,771 of 11,774 right, 0 wrong), `tools/thespian-vo-bench.py`
   (the recognizer over 1,200 of Shepard's recordings: 99.3% right, 0 wrong); their outputs are game text and audio:
-  `scratch/thespian/` only. Not built: "said in your own words" (a model tier), a hover look from gaze. [verify] in the
+  `scratch/thespian/` only. Not planned: "said in your own words" (the owner, 2026-11-14: ROADMAP.md "Not planned"). Not built: a hover look from gaze. [verify] in the
   headset: a real microphone's quiet clock in a noisy room, the panel's place and legibility (notes/headset-checklist.md).
 - LE1 power wheel at the left hand ([research/55](research/55-hand-cast-powers.md), HostServices v28 `setPowerWheel`, v29 `setPowerLock`; `core/vr/PowerWheel`,
   `game/PowerWheel`, host `plugin/PowerWheel` + `PowerWheelDraw` + `PowerIcons` + `Glow`; `[PowerWheel]` in `ASI\LE1MEVR.ini`, appended by

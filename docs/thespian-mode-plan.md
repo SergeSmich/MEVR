@@ -10,7 +10,7 @@ checks still open are in [research/70](../research/70-thespian-mode.md) (section
 The plot after spoken replies equals the plot after the same replies by stick (two conversations, saves compared);
 both conversation modes were run (first person and the 3D screen).
 Left: phase 5, the owner's acceptance in the headset with a real microphone (notes/headset-checklist.md, "Thespian
-mode"), which only the owner can do; the "said in your own words" tier is not built (the alignment decides between a wheel's few, differently worded replies). Differences
+mode"), which only the owner can do; the "said in your own words" tier is not planned (the owner, 2026-11-14; the alignment decides between a wheel's few, differently worded replies). Differences
 from the plan below: the panel is rows after the owner's concept art (3.5), rows never grow or move, there is no hover
 from gaze yet, and on the 3D screen the panel stands under the screen while the game's wheel stays on it.
 

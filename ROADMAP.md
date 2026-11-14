@@ -34,7 +34,6 @@ Mass Effect 3 comes after ME2 and builds on the same work.
 ## Later: ideas we want to build
 
 - **Walking around your room**: Shepard following your real steps beyond the 0.75 m you can lean today.
-- **Thespian mode in your own words**: say a reply your own way, not only its written line.
 - **The game's own scope reticles** instead of the plain duplex one.
 
 ## Needs testing in a headset
@@ -58,4 +57,7 @@ them helps, whether it works or not:
 - **Anything that needs a controller's menu or system button.** Many headsets (a Quest over Link) don't give one to
   games; everything is reachable from our own menu.
 - **Shipping or downloading the game's files or texture packs for you.** Optional packs come from their own pages.
+- **Talking to characters in your own words.** Thespian mode takes the game's written replies, read aloud or by their
+  label. Free speech would need the characters to answer things they were never written or recorded to say, with
+  generated dialogue and generated voices.
 - **The original (2007-2012) editions.** MEVR is built for the Legendary Edition.
