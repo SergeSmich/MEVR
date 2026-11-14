@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 #include "d3d_capture.h"
 
 #include "allocviewstate_finder.h"

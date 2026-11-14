@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 #include "calcview_hook.h"
 
 #include "convo_fp.h"

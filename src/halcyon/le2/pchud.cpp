@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 // ME2 per-element HUD control - DISCOVERY STAGE.
 //
 // ME1 moves/scales individual HUD pieces by calling the game's own

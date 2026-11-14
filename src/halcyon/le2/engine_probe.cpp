@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 #include "engine_probe.h"
 
 #include "calcview_hook.h"   // [AIMSEED] HeadLookYawUU/PitchUU (applied render-side look) for the look->aim handoff

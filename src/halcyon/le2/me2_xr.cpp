@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-only
 #include "me2_xr.h"
 
 #include "calcview_hook.h"
