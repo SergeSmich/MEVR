@@ -69,6 +69,15 @@ bool Init(hook::Context& context) {
     // LExSDKv2's resolver for its BUILTIN_*_RVA (FromOffset: the main module's base plus the offset; the interface
     // pointer is only kept, never called for those).
     ::LESDK::Initializer init{reinterpret_cast<ISharedProxyInterface*>(context.Spi()), MEVR_GAME_NAME_A "MEVRlegacy"};
+    // Its base comes from a module snapshot (CreateToolhelp32Snapshot), which fails now and then while another DLL
+    // loads (EA's overlay, 2026-11-14), and its checks compile out in release: every offset then resolved to itself
+    // and the first SFXName called 0x78640 (LE2's SFXName init RVA). The exe's base is ours to give.
+    void* const exeBase = reinterpret_cast<void*>(context.ModuleBase());
+    if (init.ModuleBase != exeBase) {
+        log::Warn("LExSDKv2's module snapshot gave the exe's base as {} (the exe is at {}): using ours", init.ModuleBase,
+                  exeBase);
+        init.ModuleBase = exeBase;
+    }
     bool ok = true;
     ok &= Resolve(init, BUILTIN_GMALLOC_RVA, GMalloc, "GMalloc");
     ok &= Resolve(init, BUILTIN_GOBJECTS_RVA, UObject::GObjObjects, "GObjObjects");

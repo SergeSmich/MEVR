@@ -2244,6 +2244,8 @@ void Write(int agree, int mismatches, int notReflected) {
 void Run(hook::Context& context) {
     // LExSDKv2's resolver for its BUILTIN_*_RVA (the reference side only; FromOffset never calls the interface).
     ::LESDK::Initializer init{reinterpret_cast<ISharedProxyInterface*>(context.Spi()), MEVR_GAME_NAME_A "MEVRreference"};
+    // Its module snapshot can fail while another DLL loads and leave the base null (engine/Legacy's Init, 2026-11-14).
+    init.ModuleBase = reinterpret_cast<void*>(context.ModuleBase());
     gRows.clear();
     if (!ResolveSdkGlobals(init)) {
         log::Warn("reflect: self-check skipped: LExSDKv2's globals (the reference) didn't resolve");
