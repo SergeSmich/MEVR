@@ -196,3 +196,9 @@ main (`tools/land-on-main.py`) only after `build-trilogy`, `build`, `build-mono`
 2. **Lanes:** **parallel sessions** (the table above).
 3. **The Hammerhead** (M6): **ME1's Mako controls and cockpit**, for now.
 4. **When to ship ME2:** **after M5** (M1-M5 in the first release; M6 after it).
+5. **HDR** (later the same day): ME2 makes a 16-bit float swap chain whenever Windows HDR is on for the monitor, which
+   Halcyon's ME2 renderer can't use (no stereo, no UI treatment). **SDR is the stop gap**: LE2's `[Colour] hdrDisplay =
+   -1` answers the game's display query as SDR, the same 8-bit frame ME1 renders ("If it's cheap to do sdr, then we can do
+   that as a stop gap while you figure out HDR"). The owner wants native HDR ("it looks so much better for VR"): the study
+   and its plan are `research/le2-hdr.md`; the default goes back once HDR works on ME2 with stereo, the UI and at least the
+   SDR frame's quality.
