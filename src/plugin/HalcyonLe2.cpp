@@ -231,4 +231,16 @@ bool XrRuntimeIsSteamVr() noexcept {
     return steam;
 }
 
+bool KeyDown(int vk) noexcept {
+    if (vk <= 0 || (GetAsyncKeyState(vk) & 0x8000) == 0) {
+        return false;
+    }
+    HWND const foreground = GetForegroundWindow();
+    DWORD process = 0;
+    if (foreground != nullptr) {
+        GetWindowThreadProcessId(foreground, &process);
+    }
+    return process == GetCurrentProcessId();  // the game's window (or its console), not another program's
+}
+
 } // namespace ME2VR::MevrBridge

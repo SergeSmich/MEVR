@@ -20,7 +20,7 @@
 #                     given; a later apply without them keeps the target (since 2026-10-23 it's the headset's
 #                     own eye size, 2824x2880 for the user's PS VR2: research/22). Halcyon reports a display
 #                     of that size to the game, so it may exceed the monitor.
-#   BorderlessWindow=True, Fullscreen=False
+#   BorderlessWindow=True, Fullscreen=False  (LE2 too, below: ResX/ResY there come from Halcyon's MELE2VR.ini)
 #                     A bordered window is capped by Windows at the real monitor's height: on a
 #                     1440p monitor a 2048x2048 target rendered gameplay at 2009x1421, and
 #                     Halcyon's left-eye capture (which needs the scene to fill the backbuffer)
@@ -108,7 +108,10 @@ if ($ResX -gt 0) {
     $wanted['SystemSettings']['ResX'] = "$ResX"
     $wanted['SystemSettings']['ResY'] = "$ResY"
 }
-if ($Game -eq 'LE1') {
+if ($Game -eq 'LE1' -or $Game -eq 'LE2') {
+    # LE2 too since 2026-11-14, as Halcyon's ME2 installer (MELE2-VR.bat) sets them: its renderer writes ResX/ResY from
+    # MELE2VR.ini's RenderW/RenderH (4096x2304) at attach, and in a fullscreen window on a 1440p monitor the game got
+    # 4096x1460; borderless it rendered 4096x2304, 2048x2304 an eye (research/le2-renderer-integration.md "Defaults from ME1").
     $wanted['SystemSettings']['BorderlessWindow'] = 'True'
     $wanted['SystemSettings']['Fullscreen'] = 'False'
     $wanted['SystemSettings']['DynamicShadows'] = 'False'

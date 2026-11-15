@@ -38,4 +38,18 @@ bool QueueProcessEvent(void* object, void* function, void const* params, std::ui
 // The OpenXR runtime this process uses is SteamVR's: XR_RUNTIME_JSON if set (our [Debug] openxrRuntime, the fake
 // headset; set at attach), else the machine's active runtime.
 bool XrRuntimeIsSteamVr() noexcept;
+
+// The key is down and a window of the game is in front (LE1's MevrBridge::KeyDown): a hotkey typed in another program
+// (Discord, a browser) must not recenter, switch profiles or open the menu.
+bool KeyDown(int vk) noexcept;
+
+// Halcyon's hotkey polls go through this: KeyDown in our ASI, the plain poll in an upstream build.
+inline bool HotkeyDown(int vk) noexcept
+{
+#if defined(MEVR_ASI)
+    return KeyDown(vk);
+#else
+    return (GetAsyncKeyState(vk) & 0x8000) != 0;
+#endif
+}
 }

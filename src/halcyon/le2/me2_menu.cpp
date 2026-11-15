@@ -473,6 +473,46 @@ void SaveFpStates(const std::wstring& path) noexcept
     WritePrivateProfileStringW(L"FirstPerson", L"Enabled", ME2VR::EngineProbe::GetFirstPerson() ? L"1" : L"0", path.c_str());
 }
 
+#if defined(MEVR_ASI)
+// [MEVR] MEVR's one supported configuration on ME2's keys (LE1's MevrBridge::ModernBaseline in plugin/HalcyonBridge.cpp,
+// 2026-11-14): stereo, the Quest image fix, the view filled, lean, look speed 1, flat menus, the head hidden in first
+// person, no profile hotkeys (their 1-4 are ME2's power keys) and no recenter on R (ME2's reload; double-tapping Back,
+// the menu's Recenter view and opening the menu still recenter). Run after every load of the ini, so an old or
+// hand-edited MELE2VR.ini can't bring one back. Head aim, VR conversations and the stick's pitch stay upstream's.
+// First person itself is not pinned yet: with upstream's MELE2VR.ini (first person on from the load) the render thread
+// faulted in the first gameplay frame in 3 of 3 runs (research/le2-renderer-integration.md "Defaults from ME1").
+void ApplyMevrBaseline() noexcept
+{
+    int changed = 0;
+    std::string names;
+    auto note = [&](bool differs, const char* name) {
+        if (!differs) return false;
+        ++changed;
+        names += names.empty() ? std::string(name) : std::string(", ") + name;
+        return true;
+    };
+    if (note(ME2VR::CalcViewHook::GetVrMode() != 4, "stereo (Mode=4)")) ME2VR::CalcViewHook::SetVrMode(4);
+    if (note(!ME2VR::Me2Xr::GetQuestFovMatch(), "Quest image fix (QuestFovMatch)")) ME2VR::Me2Xr::SetQuestFovMatch(true);
+    if (note(!ME2VR::Me2Xr::GetVrFovFill(), "field of view fill (VrFovFill)")) ME2VR::Me2Xr::SetVrFovFill(true);
+    if (note(!ME2VR::CalcViewHook::GetHeadPosEnabled(), "lean (PosEnabled)")) ME2VR::CalcViewHook::SetHeadPosEnabled(true);
+    if (note(std::fabs(ME2VR::CalcViewHook::GetLookSensitivity() - 1.0f) > 1e-4f, "look speed (LookSensitivity)"))
+        ME2VR::CalcViewHook::SetLookSensitivity(1.0f);
+    if (note(!ME2VR::D3DCapture::GetMonoMenus(), "flat menus (MonoMenus)")) ME2VR::D3DCapture::SetMonoMenus(true);
+    bool headShown = false;
+    for (int i = 0; i < ME2VR::EngineProbe::FpStateCount(); ++i)
+    {
+        ME2VR::EngineProbe::FpStateCfg* s = ME2VR::EngineProbe::GetFpStateCfg(i);
+        if (s != nullptr && !s->hideHead) { s->hideHead = true; headShown = true; }
+    }
+    note(headShown, "Shepard's head hidden ([FirstPerson] S*_hideHead)");
+    if (note(g_profileHotkeys, "profile hotkeys (ProfileHotkeys)")) g_profileHotkeys = false;
+    if (note(g_recenterKey == 'R', "the recenter key R (RecenterKey)")) g_recenterKey = 0;  // rk > 0 gates it
+    if (changed == 0) { ME2VR::Log::Line("[MEVR-BASELINE] MELE2VR.ini already matches the MEVR baseline"); return; }
+    ME2VR::Log::Line("[MEVR-BASELINE] " + std::to_string(changed) + " setting(s) in MELE2VR.ini set to the MEVR baseline: " +
+                     names);
+}
+#endif
+
 void LoadValues() noexcept
 {
     const std::wstring path = IniPath();
@@ -637,6 +677,9 @@ void LoadValues() noexcept
     // [CLEANUP] no UI toggle any more (see Tracking/View); force ON regardless of a stale ini value.
     ME2VR::CalcViewHook::SetInvMatrixFix(true);
     LoadFpStates(path);
+#if defined(MEVR_ASI)
+    ApplyMevrBaseline();  // [MEVR]
+#endif
     g_valuesLoaded = true;
 }
 
@@ -860,7 +903,7 @@ void SetGameWindow(HWND hwnd) noexcept
 
 void PollInsert() noexcept
 {
-    const bool down = (GetAsyncKeyState(g_menuKey) & 0x8000) != 0;
+    const bool down = ::ME2VR::MevrBridge::HotkeyDown(g_menuKey);  // [MEVR] game window only
     if (down && !g_insertWasDown)
     {
         g_open = !g_open;
@@ -889,7 +932,7 @@ void PollInsert() noexcept
         static bool s_profDown[kProfileCount] = {};
         for (int i = 0; i < kProfileCount; ++i)
         {
-            const bool d = (GetAsyncKeyState(g_profileKeys[i]) & 0x8000) != 0;
+            const bool d = ::ME2VR::MevrBridge::HotkeyDown(g_profileKeys[i]);  // [MEVR] game window only
             if (d && !s_profDown[i] && g_activeProfile != i) LoadProfile(i);
             s_profDown[i] = d;
         }

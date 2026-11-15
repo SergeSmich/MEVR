@@ -249,4 +249,7 @@ if ($Game -eq 'LE1') {
         Write-Output "MELEVR.ini: every profile slot on backslash with head aim off and life-size stereo set; F-key profile hotkeys off"
     }
 }
+# LE2 runs Halcyon's ME2 renderer, which reads MELE2VR.ini next to MassEffect2.exe. Upstream's file
+# (src/halcyon/le2/runtime/MELE2VR.ini: first person on, RenderW/RenderH 4096x2304) isn't installed yet: with it the render
+# thread faulted in the first gameplay frame in 3 of 3 runs (research/le2-renderer-integration.md "Defaults from ME1").
 Write-Output "Log: $(Join-Path $bin "Logs\$name.log")"

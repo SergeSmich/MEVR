@@ -2556,7 +2556,7 @@ HRESULT STDMETHODCALLTYPE PresentHook(IDXGISwapChain* swapChain, UINT syncInterv
     // menus from conversations on ME2).
     {
         static bool s_f2Down = false;
-        const bool f2 = (GetAsyncKeyState(VK_F2) & 0x8000) != 0;
+        const bool f2 = ::ME2VR::MevrBridge::HotkeyDown(VK_F2);  // [MEVR] game window only
         if (f2 && !s_f2Down)
         {
             const bool nm = !g_menuMode.load(std::memory_order_acquire);
@@ -2569,7 +2569,7 @@ HRESULT STDMETHODCALLTYPE PresentHook(IDXGISwapChain* swapChain, UINT syncInterv
     // F4 toggles the MASTER VR switch (OFF = vanilla flat game, for first-person dev). Default OFF.
     {
         static bool s_f4Down = false;
-        const bool f4 = (GetAsyncKeyState(VK_F4) & 0x8000) != 0;
+        const bool f4 = ::ME2VR::MevrBridge::HotkeyDown(VK_F4);  // [MEVR] game window only
         if (f4 && !s_f4Down)
         {
             const bool on = !ME2VR::CalcViewHook::GetVrEnabled();
@@ -2586,7 +2586,7 @@ HRESULT STDMETHODCALLTYPE PresentHook(IDXGISwapChain* swapChain, UINT syncInterv
     {
         static bool s_fpKeyDown = false;
         const int fpVk = ME2VR::Menu::GetFpToggleKey();
-        const bool fpKey = (GetAsyncKeyState(fpVk) & 0x8000) != 0;
+        const bool fpKey = ::ME2VR::MevrBridge::HotkeyDown(fpVk);  // [MEVR] game window only
         if (fpKey && !s_fpKeyDown)
         {
             const bool on = !ME2VR::EngineProbe::GetFirstPerson();
@@ -2599,7 +2599,7 @@ HRESULT STDMETHODCALLTYPE PresentHook(IDXGISwapChain* swapChain, UINT syncInterv
     // F7 toggles MESH-HIDE alone (own body invisible, weapon kept) - independent of the FP camera, to test it.
     {
         static bool s_f7Down = false;
-        const bool f7 = (GetAsyncKeyState(VK_F7) & 0x8000) != 0;
+        const bool f7 = ::ME2VR::MevrBridge::HotkeyDown(VK_F7);  // [MEVR] game window only
         if (f7 && !s_f7Down)
         {
             const bool on = !ME2VR::EngineProbe::GetMeshHide();
@@ -2613,7 +2613,7 @@ HRESULT STDMETHODCALLTYPE PresentHook(IDXGISwapChain* swapChain, UINT syncInterv
     {
         static bool s_rcDown = false;
         const int rk = ME2VR::Menu::GetRecenterKey();
-        const bool rc = !ME2VR::Menu::IsOpen() && rk > 0 && (GetAsyncKeyState(rk) & 0x8000) != 0;
+        const bool rc = !ME2VR::Menu::IsOpen() && rk > 0 && ::ME2VR::MevrBridge::HotkeyDown(rk);  // [MEVR] game window only
         if (rc && !s_rcDown) { ME2VR::Me2Xr::Recenter(); ME2VR::Log::Line("[ME2DISC] recenter (hotkey)"); }
         s_rcDown = rc;
     }
@@ -2621,7 +2621,7 @@ HRESULT STDMETHODCALLTYPE PresentHook(IDXGISwapChain* swapChain, UINT syncInterv
     // F8 dumps the weapon/inventory chain (to locate the held weapon for hide-weapon).
     {
         static bool s_f8Down = false;
-        const bool f8 = (GetAsyncKeyState(VK_F8) & 0x8000) != 0;
+        const bool f8 = ::ME2VR::MevrBridge::HotkeyDown(VK_F8);  // [MEVR] game window only
         if (f8 && !s_f8Down) ME2VR::EngineProbe::DumpWeaponChainNow();
         s_f8Down = f8;
     }
@@ -2631,7 +2631,7 @@ HRESULT STDMETHODCALLTYPE PresentHook(IDXGISwapChain* swapChain, UINT syncInterv
     // Bound to F11: F9 is the game's QUICKLOAD and F5 its quicksave - never bind a probe to either.
     {
         static bool s_hudDiscDown = false;
-        const bool k = (GetAsyncKeyState(VK_F11) & 0x8000) != 0;
+        const bool k = ::ME2VR::MevrBridge::HotkeyDown(VK_F11);  // [MEVR] game window only
         if (k && !s_hudDiscDown) ME2VR::PcHud::RunDiscovery();
         s_hudDiscDown = k;
     }
@@ -2640,7 +2640,7 @@ HRESULT STDMETHODCALLTYPE PresentHook(IDXGISwapChain* swapChain, UINT syncInterv
     // find the distinct state signal (expected: a PlayerCamera mode) so the mod can detect them reliably.
     {
         static bool s_f3Down = false;
-        const bool f3 = (GetAsyncKeyState(VK_F3) & 0x8000) != 0;
+        const bool f3 = ::ME2VR::MevrBridge::HotkeyDown(VK_F3);  // [MEVR] game window only
         if (f3 && !s_f3Down) ME2VR::EngineProbe::DumpGfxState();
         s_f3Down = f3;
     }
