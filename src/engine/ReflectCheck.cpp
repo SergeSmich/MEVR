@@ -2111,6 +2111,8 @@ void CheckClasses() {
     CheckClass<ASFXPawn_Player>("SFXGame.SFXPawn_Player");
     CheckClass<ABioWorldInfo>("SFXGame.BioWorldInfo");
     CheckClass<ASFXWeapon>("SFXGame.SFXWeapon");
+    CheckClass<USFXEngine>("SFXGame.SFXEngine");                  // a save loaded by script (mevr load, M1.6)
+    CheckClass<USFXSFHandler_Load>("SFXGame.SFXSFHandler_Load");  // ... its descriptor, as the Load screen lists it
 }
 
 void CheckFields() {
@@ -2150,6 +2152,16 @@ void CheckPaths() {
     CheckPath("Engine.Actor", {"Rotation", "Yaw"}, SDK_AT(offsetof(AActor, Rotation) + offsetof(FRotator, Yaw), 4));
     CheckPath("SFXGame.SFXWeapon", {"MagSize", "Value"}, SDK_AT(offsetof(ASFXWeapon, MagSize) + offsetof(FScaledFloat, Value), 4));
     CheckElement("Engine.Engine", "GamePlayers", static_cast<long long>(sizeof(ULocalPlayer*)));
+    // A save's descriptor (mevr load, M1.6), as the Load screen's list holds it.
+    CheckElement("SFXGame.SFXSFHandler_Load", "SaveList", static_cast<long long>(sizeof(FSaveGUIRecord)));
+    CheckPath("SFXGame.SFXSFHandler_Load", {"SaveList", "SaveDescriptor", "Career"},
+        SDK_AT(offsetof(FSaveGUIRecord, SaveDescriptor) + offsetof(FSFXSaveDescriptor, Career), sizeof(FString)));
+    CheckPath("SFXGame.SFXSFHandler_Load", {"SaveList", "SaveDescriptor", "SaveName"},
+        SDK_AT(offsetof(FSaveGUIRecord, SaveDescriptor) + offsetof(FSFXSaveDescriptor, SaveName), sizeof(FString)));
+    CheckPath("SFXGame.SFXSFHandler_Load", {"SaveList", "SaveDescriptor", "Index"},
+        SDK_AT(offsetof(FSaveGUIRecord, SaveDescriptor) + offsetof(FSFXSaveDescriptor, Index), 4));
+    CheckPath("SFXGame.SFXSFHandler_Load", {"SaveList", "SaveDescriptor", "Type"},
+        SDK_AT(offsetof(FSaveGUIRecord, SaveDescriptor) + offsetof(FSFXSaveDescriptor, Type), 1));
 }
 
 void CheckFunctions() {
@@ -2162,6 +2174,8 @@ void CheckFunctions() {
         "Engine.SceneCaptureComponent.SetFrameRate",      // the reflection fix
         "Engine.Actor.SetRotation",                       // ue3::runtime's own check of the layout
         "SFXGame.SFXWeapon.GetMagazineSize",              // the LE2 observers' first call (P1b)
+        "SFXGame.SFXEngine.QueueSaveGameCommand",         // mevr load (M1.6)
+        "SFXGame.SFXEngine.GetCurrentSaveDescriptor",     // mevr savedesc
     };
     for (char const* function : functions) {
         CheckFunction(function);
@@ -2187,6 +2201,12 @@ void CheckParams() {
     PARMS(AActor_execSetRotation_Parms, "Engine.Actor.SetRotation");
     PARAM(ASFXWeapon_execGetMagazineSize_Parms, "SFXGame.SFXWeapon.GetMagazineSize", ReturnValue);
     PARMS(ASFXWeapon_execGetMagazineSize_Parms, "SFXGame.SFXWeapon.GetMagazineSize");
+    PARAM(USFXEngine_execQueueSaveGameCommand_Parms, "SFXGame.SFXEngine.QueueSaveGameCommand", Action);
+    PARAM(USFXEngine_execQueueSaveGameCommand_Parms, "SFXGame.SFXEngine.QueueSaveGameCommand", SaveDescriptor);
+    PARAM(USFXEngine_execQueueSaveGameCommand_Parms, "SFXGame.SFXEngine.QueueSaveGameCommand", Callback);
+    PARMS(USFXEngine_execQueueSaveGameCommand_Parms, "SFXGame.SFXEngine.QueueSaveGameCommand");
+    PARAM(USFXEngine_execGetCurrentSaveDescriptor_Parms, "SFXGame.SFXEngine.GetCurrentSaveDescriptor", ReturnValue);
+    PARMS(USFXEngine_execGetCurrentSaveDescriptor_Parms, "SFXGame.SFXEngine.GetCurrentSaveDescriptor");
 }
 
 #endif  // LE1 / LE2 tables
