@@ -249,7 +249,17 @@ if ($Game -eq 'LE1') {
         Write-Output "MELEVR.ini: every profile slot on backslash with head aim off and life-size stereo set; F-key profile hotkeys off"
     }
 }
-# LE2 runs Halcyon's ME2 renderer, which reads MELE2VR.ini next to MassEffect2.exe. Upstream's file
-# (src/halcyon/le2/runtime/MELE2VR.ini: first person on, RenderW/RenderH 4096x2304) isn't installed yet: with it the render
-# thread faulted in the first gameplay frame in 3 of 3 runs (research/le2-renderer-integration.md "Defaults from ME1").
+# LE2 runs Halcyon's ME2 renderer (src/halcyon/le2), which reads MELE2VR.ini next to MassEffect2.exe. Without one its code
+# defaults leave first person off and render the eyes at the desktop's shape (research/le2-renderer-integration.md "The
+# first run on the fake headset"), so install what upstream ships once (its release/ and runtime/ files are identical at
+# 4784e90): the per-camera first-person table and RenderW/RenderH 4096x2304, which Halcyon writes into GamerSettings.ini
+# at attach (tools/vr-game-settings.ps1 -Game LE2 makes the window borderless, else the height is capped). The rest of the
+# MEVR baseline is pinned in code (me2_menu.cpp ApplyMevrBaseline). A file already there is the player's: left alone.
+if ($Game -eq 'LE2') {
+    $ini2 = Join-Path $bin 'MELE2VR.ini'
+    if (-not (Test-Path $ini2)) {
+        Copy-Item (Join-Path $PSScriptRoot '..\src\halcyon\le2\runtime\MELE2VR.ini') $ini2
+        Write-Output "Installed Halcyon's ME2 MELE2VR.ini (upstream's, next to MassEffect2.exe)"
+    }
+}
 Write-Output "Log: $(Join-Path $bin "Logs\$name.log")"

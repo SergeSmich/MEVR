@@ -201,6 +201,16 @@ void Poll(float elapsed, std::optional<unsigned char> mode, bool motionBlurProte
     if (gApplied && !changed && !newLevel && !settleDue && !backToGameplay && !gGuardFallbackPending) {
         return;
     }
+#if defined(MEVR_GAME_LE2)
+    // ME2: a scale set while a level loads (any key, even the value it already had, directly or through its opposite)
+    // with the game's depth of field on faulted the render thread in the level's first gameplay frame under Halcyon's
+    // renderer, 9 of 9 runs; the same settings 3 s into gameplay didn't (research/le2-renderer-integration.md "Defaults
+    // from ME1"). A new level's settings wait until it has been in gameplay for the first settle time; the retry is
+    // every poll, since newLevel stays true until they go.
+    if (newLevel && (gSinceWorldChange < kSettleApplyAt[0] || !mode || *mode > 4)) {
+        return;
+    }
+#endif
     std::vector<Setting> const wanted = Wanted(path);
     static std::vector<Setting> applied;  // what the game last got: a rewrite of the file with the same values is nothing
     auto const same = [&] {

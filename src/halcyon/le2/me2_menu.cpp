@@ -475,12 +475,11 @@ void SaveFpStates(const std::wstring& path) noexcept
 
 #if defined(MEVR_ASI)
 // [MEVR] MEVR's one supported configuration on ME2's keys (LE1's MevrBridge::ModernBaseline in plugin/HalcyonBridge.cpp,
-// 2026-11-14): stereo, the Quest image fix, the view filled, lean, look speed 1, flat menus, the head hidden in first
-// person, no profile hotkeys (their 1-4 are ME2's power keys) and no recenter on R (ME2's reload; double-tapping Back,
-// the menu's Recenter view and opening the menu still recenter). Run after every load of the ini, so an old or
-// hand-edited MELE2VR.ini can't bring one back. Head aim, VR conversations and the stick's pitch stay upstream's.
-// First person itself is not pinned yet: with upstream's MELE2VR.ini (first person on from the load) the render thread
-// faulted in the first gameplay frame in 3 of 3 runs (research/le2-renderer-integration.md "Defaults from ME1").
+// 2026-11-14): stereo, the Quest image fix, the view filled, lean, look speed 1, flat menus, first person with the head
+// hidden (upstream's code default is off, though its comment says on), no profile hotkeys (their 1-4 are ME2's power keys)
+// and no recenter on R (ME2's reload; double-tapping Back, the menu's Recenter view and opening the menu still recenter).
+// Run after every load of the ini, so an old or hand-edited MELE2VR.ini can't bring one back. Head aim, VR conversations
+// and the stick's pitch stay upstream's.
 void ApplyMevrBaseline() noexcept
 {
     int changed = 0;
@@ -498,6 +497,7 @@ void ApplyMevrBaseline() noexcept
     if (note(std::fabs(ME2VR::CalcViewHook::GetLookSensitivity() - 1.0f) > 1e-4f, "look speed (LookSensitivity)"))
         ME2VR::CalcViewHook::SetLookSensitivity(1.0f);
     if (note(!ME2VR::D3DCapture::GetMonoMenus(), "flat menus (MonoMenus)")) ME2VR::D3DCapture::SetMonoMenus(true);
+    if (note(!ME2VR::EngineProbe::GetFirstPerson(), "first person ([FirstPerson] Enabled)")) ME2VR::EngineProbe::SetFirstPerson(true);
     bool headShown = false;
     for (int i = 0; i < ME2VR::EngineProbe::FpStateCount(); ++i)
     {
