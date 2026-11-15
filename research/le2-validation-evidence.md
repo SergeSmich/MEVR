@@ -51,7 +51,8 @@ reserves. `surplus-reserve` reuses `partial`. The pinned Trilogy Save Editor
 oracle verified all six save/recipe/receipt triples. The private batch is in
 `local-tools/le2-freedoms-progress-save4/reload-ammo`. Its `index.json` SHA-256
 is `76445c3926e4779018d7e4744b01be73047319e937dec0f8904e1c10fd99bbac`.
-Native starting-state and gameplay checks for the edited saves are pending.
+The partial and no-reserve native checks are recorded below. The other
+edited starting states still need a live check.
 
 ### Protected run plans for the next game window
 
@@ -74,9 +75,8 @@ transfer that consumes the last reserve rounds.
    isolated case at a time. Open Load Game with the diagnostic and record a
    **fresh** `observe-save-menu` response and a run-bound menu capture while
    the staged slot is visible. Select the ordinary menu row in the first run.
-   The previously archived run establishes the scene but lacks a matched
-   descriptor/capture pair. Have a reviewer bind that pair, target and exact
-   staged hash before adding `fixtureSelection` to a fresh plan. Follow the
+   Have a reviewer bind that pair, target and exact staged hash before
+   adding `fixtureSelection` to a fresh plan. Follow the
    [fixture-load contract](../tools/qa-le2/control.md#reviewed-frozen-fixture-loading)
    for the subsequent scripted load. Confirm a unique candidate before dispatch
    and verify the actual scene and weapon after loading.
@@ -98,6 +98,46 @@ transfer that consumes the last reserve rounds.
 The next scanning run can reuse the existing [one-probe and zero-probe plans](le2-scanning-readiness.md#immediate-acquisition-sequence).
 Both passed fresh file preflight. Follow normal travel from the Normandy Crew
 Deck to the CIC and Zanethu before sampling a probe action.
+
+### Scripted loading and two native reload cases, 2026-11-15 UTC
+
+The diagnostic build `5190e3dd` verified the staged Save 99 as a unique manual
+descriptor in the owner's Freedom's Progress career. The normal Load Game
+works with the edited partial and no-reserve saves. The combined starting
+state and [paired reload transfer checks](../tools/qa-le2/scenarios/reload.json)
+passed for both. Each pair samples the same heavy pistol before and after one
+normal `R` input. Ammo counts below are magazine / reserve.
+
+| Case | Verified load | Observed after `R` | Before and after request IDs |
+| --- | --- | --- | --- |
+| Partial, run `75d7636f-bf34-4b4a-8ff1-bab6edfebf70` | 10 / 60 | 12 / 58 | `5fb6d402-e0ec-470b-8f35-6af5a5f411bd`, `e25d5653-0508-41e8-8937-918005481b63` |
+| No reserve, run `fbec6d59-8636-412b-8cc2-3b818e0f1220` | 10 / 0 | 10 / 0 | `da9530a4-ed80-4835-937a-1fb8d0a6b8ce`, `95029b57-b15d-471d-9652-263fbfb569cb` |
+
+Fresh run `cc1a5334-c1cc-4c3d-af6f-63856c9eb419` used the
+`partial-scripted.plan.json` binding from the partial run's reviewed menu
+capture and descriptor response `3ab61bc9-77b9-471a-86b2-cf83c924875c`.
+`observe-fixture` found one eligible match, and `load-fixture` request
+`16c92675-71fb-4b6c-bd50-2f3f443c3bda` returned normally. A fresh capture
+showed the same closed-door scene and HUD counts of 10 / 60. Live map, weapon
+and ammo checks independently passed. No manual menu interaction was needed
+in the scripted run. The private `no-reserve-scripted.plan.json` also passed
+file preflight using the no-reserve run's own descriptor and capture. Its
+scripted load remains untested. Both plans are under
+`le2-freedoms-progress-save4/native-plans`.
+
+Wait for the lease handshake and structurally interactive main menu before
+issuing a menu action. One opener was rejected before native entry while the
+main menu was still loading. The retry after readiness succeeded. Use an
+installed Python with Pillow for the desktop capture. The first capture
+attempt used an interpreter without Pillow and was preserved as failed.
+Exact reserve is next, followed by the remaining ammo cases. Reload event
+order, persistence for these ammo cases and VR interaction remain pending.
+
+All three runs closed normally and verified restoration of all four protected
+roots. The final check confirmed the original Save 4 and stock Bink hashes and
+the absence of staged Save 99, the owned process and the test lock. The raw
+archives are `next-save4-partial`, `next-save4-partial-scripted` and
+`next-save4-no-reserve` under `local-tools/le2-diagnostic-handoff`.
 
 ## Offline dialogue recorder, 2026-11-14 UTC
 
