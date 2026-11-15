@@ -10,7 +10,7 @@
 #include "core/vr/PowerWheel.hpp"
 #include "core/vr/SquadPlace.hpp"
 #include "plugin/Glow.hpp"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/PowerIcons.hpp"
 #include "plugin/PowerWheelDraw.hpp"
 #include "plugin/TestLoop.hpp"
@@ -142,8 +142,8 @@ bool EnsureGpu(ID3D11Device* device, ID3D11DeviceContext* context) {
     io.LogFilename = nullptr;
     io.DisplaySize = ImVec2(static_cast<float>(draw::kCanvas), static_cast<float>(draw::kCanvas));
     std::vector<std::filesystem::path> folders;
-    if (!MELEVR::MevrBridge::SettingsPath().empty()) {
-        folders.push_back(std::filesystem::path(MELEVR::MevrBridge::SettingsPath()).parent_path() / L"fonts");
+    if (!mevr::host::SettingsPath().empty()) {
+        folders.push_back(std::filesystem::path(mevr::host::SettingsPath()).parent_path() / L"fonts");
     }
     std::string chosen;
     gGpu.fonts = draw::LoadFonts(io, folders, chosen);

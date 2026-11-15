@@ -1,16 +1,96 @@
 // SPDX-License-Identifier: MIT
 // The renderer interface (plugin/Renderer.hpp) on LE2: Halcyon's ME2 renderer (src/halcyon/le2), forwarding to its own
 // functions or to its seams (src/halcyon/le2/mevr_bridge.h). Where ME2's renderer has nothing that answers yet, the
-// function says so in its comment.
+// function says so and answers as LE1's would with that feature off; ME1's defaults stand where ME2 keeps no setting
+// (the defaults in Renderer.hpp). research/le2-renderer-integration.md "The renderer interface".
 
 #include "plugin/Renderer.hpp"
 
+#include "engine/SettingsFile.hpp"
+#include "halcyon/le2/d3d_capture.h"
+#include "halcyon/le2/engine_probe.h"
+#include "halcyon/le2/logger.h"
 #include "halcyon/le2/me2_menu.h"
 
+#include <dxgi.h>
+
+#include <atomic>
+
+namespace mevr::host {
+
+std::wstring const& SettingsPath() noexcept {
+    // A function-local static: the game thread and the Present thread both ask first.
+    static std::wstring const path = engine::SettingsFile().wstring();
+    return path;
+}
+
+} // namespace mevr::host
+
 namespace mevr::host::renderer {
+namespace {
+std::atomic<HWND> gGameWindow{nullptr};
+}
 
 bool OwnMenuOpen() noexcept {
     return ME2VR::Menu::IsOpen();
+}
+
+void SetOwnMenuOpen(bool) noexcept {
+    // ME2's menu (me2_menu.cpp) has no setter; our main menu on ME2 (M4) adds the seam.
+}
+
+void LogLine(std::string const& line) noexcept {
+    ME2VR::Log::Line(line);
+}
+
+int GameMode() noexcept {
+    return ME2VR::EngineProbe::ReadGameModeSEH();
+}
+
+bool FirstPersonOwned() noexcept {
+    return false;  // ME2's first person (engine_probe's ApplyFirstPerson) is read through here with VRIK (M3)
+}
+
+std::uint64_t HeadArmSequence() noexcept {
+    return 0;  // ME2's head look has no arm counter
+}
+
+HWND GameWindow() noexcept {
+    // The swap chain the renderer captured (d3d_capture.cpp); its output window doesn't change once known.
+    if (HWND const known = gGameWindow.load(std::memory_order_relaxed)) {
+        return known;
+    }
+    IDXGISwapChain* const chain = ME2VR::D3DCapture::GetGameSwapChain();
+    DXGI_SWAP_CHAIN_DESC desc{};
+    if (chain == nullptr || FAILED(chain->GetDesc(&desc)) || desc.OutputWindow == nullptr) {
+        return nullptr;
+    }
+    gGameWindow.store(desc.OutputWindow, std::memory_order_relaxed);
+    return desc.OutputWindow;
+}
+
+HudSettings Hud() noexcept {
+    return {};  // ME1's defaults: ME2's renderer keeps no HUD panel settings
+}
+
+PanelSettings Panels() noexcept {
+    return {};
+}
+
+float RecenterTiltDeg() noexcept {
+    return 60.0f;  // ME1's default (vr_config.h recenterTiltDeg)
+}
+
+void SetScreenReticleHidden(bool) noexcept {
+    // ME2's PcHud has no crosshair switch yet (M3: the hand reticle replaces the crosshair there too).
+}
+
+bool ScreenReticleHidden() noexcept {
+    return false;
+}
+
+void SetAuthoredHudLayout(bool) noexcept {
+    // Until the HUD panel (M2 step 4), ME2's renderer lays the HUD out for each eye itself (UiDupEnabled, PcHud).
 }
 
 } // namespace mevr::host::renderer

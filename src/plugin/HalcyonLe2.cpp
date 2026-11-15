@@ -5,6 +5,7 @@
 #include "core/FixedText.hpp"
 #include "core/Ini.hpp"
 #include "core/Log.hpp"
+#include "core/Window.hpp"
 #include "engine/Addresses.hpp"
 #include "engine/SettingsFile.hpp"
 #include "halcyon/le2/d3d_capture.h"
@@ -237,15 +238,7 @@ bool XrRuntimeIsSteamVr() noexcept {
 }
 
 bool KeyDown(int vk) noexcept {
-    if (vk <= 0 || (GetAsyncKeyState(vk) & 0x8000) == 0) {
-        return false;
-    }
-    HWND const foreground = GetForegroundWindow();
-    DWORD process = 0;
-    if (foreground != nullptr) {
-        GetWindowThreadProcessId(foreground, &process);
-    }
-    return process == GetCurrentProcessId();  // the game's window (or its console), not another program's
+    return mevr::window::KeyDownInGame(vk);  // the game's window (or its console), not another program's
 }
 
 } // namespace ME2VR::MevrBridge

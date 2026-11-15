@@ -6,7 +6,8 @@
 #include "core/Log.hpp"
 #include "core/vr/TestRequest.hpp"
 #include "halcyon/le1/mevr_bridge.h"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
+#include "core/Window.hpp"
 #include "plugin/VoiceModel.hpp"
 #include "voice/VoiceApi.h"
 
@@ -404,7 +405,7 @@ fs::path RequestFile() {
 }  // namespace
 
 void Init() {
-    gSettingsPath = MELEVR::MevrBridge::SettingsPath();
+    gSettingsPath = mevr::host::SettingsPath();
     if (gSettingsPath.empty()) {
         SetWhyOff("no settings file path");
         return;
@@ -417,7 +418,7 @@ void Init() {
 void OnPresent() {
     std::uint64_t const now = GetTickCount64();
     int const vk = gKey.load();
-    bool const key = vk != 0 && MELEVR::MevrBridge::KeyDown(vk);
+    bool const key = vk != 0 && mevr::window::KeyDownInGame(vk);
     gKeyListen.store(key);
     if (now >= gNextRequestMs) {
         gNextRequestMs = now + 250;

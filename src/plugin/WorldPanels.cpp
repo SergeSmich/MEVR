@@ -6,11 +6,11 @@
 // frames and settings (MELEVR.ini worldLockedPanels, panelFollowDeg).
 
 #include "plugin/WorldPanels.hpp"
+#include "plugin/Renderer.hpp"
 
 #include "plugin/GalaxyHologram.hpp"
 
 #include "halcyon/le1/mevr_bridge.h"
-#include "halcyon/le1/vr_config.h"
 
 #include "core/Log.hpp"
 #include "core/vr/OverlayPlacement.hpp"
@@ -74,7 +74,7 @@ PanelPose PlacePanel(PanelKind kind, float const viewPosition[3], void* viewSpac
     out.position[2] = viewPosition[2];
     out.headLocked = true;
 
-    auto const& cfg = MELEVR::Config::Get();
+    mevr::host::renderer::PanelSettings const cfg = mevr::host::renderer::Panels();
     Slot& slot = gSlots[kind == PanelKind::InsertMenu ? 1 : 0];
     bool const on = cfg.worldLockedPanels && appSpace != nullptr;
     if (on != slot.on) {

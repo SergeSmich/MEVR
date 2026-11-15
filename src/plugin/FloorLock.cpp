@@ -2,16 +2,12 @@
 #include "plugin/FloorLock.hpp"
 
 #include "core/Log.hpp"
-#include "halcyon/le1/head_aim.h"
 #include "halcyon/le1/mevr_bridge.h"
-#include "halcyon/le1/vr_config.h"
-#include "halcyon/le1/vr_menu.h"
-#include "halcyon/le1/render_hook.h"
 #include "plugin/Calibration.hpp"
 #if defined(MEVR_WITH_MAIN_MENU)
 #include "plugin/MainMenu.hpp"
 #endif
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/CrashBreadcrumbs.hpp"
 #include "core/Breadcrumbs.hpp"
 
@@ -58,7 +54,7 @@ void SetManualHeight(float meters) {
 }
 
 void RefreshSettings() {
-    auto const& path = MELEVR::MevrBridge::SettingsPath();
+    auto const& path = mevr::host::SettingsPath();
     // Held world views carry the corrected base too; an explicit 0 keeps the legacy path.
     bool const on = path.empty() || GetPrivateProfileIntW(L"Body", L"floorLock", 1, path.c_str()) != 0;
     std::lock_guard lock(gMutex);
@@ -75,14 +71,14 @@ void Queue(vr::host_view::State const& view, vr::floor::State const& floor, bool
     p.view = view;
     p.view.timeMs = GetTickCount64();
     p.floor = floor;
-    p.arm = MELEVR::RenderHook::GetHeadArmSeq();
+    p.arm = mevr::host::renderer::HeadArmSequence();
     p.context.world = view.valid && ordinaryWorld;
-    p.context.firstPerson = MELEVR::Config::Get().fpEnabled && MELEVR::HeadAim::FirstPersonOwnsAny();
+    p.context.firstPerson = mevr::host::renderer::FirstPersonOwned();
     bool menuBlocks = MELEVR::MevrBridge::MainMenuOpen();
 #if defined(MEVR_WITH_MAIN_MENU)
     menuBlocks = menuBlocks && !main_menu::LiveAdjusting();
 #endif
-    p.context.menu = MELEVR::Menu::IsOpen() || menuBlocks || calibration::Active();
+    p.context.menu = mevr::host::renderer::OwnMenuOpen() || menuBlocks || calibration::Active();
     std::lock_guard lock(gMutex);
     p.context.enabled = gEnabled;
     p.context.heightOffsetM = gManualHeight;

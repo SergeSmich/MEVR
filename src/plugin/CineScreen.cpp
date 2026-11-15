@@ -3,7 +3,7 @@
 #include "plugin/CineScreen.hpp"
 
 #include "halcyon/le1/mevr_bridge.h"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 
 #include "core/Ini.hpp"
 #include "core/Log.hpp"
@@ -71,7 +71,7 @@ void RefreshSettings(std::uint64_t now) {
     }
     gSettingsReadMs = now;
     cs::Settings s;
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     if (!path.empty()) {
         {   // 0/vr, 1/screen, or world (research/59: the mod shows it in the world; what it leaves out, the set pieces, comes here)
             wchar_t text[32] = {};

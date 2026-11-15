@@ -8,7 +8,7 @@
 #include "core/vr/SceneCaptureScope.hpp"
 #include "plugin/DrawReplay.hpp"
 #include "plugin/MetricStereo.hpp"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/UiWorldFigure.hpp"
 #include "halcyon/le1/mevr_bridge.h"
 
@@ -1876,7 +1876,7 @@ void SetCommanderHook(std::uint8_t which) {
 }
 
 std::wstring const& IniPath() {
-    static std::wstring path = MELEVR::MevrBridge::SettingsPath();  // <exe dir>\ASI\LE1MEVR.ini, as the mod
+    static std::wstring path = mevr::host::SettingsPath();  // <exe dir>\ASI\LE1MEVR.ini, as the mod
     return path;
 }
 

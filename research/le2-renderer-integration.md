@@ -529,6 +529,60 @@ files are read). `tools/snapshot.ps1 -Tag x`, `tools/record.ps1 -Seconds N`, `to
 Quads ME2's renderer submits are named `quadN` (LE1's are named by `testloop::NameSwapchain` in our own modules; Halcyon's
 menu quad is "menu" through `NoteMenuQuad`, which ME2 has no seam for yet).
 
+### Step 2: the renderer interface
+
+**The rule:** a host module asks the renderer only through `src/plugin/Renderer.hpp` (namespace `mevr::host::renderer`,
+plus `mevr::host::SettingsPath()`), never through a renderer's own headers. `plugin/RendererLe1.cpp` (in
+`MEVR_HALCYON_HOST_SOURCES`) forwards each function to what the modules called before; `plugin/RendererLe2.cpp` (the LE2
+host's sources) answers from ME2's renderer or, where it has nothing yet, as LE1 does with that feature off. The other
+direction (the renderer calling the host: `OnFrameBegun`, `WrapSessionFunctions`, the HUD panel's draw seams) stays in each
+renderer's `mevr_bridge.h`.
+
+| Function | LE1 (`RendererLe1.cpp`) | LE2 (`RendererLe2.cpp`) | Used by |
+|---|---|---|---|
+| `mevr::host::SettingsPath()` | `engine::SettingsFile()`, cached (LE1's `MevrBridge::SettingsPath` forwards here now) | the same | every module with settings |
+| `OwnMenuOpen()` | `MELEVR::Menu::IsOpen` | `ME2VR::Menu::IsOpen` | TestLoop, Calibration, FloorLock, MainMenu |
+| `SetOwnMenuOpen(bool)` | `MELEVR::Menu::SetOpen` | no-op (no setter in `me2_menu.cpp`: M4) | MainMenu |
+| `LogLine(text)` | `MELEVR::Logger::LogLine` | `ME2VR::Log::Line` | Colour, HalcyonOverlays, MetricStereo, RecenterTilt |
+| `GameMode()` | `MELEVR::HeadAim::ReadGameModeSEH` | `ME2VR::EngineProbe::ReadGameModeSEH` (ME2's numbers: [verify] each past 0) | GamePointer |
+| `FirstPersonOwned()` | `Config::Get().fpEnabled && HeadAim::FirstPersonOwnsAny()` | false (M3) | FloorLock |
+| `HeadArmSequence()` | `RenderHook::GetHeadArmSeq` | 0 (no arm counter) | FloorLock |
+| `GameWindow()` | `MevrBridge::GameWindow` (its `SetGameWindow` seam) | the captured swap chain's `OutputWindow` | GamePointer |
+| `Hud()` (`HudSettings`) | `Config::Get()`'s `hudPanel*`, `handReticle*` | ME1's defaults (the struct's member values) | HalcyonOverlays |
+| `Panels()` (`PanelSettings`) | `worldLockedPanels`, `panelFollowDeg` | ME1's defaults | WorldPanels |
+| `RecenterTiltDeg()` | `recenterTiltDeg` | 60 (ME1's default) | RecenterTilt |
+| `SetScreenReticleHidden`, `ScreenReticleHidden` | `MELEVR::Pchud::SetCrosshairHidden`, `CrosshairHidden` | no-op, false (M3) | HalcyonOverlays, ModLoader (`hideScreenReticle`) |
+| `SetAuthoredHudLayout(bool)` | `MELEVR::Pchud::SetAuthoredLayout` | no-op (step 4) | HalcyonOverlays |
+
+`mevr::window::KeyDownInGame(vk)` (`core/Window`, game-independent) is what both bridges' `KeyDown` and plugin/Voice call.
+
+**Moved onto it** (their `halcyon/le1/*.h` includes gone but `mevr_bridge.h`, whose plain types and seam declarations they
+share): Calibration, CineScreen, Colour, FloorLock, GalaxyHologram, GamePointer, HalcyonOverlays, MainMenu, MetricStereo,
+ModLoader, MotionBlurGuard, OmniPad, OmniToolRail, PowerWheel, QuestPacing, RecenterTilt, SquadPlaceDraw, Swapchains,
+TestLoop, Upscale, Voice, VoiceModel, WorldPanels; PerfProbe and RenderLevers for the settings path only.
+
+**Still LE1's on purpose** (Halcyon's LE1 renderer itself, not modules that use it): `HalcyonBridge.cpp` (LE1's seams),
+`Halcyon.cpp` (its startup), `MevrMenuTab.cpp` and `MevrMenuPointer.cpp` (our tab in Halcyon's LE1 ImGui menu),
+`MainMenuSettings.cpp` (edits Halcyon's LE1 `VrConfig` row by row: lane D maps those rows to ME2's keys in M4),
+`PerfProbe.cpp` (`g_perfDraws`, `XrSession::GetResolutionStats`), `RenderLevers.cpp` and `DrawReplay.cpp` (LE1's render
+thread), `MetricStereo.cpp`'s `StereoPlan` (LE1's stereo plan).
+
+**What a module still takes from LE1's adapter files** (host functions, not the renderer's; they move to game-independent
+files when the module first compiles into the LE2 host): `MevrBridge::MainMenuOpen` (HalcyonBridge.cpp; FloorLock,
+GamePointer), `MevrBridge::TakeArmSample` (MevrMenuTab.cpp; Calibration), `MevrBridge::StartCameraAlign` (MevrMenuTab.cpp;
+MainMenu), and `mevr::host::halcyon::*` (HalcyonBridge.cpp: haptics, the floor, the support grip, hand aim).
+
+**Checked: LE1 is unchanged.** Two fake-headset runs of the owner's current LE1 career (it continues on Noveria, Anoleis's
+office), each `tools/fake-headset-session.ps1 -Run <script>` with the same script: 20 s in the world, the replay
+`make-walk-recording.py --plan stand:600 --hands view` looped, 8 s, the console's `pause`, two snapshots 1 s apart. Before:
+the build of step 1 (sessions `2026-11-14_19-39-41-laneb-pose-before`); after: step 2's (`2026-11-14_19-47-47-laneb-pose-after`).
+The same six layers (both eyes, `hud`, `label`, `wrist`, `omnitarget`) at the same places (the wrist quad 1 mm apart), the
+JSON's `hostView` identical (offset -43.3/-4.1/-18.1 uu, 100 uu/m), the HUD panel's picture identical pixel for pixel,
+and the eyes 0.5% of pixels apart by more than 32/255, all of them on things that move in a paused world between two
+launches (Shepard's idle hands and the gun, Anoleis, the console's flicker, the window's light); two snapshots of
+the same run differ by 0.26% over 8/255. The comparison is a script over the two snapshots' PNGs and JSON (PIL
+`ImageChops.difference`).
+
 ## Native verification after explicit handoff
 
 Use the protected LE2 session workflow and recheck shared ownership, profiles,

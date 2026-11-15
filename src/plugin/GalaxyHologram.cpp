@@ -10,7 +10,7 @@
 #include "core/vr/TestRequest.hpp"
 #include "plugin/GalaxyHologramDraw.hpp"
 #include "plugin/Halcyon.hpp"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/ScopeCaptureSource.hpp"
 #include "plugin/TestLoop.hpp"
 #include "plugin/Swapchains.hpp"
@@ -298,7 +298,7 @@ bool EnsureRenderer(ID3D11Device* device) {
     }
     gRendererTried = true;
     std::filesystem::path font;
-    std::wstring const& settings = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& settings = mevr::host::SettingsPath();
     if (!settings.empty()) {
         font = std::filesystem::path(settings).parent_path() / L"fonts" / L"Rajdhani-SemiBold.ttf";
     }

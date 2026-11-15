@@ -6,7 +6,7 @@
 #include "plugin/PerfProbe.hpp"
 #include "plugin/QuestPacing.hpp"
 #include "plugin/Colour.hpp"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/RenderLevers.hpp"
 #if defined(MEVR_WITH_MAIN_MENU)
 #include "plugin/MainMenu.hpp"
@@ -895,7 +895,7 @@ bool EarlyFrameWait() noexcept {
     if (now >= nextReadMs) {
         nextReadMs = now + 1000;
         if (path.empty()) {
-            path = MELEVR::MevrBridge::SettingsPath();  // <exe dir>\ASI\LE1MEVR.ini, as the mod
+            path = mevr::host::SettingsPath();  // <exe dir>\ASI\LE1MEVR.ini, as the mod
         }
         // `auto` (the default, or the key absent): the late wait for a streamed Meta headset, the early one for the rest. The
         // owner's QA (2026-11-07, a Quest 3 over Steam Link and Quest Link): with the early wait the Quest dropped to half rate at

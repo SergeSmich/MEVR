@@ -8,7 +8,7 @@
 #include "core/vr/OverlayPlacement.hpp"
 #include "core/vr/SquadPlace.hpp"
 #include "plugin/GalaxyHologramDraw.hpp"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/TestLoop.hpp"
 #include "plugin/Swapchains.hpp"
 #include "plugin/menu/StateGuard.hpp"
@@ -173,7 +173,7 @@ bool EnsureRenderer(ID3D11Device* device) {
     // The selector's names in the menus' font (deploy-asi puts it in ASI\fonts); without it, no names (the tiles' order and
     // the haptics still tell who).
     std::filesystem::path font;
-    std::wstring const& settings = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& settings = mevr::host::SettingsPath();
     if (!settings.empty()) {
         font = std::filesystem::path(settings).parent_path() / L"fonts" / L"Rajdhani-SemiBold.ttf";
     }

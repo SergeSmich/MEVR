@@ -4,7 +4,7 @@
 #include "core/Ini.hpp"
 #include "core/Log.hpp"
 #include "core/vr/TestRequest.hpp"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 
 #if !defined(MEVR_HAVE_LLAMA)
 // Built without llama.cpp's header (external/llama-cpp absent: CI, a fresh clone): the model tier is off.
@@ -128,7 +128,7 @@ void WorkerMain(fs::path libraryDir, fs::path model, int threads) {
 }  // namespace
 
 void Init() {
-    gSettingsPath = MELEVR::MevrBridge::SettingsPath();
+    gSettingsPath = mevr::host::SettingsPath();
     if (gSettingsPath.empty()) return;
     if (ReadNumber(L"llm", 1.0) == 0.0) {
         gWhyOff = "[Voice] llm = 0";

@@ -29,6 +29,7 @@
 #include "plugin/Calibration.hpp"
 #include "plugin/Colour.hpp"
 #include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/PerfProbe.hpp"
 #include "plugin/TestLoop.hpp"
 #include "halcyon/le1/vr_config.h"
@@ -366,7 +367,7 @@ void CameraSection() {
 } // namespace
 
 std::wstring const& SettingsPath() noexcept {
-    return Path();
+    return mevr::host::SettingsPath();  // the host's (plugin/Renderer.hpp): the same file as Path()
 }
 
 void TakeArmSample(XrVector3f const& left, XrVector3f const& right, XrVector3f const* head, char const* why) noexcept {

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "plugin/ModLoader.hpp"
+#include "plugin/Renderer.hpp"
 
 #include "core/Ini.hpp"
 #include "core/Log.hpp"
@@ -14,7 +15,6 @@
 #include "core/vr/Controllers.hpp"
 #endif
 #if defined(MEVR_WITH_HALCYON)
-#include "halcyon/le1/pchud.h"
 #include "core/vr/Controllers.hpp"
 #include "core/vr/AimRay.hpp"
 #include "core/vr/Calibration.hpp"
@@ -303,7 +303,7 @@ HostServices WithWorldUi(HostServices services) {
     services.takeGameUiRequest = &HostTakeGameUiRequest;
     services.reserveWorldUi = &world_ui::Reserve;
     services.logWorldUiStats = &world_ui::LogStats;
-    services.hideScreenReticle = &MELEVR::Pchud::CrosshairHidden;
+    services.hideScreenReticle = &mevr::host::renderer::ScreenReticleHidden;
     return services;
 }
 HostServices WithGalaxyMap(HostServices services) {

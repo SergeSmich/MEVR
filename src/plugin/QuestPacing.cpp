@@ -10,7 +10,7 @@
 #include "plugin/MainMenu.hpp"
 #endif
 #include "halcyon/le1/mevr_bridge.h"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include <Windows.h>
 #include <intrin.h>
 #include <openxr/openxr.h>
@@ -74,7 +74,7 @@ void Read(double now) {
     static bool readOnce = false;
     static ini::File file;
     std::error_code ec;
-    std::filesystem::path const path(MELEVR::MevrBridge::SettingsPath());
+    std::filesystem::path const path(mevr::host::SettingsPath());
     auto const stamp = std::filesystem::last_write_time(path, ec);
     if (!readOnce || (!ec && stamp != lastWrite)) {
         readOnce = true;

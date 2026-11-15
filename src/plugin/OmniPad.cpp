@@ -5,7 +5,7 @@
 #include "plugin/GamePointer.hpp"
 #include "plugin/Halcyon.hpp"
 #include "plugin/MainMenu.hpp"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/TestLoop.hpp"
 #include "plugin/Swapchains.hpp"
 #include "plugin/menu/MenuUi.hpp"
@@ -131,7 +131,7 @@ void ReadSettings() {
         return;
     }
     g.settingsMs = now;
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     if (path.empty()) {
         return;
     }

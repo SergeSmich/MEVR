@@ -3,10 +3,9 @@
 // core/vr/Recenter). Present thread throughout: DoRecenter and OverlayLayers both run in Halcyon's frame.
 
 #include "plugin/RecenterTilt.hpp"
+#include "plugin/Renderer.hpp"
 
-#include "halcyon/le1/logger.h"
 #include "halcyon/le1/mevr_bridge.h"
-#include "halcyon/le1/vr_config.h"
 
 #include "core/Log.hpp"
 #include "core/vr/Recenter.hpp"
@@ -38,12 +37,12 @@ int gRecenters = 0;
 
 void LogBoth(std::string const& line) {
     log::Info("{}", line);
-    MELEVR::Logger::LogLine(line);
+    mevr::host::renderer::LogLine(line);
 }
 
 rc::Settings SettingsNow() {
     rc::Settings settings;
-    settings.tiltDeg = MELEVR::Config::Get().recenterTiltDeg;
+    settings.tiltDeg = mevr::host::renderer::RecenterTiltDeg();
     return settings;
 }
 

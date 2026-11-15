@@ -10,4 +10,9 @@ namespace mevr::window {
 // focus, so this briefly shares its input queue. Any thread.
 void BringToForeground(HWND window);
 
+// The key is down and a window of this process (the game's, or its console) is in front: a hotkey typed in another
+// program (Discord, a browser) must not recenter, open a menu or switch anything (both renderers' KeyDown seams, the
+// voice key). Any thread.
+bool KeyDownInGame(int vk);
+
 } // namespace mevr::window

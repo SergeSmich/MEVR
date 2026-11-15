@@ -23,9 +23,6 @@
 // alpha is made from, so they reach the panel too instead of staying in the eyes.
 
 #include "halcyon/le1/mevr_bridge.h"
-#include "halcyon/le1/logger.h"
-#include "halcyon/le1/pchud.h"
-#include "halcyon/le1/vr_config.h"
 
 #include "core/Ini.hpp"
 #include "core/Log.hpp"
@@ -58,7 +55,7 @@
 #include "plugin/OmniToolRail.hpp"
 #include "plugin/Thespian.hpp"
 #endif
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/PerfProbe.hpp"
 #include "plugin/RecenterTilt.hpp"
 #include "plugin/SightLayers.hpp"
@@ -114,7 +111,7 @@ constexpr float kGalaxyUiWidthM = 1.50f;  // the game's UI frame over the galaxy
 // Logs a line to our log and to Halcyon's (one-shots that belong next to Halcyon's [XRSUBMIT] lines).
 void LogBoth(std::string const& line) {
     mevr::log::Info("{}", line);
-    MELEVR::Logger::LogLine(line);
+    mevr::host::renderer::LogLine(line);
 }
 
 // ---- The panel texture: the game's UI draws land here (render thread) -------------------------------
@@ -1184,7 +1181,7 @@ hp::Settings const& HudSettings(std::uint64_t now) {
         return gHudSettings;
     }
     gHudSettingsNextMs = now + 1000;
-    std::wstring const& path = SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     WIN32_FILE_ATTRIBUTE_DATA data{};
     if (path.empty() || !GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &data)) {
         return gHudSettings;
@@ -1789,7 +1786,7 @@ unsigned OverlayLayers(OverlayFrame const& frame, void const** layersOut, unsign
         mevr::host::ui_world_figure::Forget();
         gSession = session;
     }
-    auto const& cfg = MELEVR::Config::Get();
+    mevr::host::renderer::HudSettings const cfg = mevr::host::renderer::Hud();
     std::uint64_t const now = GetTickCount64();
     float const dt = gLastFrameMs == 0 ? 0.0f : static_cast<float>(now - gLastFrameMs) / 1000.0f;
     gLastFrameMs = now;
@@ -1829,7 +1826,7 @@ unsigned OverlayLayers(OverlayFrame const& frame, void const** layersOut, unsign
     bool const handAim = ControllerAimActive();
     bool const panelUsable = !gPanelSwapchain.Refused() && !gPanel.failed && !(gPipeline.tried && !gPipeline.ready);
     bool const engaged = cfg.hudPanel && frame.sfr2 && panelUsable;
-    MELEVR::Pchud::SetAuthoredLayout(engaged);
+    mevr::host::renderer::SetAuthoredHudLayout(engaged);
 
     unsigned count = 0;
     unsigned const draws = gPanelDraws.exchange(0, std::memory_order_relaxed);
@@ -2476,7 +2473,7 @@ unsigned OverlayLayers(OverlayFrame const& frame, void const** layersOut, unsign
     // Independent of a weapon, aim ray, controller tracking or a free turret hand.
     // The game-thread consumer preserves the native sniper movie and the game's visibility.
     // OverlayLayers runs only inside an XR frame, including a Mako shown on Halcyon's flat VR panel.
-    MELEVR::Pchud::SetCrosshairHidden(cfg.handReticle && gameplay);
+    mevr::host::renderer::SetScreenReticleHidden(cfg.handReticle && gameplay);
     if (source != 0 && !sightHidesRing && frame.worldFrame && !frame.menuOpen && frame.headValid && count < capacity &&
         device != nullptr) {
         overlay::Billboard reticle;
