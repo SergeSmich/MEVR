@@ -664,7 +664,7 @@ def test_voice(setup, base, root, payload, local, repo, cache):
     (payload / "voice" / "MEVR-Voice.dll").write_bytes(b"stand-in MEVR-Voice.dll (test-network.py)")
     rc, out = setup.run(["--install", "--game", root, "--payload", payload, "--no-settings", "--ignore-version"])
     check(rc == 0 and (voice / "MEVR-Voice.dll").exists(), "voice: Install puts the release's MEVR-Voice.dll in ASI\\voice")
-    check("voice orders: not installed" in out and "MEVR-Voice.dll present" in out, "voice: the status says not installed, the DLL there")
+    check("голосовые приказы: не установлены" in out and "MEVR-Voice.dll на месте" in out, "voice: the status says not installed, the DLL there")
 
     # 1. The model isn't published yet (no such release: 404): the rest installs, said so.
     STATE.take_requests()
@@ -681,7 +681,7 @@ def test_voice(setup, base, root, payload, local, repo, cache):
     tags = sorted({f.get("content", "") for f in m["files"] if f.get("content")})
     check(tags == ["voice/models-tiny", "voice/recognizer"], f"voice: recorded as content ({tags})")
     check(any(p["id"] == "voice" and p["method"] == "download" for p in m["packs"]), "voice: 'Voice orders' on record in packs")
-    check("voice orders: recognizer, models-tiny" in out and "texture packs installed: none" in out, "voice: status lines (not a texture pack)")
+    check("голосовые приказы: recognizer, models-tiny" in out and "наборы текстур установлены: нет" in out, "voice: status lines (not a texture pack)")
     leftovers = list((local / "MEVR" / "downloads" / "voice").glob("*")) if (local / "MEVR" / "downloads" / "voice").exists() else []
     check(not leftovers, f"voice: the download folder emptied ({[p.name for p in leftovers]})")
 
@@ -706,7 +706,7 @@ def test_voice(setup, base, root, payload, local, repo, cache):
     check(rc == 0 and (llm / "model.gguf").read_bytes() == gguf, "voice: the published model as ASI\\voice\\llm\\model.gguf")
     check(all((llm / f).exists() for f in ("llama.dll", "ggml.dll", "ggml-base.dll", "libomp.dll", "ggml-cpu-x64.dll")) and
           not (llm / "llama-server.exe").exists() and not (llm / "mtmd.dll").exists(), "voice: llama.cpp's DLLs, not its tools")
-    check(not (voice / "models" / "small-streaming-en").exists() and "taking out Recognizer model (small)" in out,
+    check(not (voice / "models" / "small-streaming-en").exists() and "taking out Модель распознавателя (small)" in out,
           "voice: the small models taken out when no longer chosen")
 
     # 4. Checks: by size, by SHA-256; a file changed without changing its size is fetched again.
@@ -737,7 +737,7 @@ def test_voice(setup, base, root, payload, local, repo, cache):
     rc, out = setup.run(["--remove-voice", "--game", root])
     check(rc == 0 and not (voice / "onnxruntime.dll").exists() and not llm.exists() and not (voice / "models").exists(),
           "voice: Remove takes the downloads out")
-    check((voice / "MEVR-Voice.dll").exists() and "voice orders: not installed" in out, "voice: MEVR-Voice.dll stays with the mod")
+    check((voice / "MEVR-Voice.dll").exists() and "голосовые приказы: не установлены" in out, "voice: MEVR-Voice.dll stays with the mod")
     m = read_manifest(root)
     check(not any(p["id"] == "voice" for p in m["packs"]) and not any(f.get("content") for f in m["files"]), "voice: off the record")
     rc, out = setup.run(["--install-voice", "--no-voice-llm"] + voice_args, timeout=600)
