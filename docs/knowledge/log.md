@@ -25,3 +25,6 @@
 ## 2026-11-13
 * **Create**: [BioConversation's reply functions read its lists unchecked](gotchas/conversation-reply-natives-without-a-wheel.md), after Thespian mode read a wheel just after `mevr convo end` and the game ended twice in another session's runs; the 2026-11-06 pick between lines was the same mechanism.
 * **Update**: [the Bash tool collapses doubled backslashes](gotchas/bash-heredoc-backslashes.md) bit again (an inline edit of the census tool's C++ header lines).
+
+## 2026-11-14
+* **Create**: [In ME2 a console scale set during a level load, with depth of field on, kills the rendering thread](gotchas/me2-scale-set-during-load.md), after nine hung runs of Halcyon's ME2 renderer were blamed in turn on first person, the eye size, the body hides and the HUD.

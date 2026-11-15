@@ -383,12 +383,12 @@ development host hot-reloads.
 1. **First person is off without upstream's ini.** Halcyon reads `[FirstPerson] Enabled` from `MELE2VR.ini` (next to
    `MassEffect2.exe`) with a default of 0 (`me2_menu.cpp`), and upstream ships `runtime/MELE2VR.ini` with `Enabled=1`
    and `FpToggleKey=75` (K). Our deploy writes no such file, so the mirror showed the over-the-shoulder camera until K
-   was pressed. Installing upstream's file (its `runtime/` and `release/` copies are identical) is held: with it the
-   render thread faulted at the first gameplay frame ("Defaults from ME1" below).
+   was pressed. The deploy installs upstream's file since (its `runtime/` and `release/` copies are identical), and the
+   baseline pins first person ("Defaults from ME1" below, with the fault the file first brought).
 2. **The eyes are the monitor's shape.** `Rendering 5120x1440 (2560x1440 per eye). Headset suggests 1912x1952`: the game
    renders at the desktop's 32:9 size, so each eye is 16:9 against a square-ish headset. Upstream's `ArmResolutionSpoof`
    takes `[VR] RenderW/RenderH` from the same missing ini; with them and a borderless window
-   (`tools/vr-game-settings.ps1 -Game LE2` since then) it rendered 2048x2304 an eye. Held with item 1.
+   (`tools/vr-game-settings.ps1 -Game LE2` since then) it rendered 2048x2304 an eye.
 3. **The second launch crashed in our mod, not in Halcyon** (fixed the same day in `engine/Legacy.cpp` and
    `engine/ReflectCheck.cpp`): LExSDKv2 finds the exe's base with `CreateToolhelp32Snapshot`, which fails now and then
    while another DLL loads (EA's overlay `IGO64.dll` was injecting on that launch), and its checks compile out in
@@ -415,7 +415,7 @@ The owner asked to reuse what ME1 established rather than re-decide it for ME2. 
 | Layer | ME1 | ME2 |
 |---|---|---|
 | The mod's own (`ASI\<GAME>MEVR.ini`) | code defaults, written on first start | **the same code**: the first LE2 start wrote all of them (most of their features are LE1-only for now) |
-| The engine's (`game/SystemSettings`: shadows, motion blur, foliage after each load) | yes | **already runs on LE2** (`system settings: scale set DynamicShadows False, ...` in the LE2 log) |
+| The engine's (`game/SystemSettings`: shadows, motion blur, foliage after each load) | yes, at the world change | **already runs on LE2**, since this work 3 s into gameplay instead (the fault below) |
 | The game's files (`tools/vr-game-settings.ps1`) | VSync, blur, grain, HDR, filtering, borderless, shadows, foliage | the first five already; **borderless, shadows and foliage added for LE2 now** |
 | Halcyon's (`MELEVR.ini` / `MELE2VR.ini`) | pinned in code: `MevrBridge::ModernBaseline` | different program and keys: **`ApplyMevrBaseline` in `me2_menu.cpp`** (`[MEVR]`), run at the end of `LoadValues` |
 
@@ -428,7 +428,7 @@ ME1's baseline mapped to ME2's keys (ME2's mode numbers differ: 0 Mono, 2 AER, 3
 | `leanEnabled`, `lookSensitivity = 1` | `PosEnabled`, `LookSensitivity` | pinned |
 | `menuFlat` | `MonoMenus` | pinned |
 | `fpHideHead` | `[FirstPerson] S*_hideHead` | pinned |
-| `fpEnabled` | `[FirstPerson] Enabled` (code default 0, upstream's comment says "defaults ON") | **not yet** (below) |
+| `fpEnabled` | `[FirstPerson] Enabled` (code default 0, upstream's comment says "defaults ON") | pinned |
 | no profile hotkeys | `ProfileHotkeys` (keys 1-4: ME2's power keys) | off |
 | keys only with the game in front (`MevrBridge::KeyDown`) | its ten hotkey polls | `MevrBridge::HotkeyDown` |
 | recenter on R (ME1 has no reload key) | `RecenterKey=82`: R is ME2's reload | off R (`RecenterKeyEnabled` is saved but never read upstream, so the key is cleared); double-tap Back, the menu's Recenter view and opening the menu still recenter |
@@ -440,18 +440,45 @@ ME1's baseline mapped to ME2's keys (ME2's mode numbers differ: 0 Mono, 2 AER, 3
 R in gameplay logged no `Recentred view`. The eye size: with upstream's `RenderW/RenderH` the game rendered `4096x1460`
 in a fullscreen window on the 1440p monitor and `4096x2304 (2048x2304 per eye)` borderless.
 
-**Why upstream's `MELE2VR.ini` isn't installed yet:** in all three runs with it (first person on from the load, Explore
-camera), the render thread faulted in the first gameplay frame, 15 ms after `[VRSTATE] gm 0 -> VR`: `first-chance access
-violation ... at MassEffect2.exe+0x98C25D (reading 0x1C)` on a thread that isn't the game thread (stack all
-`MassEffect2.exe`: `0x3D262C`, `0x3AA564`, `0x34B296` ... from the thread entry `0x130F34`, likely the rendering thread in
-its D3D11 code: `OMSetRenderTargets` is called from `+0x98B8C4`). The game thread then waits for good (no heartbeat, no
-CPU); the reports are in the sessions' `logs`. It isn't the window size (4096x1460 and 4096x2304 both faulted) and not
-the body and weapon hides (with `S0/S1_hideBody=0`, `hideWeapon=0` it still faulted, no hide sent). Runs without the
-file never faulted, including first person switched on later with K in the Combat camera. Not separated yet: first person
-at the load against the file's other values (`HalfEyeUU=3.35`, `Convergence=0.0197`, the HUD transforms ...). **Next:**
-(1) a run with the file but `[FirstPerson] Enabled=0`, (2) one without the file and `Enabled=1` only, (3) `0x98C25D` in
-Ghidra once ME2's decrypted `.text` is loaded (`%LOCALAPPDATA%\MEVR\dump\MassEffect-60AEEFA5.text.bin`). The A/B at the
-monitor's size stopped before loading: the computer-use keys didn't reach the game reliably.
+#### The first-gameplay-frame fault, found and fixed
+
+**Symptom:** with upstream's `MELE2VR.ini` installed, the level's first gameplay frame after a load (15-25 ms after
+`[VRSTATE] gm 0 -> VR`) faulted on the rendering thread: `first-chance access violation ... at MassEffect2.exe+0x98C25D
+(reading 0x1C)`, a thread that isn't the game thread, its stack all `MassEffect2.exe` (`0x3D262C`, `0x3AA564`,
+`0x34B296` ... from the thread entry `0x130F34`; the D3D11 code: `OMSetRenderTargets` is called from `+0x98B8C4`). The
+thread dies behind the engine's handler, the game thread waits for good (no heartbeat, no CPU, the window still
+"responding"), so the game hangs instead of closing.
+
+**Cause:** `game/SystemSettings` (the mod) sends `scale set DynamicShadows / MotionBlur / FoliageDrawRadiusMultiplier /
+LightEnvironmentShadows` when a new level becomes the world, which on a save's load is during the load, about a second
+before the first gameplay frame; with the game's depth of field on, any such `scale set` there (even the value the
+engine already had, directly or through its opposite) faults that frame. Upstream's file has `DisableDof=0` (depth of
+field on); without the file Halcyon's code default `DisableDof=1` wrote `DepthOfField=False` at attach (`[DOFOFF]`),
+which is why the first runs never faulted. **Fix:** on LE2 a new level's settings wait until it has been in gameplay for
+3 s (`kSettleApplyAt[0]`, `#if defined(MEVR_GAME_LE2)` in `Poll`); the same settings there, opposite-first as on LE1, are
+harmless (runs I, J). LE1 keeps applying at the world change (its motion blur fix needs it).
+
+The A/B, one variable a run, the owner's Freedom's Progress Save 4 each time (session `20261114-175705-le2-firstframe`,
+its `logs` keep every report):
+
+| Run | Upstream's ini, except | Mod's settings at the load | Depth of field | Result |
+|---|---|---|---|---|
+| first runs | no ini at all | sent | off (`DisableDof` default 1) | fine |
+| 3 runs | none / no body or weapon hides / 4096x1460 window | sent | on | fault |
+| A | first person off | sent | on | fault |
+| B | `RenderW/H` the desktop's 5120x1440 | sent | on | fault |
+| C | B, and `[HUD] PerElement=0` | sent | on | fault |
+| D | C, and `HudScaleX/Y` 1.0 | sent | on | fault |
+| E | D, and `DisableDof=1` | sent | **off** | **fine** |
+| F | D | **`[SystemSettings] apply = 0`** | on | **fine** |
+| G | D | sent directly, not through the opposite | on | fault |
+| H | D | `LightEnvironmentShadows = True`: no value changes | on | fault |
+| I | D | **held until 3 s into gameplay** | on | **fine** (applied at 3 s and 15 s) |
+| J | none (as upstream ships it, first person on) | held | on | **fine**: first person on from the load, 2048x2304 eyes |
+
+**Also noted:** `LightEnvironmentShadows False` is LE1's rule for its replayed second eye (`[Performance] sharePass`); on
+LE2 the key is missing, read as LE1's default 5, so ME2 gets it too. Halcyon's ME2 replays its second eye as well
+(`replays=600`), so it may be right there, but nobody decided it: [verify] the characters' shadows in both eyes.
 
 ## Native verification after explicit handoff
 

@@ -57,8 +57,9 @@ Ranked by how much they block. Each lists what ME1 has, the step, and how to che
 **Status 2026-11-14:** steps 1-3 done (`a21fc14e`, `c1a6d183`, `2b6900d3`; the LE2 host links it in `build-trilogy`, all
 three builds and the offline tests pass): research/le2-renderer-integration.md "Imported and linked into the LE2 host".
 Step 4's first session ran on the fake headset the same day ("The first run on the fake headset" there): stereo, our
-controllers and the queue work. ME1's choices now apply on ME2's keys (`ApplyMevrBaseline`, "Defaults from ME1" there);
-next, find the first-gameplay-frame fault that upstream's `MELE2VR.ini` brings, then install it (first person, the eye size).
+controllers and the queue work. ME1's choices now apply on ME2's keys (`ApplyMevrBaseline`), the deploy installs upstream's
+`MELE2VR.ini` (first person from the load, 2048x2304 eyes), and the fault it first brought (the mod's engine settings during
+a load with depth of field on) is fixed ("Defaults from ME1" there). Next: the snapshot seam, then the headset.
 
 **ME1 has:** the recipe, in four commits on 2026-10-08:
 1. `af23acaa` imported Halcyon's source verbatim into `src/halcyon/le1` (upstream `3c51514`), alone in its commit, so

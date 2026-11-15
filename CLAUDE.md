@@ -129,9 +129,11 @@ external code candidates. Read these before sequel work. The current scope is pr
   stereo and the queue work, first person is off until that ini has `[FirstPerson] Enabled=1` (K toggles it), the eyes
   take the monitor's shape; research/le2-renderer-integration.md "The first run on the fake headset"). **ME1's choices on
   ME2's keys:** `[MEVR]` `ApplyMevrBaseline` in `me2_menu.cpp` after every ini load (stereo, flat menus, no profile
-  hotkeys, no recenter on R, ME2's reload), its hotkeys only with the game in front (`MevrBridge::HotkeyDown`); upstream's
-  `MELE2VR.ini` is not installed yet: with it the render thread faulted at the first gameplay frame, 3 of 3 runs
-  ("Defaults from ME1" there).
+  hotkeys, no recenter on R, ME2's reload, first person), its hotkeys only with the game in front (`MevrBridge::HotkeyDown`);
+  the deploy installs upstream's `MELE2VR.ini` (eyes 2048x2304 with `vr-game-settings.ps1 -Game LE2`'s borderless window).
+  **On LE2 `game/SystemSettings` waits until a level has been in gameplay for 3 s**: a `scale set` during the load with the
+  game's depth of field on faulted the rendering thread in the first gameplay frame, the game hung (9 of 9 runs;
+  "Defaults from ME1" there, gotchas/me2-scale-set-during-load).
 - **Never call ProcessEvent (or anything that runs UnrealScript) off the game thread** (the engine tick's).
   The script VM keeps its state in process-wide globals (GPropAddr, GRuntimeUCFlags...), so a call from the
   Present/render thread races the game thread's script. That caused the 2026-10-23 crash (Halcyon's
