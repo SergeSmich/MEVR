@@ -143,7 +143,8 @@ Mako's controls can't drive it). Order by what the owner plays first. M6 comes a
 ### M7. Ship it (M)
 
 **ME2 ships after M5** (the owner, 2026-11-14): the first ME2 release has M1 to M5 (engine access, the host's services,
-VRIK, the menus, the cinema screen and interrupts); M6's modules follow it. Step 2 waits for nothing and can start any time.
+VRIK, the menus, the cinema screen and interrupts); M6's modules follow it. Step 2 waits for nothing; it starts when M5
+is close (the owner, 2026-11-14).
 
 1. **The players' build without LExSDKv2 for LE2** (needs M1's step 5): the CMake guard and
    `tools/package-release.ps1`'s refusal, as for LE1.

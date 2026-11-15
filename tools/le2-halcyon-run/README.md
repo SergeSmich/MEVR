@@ -5,10 +5,12 @@ Until `tools/qa-le2`'s responder and Halcyon's renderer share one LE2 host (docs
 scripts run ME2 as the players' host does: our `halcyon-le2` host from `build-trilogy`, loaded by LEBinkProxy, on
 SteamVR's null driver. They are what the ME2 lanes of [the continuation plan](../../docs/le2-continuation-plan.md) use.
 
-One game run at a time on this machine, across every session: **`run-lock.ps1`** names who runs the game. `prep.ps1`
-takes it and `restore.ps1` gives it back; take it by hand around any other run (an LE1 run with
-`tools/fake-headset-session.ps1`). A game running while nobody holds the lock is someone else's (the owner, the ME2
-validation session's `tools/qa-le2`): leave it alone and wait.
+One game run at a time on this machine, across every session and agent: **`run-lock.ps1`** names who runs the game
+(`%LOCALAPPDATA%\MEVR\game-run.lock`). `prep.ps1` takes it and `restore.ps1` gives it back; take it by hand around any
+other run (an LE1 run with `tools/fake-headset-session.ps1`). It follows `tools/qa-le2`'s and `tools/qa-cafeteria`'s
+convention: their runners refuse while any `*.lock` is in that folder and hold `qa-cafeteria.lock` while they run, and
+this one refuses while theirs is held. A game running while no lock is held is someone else's (the owner, another agent
+driving ME2 by hand): leave it alone and wait.
 
 ```powershell
 tools\le2-halcyon-run\run-lock.ps1 -Status
