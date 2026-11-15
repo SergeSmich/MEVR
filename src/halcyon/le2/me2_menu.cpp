@@ -478,8 +478,10 @@ void SaveFpStates(const std::wstring& path) noexcept
 // 2026-11-14): stereo, the Quest image fix, the view filled, lean, look speed 1, flat menus, first person with the head
 // hidden (upstream's code default is off, though its comment says on), no profile hotkeys (their 1-4 are ME2's power keys)
 // and no recenter on R (ME2's reload; double-tapping Back, the menu's Recenter view and opening the menu still recenter).
-// Run after every load of the ini, so an old or hand-edited MELE2VR.ini can't bring one back. Head aim, VR conversations
-// and the stick's pitch stay upstream's.
+// Run after every load of the ini, so an old or hand-edited MELE2VR.ini can't bring one back. The owner's answers
+// (2026-11-14; ME2 continues ME1, deviating only where the game forces it): no head aim (the hand will aim: VRIK is to be
+// fast-tracked for ME2), the stick doesn't tilt the view (ME1's decoupledPitch), and conversations and cutscenes not in
+// VR but on a screen, ME1's way: its 3D cinema screen isn't ported yet, so Halcyon's flat cine panel until it is.
 void ApplyMevrBaseline() noexcept
 {
     int changed = 0;
@@ -505,6 +507,12 @@ void ApplyMevrBaseline() noexcept
         if (s != nullptr && !s->hideHead) { s->hideHead = true; headShown = true; }
     }
     note(headShown, "Shepard's head hidden ([FirstPerson] S*_hideHead)");
+    if (note(ME2VR::EngineProbe::GetHeadAimEnabled(), "head aim (HeadAim)")) ME2VR::EngineProbe::SetHeadAimEnabled(false);
+    if (note(!g_decoupledPitch.load(std::memory_order_relaxed), "the stick's pitch (DecoupledPitch)"))
+        g_decoupledPitch.store(true, std::memory_order_relaxed);
+    if (note(ME2VR::CalcViewHook::GetCineVrConvo(), "conversations in VR (CineVrConvo)")) ME2VR::CalcViewHook::SetCineVrConvo(false);
+    if (note(ME2VR::CalcViewHook::GetCineVrCutscene(), "cutscenes in VR (CineVrCutscene)"))
+        ME2VR::CalcViewHook::SetCineVrCutscene(false);
     if (note(g_profileHotkeys, "profile hotkeys (ProfileHotkeys)")) g_profileHotkeys = false;
     if (note(g_recenterKey == 'R', "the recenter key R (RecenterKey)")) g_recenterKey = 0;  // rk > 0 gates it
     if (changed == 0) { ME2VR::Log::Line("[MEVR-BASELINE] MELE2VR.ini already matches the MEVR baseline"); return; }
