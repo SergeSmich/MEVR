@@ -18,7 +18,8 @@ tools\le2-halcyon-run\prep.ps1 -Holder <session name> [-Tag what] [-Diagnostics]
 tools\le2-halcyon-run\launch.ps1 [-Kill]                                           # each run: Steam's -game 2, waits for the XR session
 tools\le2-halcyon-run\load.ps1 [-Save <career>\<file>.pcsav]                         # a save's gameplay by script (default: Freedom's Progress)
 # ... the run: logs in ME2\Binaries\Win64\Logs\LE2MEVR.log and %LOCALAPPDATA%\MELE2VR\MELE2VR_Log.txt
-tools\le2-halcyon-run\launch.ps1 -Kill                                             # the next run (rebuild, then prep.ps1 again to redeploy)
+tools\le2-halcyon-run\launch.ps1 -Kill                                             # the next run: closes ME2 and starts it again
+tools\le2-halcyon-run\launch.ps1 -Stop                                             # only closes ME2 (to rebuild, then prep.ps1 again to redeploy)
 tools\le2-halcyon-run\restore.ps1 -Holder <session name>                          # once at the end of the task
 ```
 

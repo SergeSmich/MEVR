@@ -104,6 +104,32 @@ def force_rmtree(path):
     shutil.rmtree(long, onerror=retry)
 
 
+def unlink_links(path):
+    """Removes, as links, the junctions and symlinks a session made at a worktree's top or in its external folder (to the
+    main checkout's submodules and fetched libraries, when `git submodule update` refused the local transport), so the
+    removal below can never delete through one into the main checkout's own copies. False if one couldn't be unlinked."""
+    isjunction = getattr(os.path, 'isjunction', lambda _p: False)
+    ok = True
+    for top in (path, os.path.join(path, 'external')):
+        try:
+            names = os.listdir(top)
+        except OSError:
+            continue
+        for name in names:
+            p = os.path.join(top, name)
+            try:
+                if isjunction(p) or (os.path.islink(p) and os.path.isdir(p)):
+                    os.rmdir(p)  # the link only, never its target
+                    print(f'  unlinked {p}')
+                elif os.path.islink(p):
+                    os.unlink(p)
+                    print(f'  unlinked {p}')
+            except OSError as e:
+                print(f'  could not unlink {p}: {e}')
+                ok = False
+    return ok
+
+
 def free_gb(path):
     try:
         return shutil.disk_usage(path).free / 2**30
@@ -147,6 +173,9 @@ def main(argv):
         why = verdict(repo, wt, main_rev, idle_s, args.keep)  # again: a session may have started in it meanwhile
         if why:
             print(f'skipped {path}  ({why}, changed since the list)')
+            continue
+        if not unlink_links(path):
+            print(f'skipped {path}  (a link into another folder could not be removed: remove it by hand)')
             continue
         r = git(repo, 'worktree', 'remove', '--force', path, check=False)
         if r.returncode != 0:

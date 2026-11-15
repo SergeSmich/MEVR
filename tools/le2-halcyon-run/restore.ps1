@@ -13,7 +13,7 @@ if ($open.holder -ne $Holder) { throw "the open stretch is '$($open.holder)'s, n
 $S = $open.session
 $G = Join-Path (Find-MELEInstall).Root 'Game'
 $docs = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'BioWare\Mass Effect Legendary Edition'
-if (Get-Process MassEffect1, MassEffect2, MassEffect3, MassEffectLauncher -ErrorAction SilentlyContinue) { throw 'a game is running: launch.ps1 -Kill or close it' }
+if (Get-Process MassEffect1, MassEffect2, MassEffect3, MassEffectLauncher -ErrorAction SilentlyContinue) { throw 'a game is running: launch.ps1 -Stop closes ME2' }
 
 New-Item -ItemType Directory -Force "$S\logs" | Out-Null
 Copy-Item "$G\ME2\Binaries\Win64\Logs\LE2MEVR.log" "$S\logs\" -ErrorAction SilentlyContinue

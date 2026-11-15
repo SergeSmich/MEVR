@@ -1,7 +1,15 @@
 # SPDX-License-Identifier: MIT
 # Starts ME2 through Steam (LEBinkProxy's -game 2) once SteamVR has been up 16 s and waits for Halcyon's XR session;
-# with -Kill first closes a running (or hung) ME2 and its launcher. Run prep.ps1 first.
-param([switch]$Kill)
+# with -Kill first closes a running (or hung) ME2 and its launcher, then starts it again; -Stop only closes them. Run
+# prep.ps1 first.
+param([switch]$Kill, [switch]$Stop)
+if ($Stop) {
+    Get-Process MassEffect2 -ErrorAction SilentlyContinue | Stop-Process -Force -Confirm:$false
+    Start-Sleep 3
+    Get-Process MassEffectLauncher -ErrorAction SilentlyContinue | Stop-Process -Confirm:$false
+    'ME2 closed'
+    exit 0
+}
 $current = Join-Path $env:LOCALAPPDATA 'MEVR\sessions\le2-current.json'
 if (-not (Test-Path -LiteralPath $current)) { throw 'no ME2 stretch is open: run prep.ps1 first' }
 if ($Kill) {
