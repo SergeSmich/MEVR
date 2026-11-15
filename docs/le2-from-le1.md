@@ -305,7 +305,8 @@ This is where ME1 has the most built (research/52, 59, 69, 70). Do it in this or
 
 ## 4. Order of work
 
-**Since 2026-11-14 (section 0): ME1's systems on ME2, VRIK first.** Done that day: Halcyon's ME2 renderer in our LE2 host
+**Since 2026-11-14 (section 0): ME1's systems on ME2, VRIK first.** The work list with each step's files and checks is
+[the continuation plan](le2-continuation-plan.md) (milestones M1-M7); this section is its outline. Done that day: Halcyon's ME2 renderer in our LE2 host
 (A1), its first sessions on the fake headset, ME1's renderer choices on its keys (`ApplyMevrBaseline`), upstream's
 `MELE2VR.ini` from the deploy and the first-gameplay-frame fault it exposed (research/le2-renderer-integration.md). In order
 from there:
