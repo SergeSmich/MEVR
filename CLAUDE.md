@@ -127,7 +127,11 @@ external code candidates. Read these before sequel work. The current scope is pr
   our actions on its session, Touch as pad 0, its Present-thread ProcessEvents queued for the game thread; its log
   `MELE2VR_Log.txt`, its settings `MELE2VR.ini` next to `MassEffect2.exe`; run once on the fake headset 2026-11-14:
   stereo and the queue work, first person is off until that ini has `[FirstPerson] Enabled=1` (K toggles it), the eyes
-  take the monitor's shape; research/le2-renderer-integration.md "The first run on the fake headset").
+  take the monitor's shape; research/le2-renderer-integration.md "The first run on the fake headset"). **ME1's choices on
+  ME2's keys:** `[MEVR]` `ApplyMevrBaseline` in `me2_menu.cpp` after every ini load (stereo, flat menus, no profile
+  hotkeys, no recenter on R, ME2's reload), its hotkeys only with the game in front (`MevrBridge::HotkeyDown`); upstream's
+  `MELE2VR.ini` is not installed yet: with it the render thread faulted at the first gameplay frame, 3 of 3 runs
+  ("Defaults from ME1" there).
 - **Never call ProcessEvent (or anything that runs UnrealScript) off the game thread** (the engine tick's).
   The script VM keeps its state in process-wide globals (GPropAddr, GRuntimeUCFlags...), so a call from the
   Present/render thread races the game thread's script. That caused the 2026-10-23 crash (Halcyon's
