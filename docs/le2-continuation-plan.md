@@ -1,9 +1,10 @@
 <!-- SPDX-License-Identifier: MIT -->
 # ME2 as a continuation of ME1: the plan
 
-Date: 2026-11-14, against main `544067a3`. The why and the evidence are in [ME2 from ME1](le2-from-le1.md) (sections 0 and
-4) and [research/le2-renderer-integration.md](../research/le2-renderer-integration.md); this is the work list. Each step
-names its files, its check and what it waits for, so a session can pick one up without this conversation.
+Date: 2026-11-14, against main `544067a3`; the owner's answers to its questions the same day (below). The why and the
+evidence are in [ME2 from ME1](le2-from-le1.md) (sections 0 and 4) and
+[research/le2-renderer-integration.md](../research/le2-renderer-integration.md); this is the work list. Each step names its
+files, its check and what it waits for, so a session can pick one up without this conversation.
 
 ## The rule
 
@@ -118,20 +119,31 @@ Waits for M2. Can run beside M3.
 1. The cinema screen's seams in `me2_xr.cpp` (research/52: the decision, parked head look, projection, plan, submit, pace,
    the conversation movie at its authored size), `plugin/CineScreen`, the floor and horizon (`CinemaBackdrop`), the dip
    from black (`TransitionFade`). Replaces the flat cine panel; `ApplyMevrBaseline` keeps VR conversations off.
-2. ME2's interrupts (ME2's own): `SFXGameModeConversation.InterruptParagon/Renegade`; how a VR player triggers one is the
-   owner's question below.
+2. ME2's interrupts (ME2's own), **on the controllers' triggers as ME2 has them on a pad** (the owner, 2026-11-14):
+   while the game shows an interrupt prompt the triggers reach it as pad 0's LT and RT (Touch as pad 0 already does; LT
+   Paragon, RT Renegade, le2-from-le1.md 3.7), nothing of ours claims them in the conversation mode (the squad's left
+   trigger, `squad_menu::OwnTrigger`; the game pointer's trigger latch; our menu's), and the prompt shows where the player
+   looks (the screen's UI layer). The game's own route (`SFXGameModeConversation.InterruptParagon/Renegade`, then
+   `BioSFHandler_Conversation.HandleEvent`, then `BioConversation.SelectInterruption`) stays untouched.
 
-**Check:** a snapshot during Freedom's Progress's first conversation shows the screen in stereo with the floor around it.
+**Check:** a snapshot during Freedom's Progress's first conversation shows the screen in stereo with the floor around it;
+at Veetor's door (the validation session's fixture) a replayed trigger inside the prompt's window takes the interrupt and
+one outside it doesn't, from a recording, not a pad pulse.
 
 ### M6. The rest of ME1, one module at a time (L)
 
 Each waits for M1 and M2 and follows its LE1 research note: comfort and the vignette, the HUD pieces (wrist status, gun
 panel: ME2's HUD crops), interaction labels, VR cover (ME2's damage rule, research/23 6.3), physical crouch and sprint
 (ME2's storm), the power wheel and self-cast gestures (ME2's powers), squad orders, placement and voice, Thespian mode
-(ME2's wheels and interrupts), conversations in the world, the galaxy map and scanning, the Hammerhead (the Mako's
-controls where they fit). Order by what the owner plays first.
+(ME2's wheels and interrupts), conversations in the world, the galaxy map and scanning, **the Hammerhead with ME1's Mako
+controls and cockpit for now** (the owner, 2026-11-14: `game/MakoControls`' lever and stick, the cockpit models and
+`game/CockpitProbe`'s ride, the repair button and extraction lever, on ME2's hover tank; ME2's own driving only where the
+Mako's controls can't drive it). Order by what the owner plays first. M6 comes after the first ME2 release (M7).
 
 ### M7. Ship it (M)
+
+**ME2 ships after M5** (the owner, 2026-11-14): the first ME2 release has M1 to M5 (engine access, the host's services,
+VRIK, the menus, the cinema screen and interrupts); M6's modules follow it. Step 2 waits for nothing and can start any time.
 
 1. **The players' build without LExSDKv2 for LE2** (needs M1's step 5): the CMake guard and
    `tools/package-release.ps1`'s refusal, as for LE1.
@@ -141,20 +153,26 @@ controls where they fit). Order by what the owner plays first.
 
 ## Who and when
 
-| Lane | Takes | Notes |
-|---|---|---|
-| A | M1 | Ghidra on ME2; touches `src/engine`, `src/ue3` |
-| B | M2, then M5 | the renderer seams; touches `src/plugin`, `src/halcyon/le2` |
-| C | M3 once A and B land | VRIK |
-| ME2 validation session | reload fixtures and the coordinator (M3.5), saves, scenarios (`tools/qa-le2`) | its protected runner becomes the ME2 test runner once its responder and Halcyon share one LE2 host (le2-from-le1.md 3.3) |
+**Parallel sessions** (the owner, 2026-11-14): each lane is a session of its own in its own worktree, started and
+coordinated by the session that wrote this plan.
 
-A and B run in parallel; C starts when both have landed. One game run at a time on this machine (all lanes and the
-validation session); back up saves and settings once at the start of a stretch of runs and restore once at the end.
-Every milestone lands on main only after `build-trilogy`, `build`, `build-mono` and ctest pass.
+| Lane | Takes | Starts | Notes |
+|---|---|---|---|
+| A | M1 | now | Ghidra on ME2 (the only lane that opens Ghidra until M1 lands); touches `src/engine`, `src/ue3` |
+| B | M2, then M5 | now; M5 once M2 lands | the renderer seams; touches `src/plugin`, `src/halcyon/le2` |
+| C | M3 | once M1 and M2 have landed | VRIK; touches `src/game`, `src/engine/BonePose`, `src/core/ik` |
+| D | M4 | once M2 has landed (its game side once M1 has) | the menus; touches `plugin/MainMenu*`, `plugin/Calibration`, `plugin/OmniToolRail`, `game/OmniTool`, `game/WorldUi` |
+| ME2 validation session | reload fixtures and the coordinator (M3.5), saves, scenarios (`tools/qa-le2`) | already running | its protected runner becomes the ME2 test runner once its responder and Halcyon share one LE2 host (le2-from-le1.md 3.3) |
 
-## Questions for the owner
+**One game run at a time on this machine** (every lane, the validation session, the owner): `tools/le2-halcyon-run`'s
+`run-lock.ps1` names who runs the game; its `prep.ps1` takes the lock and backs up saves and settings once at the start
+of a stretch of runs, its `restore.ps1` puts them back once at the end and releases it; take the lock by hand around an
+LE1 run. A game running with the lock free is someone else's: leave it and wait. Every milestone lands on main
+(`tools/land-on-main.py`) only after `build-trilogy`, `build`, `build-mono` and ctest pass; the owner pushes.
 
-1. **Interrupts in VR** (ME2 only, M5.2): the pad's triggers as ME2 has them, or a gesture?
-2. **Lanes:** run A and B as parallel sessions now, or one after the other in this one?
-3. **The Hammerhead:** ME1's Mako controls and cockpit for it (M6), or ME2's own driving first?
-4. **When to ship ME2:** after M3 and M4 (aiming and the menus), or wait for M5 and M6?
+## The owner's answers (2026-11-14)
+
+1. **Interrupts in VR** (M5.2): **the triggers**, as ME2 has them on a pad.
+2. **Lanes:** **parallel sessions** (the table above).
+3. **The Hammerhead** (M6): **ME1's Mako controls and cockpit**, for now.
+4. **When to ship ME2:** **after M5** (M1-M5 in the first release; M6 after it).

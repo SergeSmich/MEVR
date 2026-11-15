@@ -276,7 +276,7 @@ This is where ME1 has the most built (research/52, 59, 69, 70). Do it in this or
 3. **Interrupts in VR.** Timed prompts on the triggers (LT Paragon, RT Renegade). In LE1 the controllers' triggers are
    the squad's and the gun's on foot (the squad takes the left trigger per pull, `squad_menu::OwnTrigger`); check that
    nothing of ours owns either trigger in the conversation mode before mapping them. Test the taken and the missed window on Veetor's door
-   with a recording (3.3), not a pad pulse. A hand gesture instead of a trigger is a design question for the owner.
+   with a recording (3.3), not a pad pulse. **The triggers it is** (the owner, 2026-11-14), not a hand gesture.
 4. **Input latches across the hand-over:** the stick that picked a reply must be let go before it walks
    (`cw::StickWalks`); buttons held when a menu closes are kept from the game until released (`gamepad::CloseLatch`).
    Both bit LE1.
@@ -292,7 +292,8 @@ This is where ME1 has the most built (research/52, 59, 69, 70). Do it in this or
 - Scanning is a held input, but probes are edges. Follow the ME2 plan's warning: one probe per press, never per sampled
   frame.
 - The Hammerhead can reuse the Mako's control geometry and the panel code (`core/vr/MakoControls`, `CockpitPanel`), not
-  its physics writes.
+  its physics writes. **ME1's Mako controls and cockpit, for now** (the owner, 2026-11-14), after the first ME2 release
+  (it ships after M5 of docs/le2-continuation-plan.md).
 
 ### 3.9 Build and test hygiene
 
