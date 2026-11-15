@@ -4,6 +4,7 @@
   python tools/clean-worktrees.py                 # lists what it would remove and why it keeps the rest (changes nothing)
   python tools/clean-worktrees.py --apply         # removes them
   python tools/clean-worktrees.py --apply --idle-hours 2 --keep left-hand --delete-branches
+  python tools/clean-worktrees.py --apply --only agent-ae7e --idle-hours 0 --delete-branches   # one lane, once it landed
 
 A worktree is removed only when all of these hold, checked again right before its removal:
   - it isn't the main checkout and isn't locked (`git worktree lock <path>` keeps one for good);
@@ -14,6 +15,10 @@ Removing one deletes its folder and everything ignored in it (build directories:
 A folder another program holds open can survive as empty directories; it goes once that program ends. --delete-branches
 also deletes each removed worktree's branch (`git branch -d`, merged only). Never touches main, never pushes.
 Worktrees pile up because nothing removes them once their work lands (H: was full on 2026-11-13: 34 of them, 93 GB).
+So prune a lane's worktree as soon as its work has landed and its agent or session is done (the owner, 2026-11-14):
+--only names it (its path's text) and --idle-hours 0 lifts the idle wait for it alone. A background agent's worktree is
+locked by the harness while the agent runs: `git worktree unlock <path>` once the agent has finished. Junctions and
+symlinks at a worktree's top or in its external folder are removed as links first, never followed.
 """
 import argparse
 import os
@@ -68,6 +73,23 @@ def newest_change(path):
     return max(times) if times else 0.0
 
 
+def links_in(path):
+    """Junctions and symlinks at a worktree's top or in its external folder: a session links a submodule or a fetched
+    library to the main checkout's copy when `git submodule update` refuses the local transport."""
+    isjunction = getattr(os.path, 'isjunction', lambda _p: False)
+    found = []
+    for top in (path, os.path.join(path, 'external')):
+        try:
+            names = os.listdir(top)
+        except OSError:
+            continue
+        for name in names:
+            p = os.path.join(top, name)
+            if isjunction(p) or os.path.islink(p):
+                found.append(p)
+    return found
+
+
 def verdict(repo, wt, main, idle_s, keep):
     """None if the worktree may go, else why it stays."""
     path = wt['worktree']
@@ -78,6 +100,10 @@ def verdict(repo, wt, main, idle_s, keep):
     if 'prunable' in wt or not os.path.isdir(path):
         return 'missing (git worktree prune drops it)'
     status = git(path, 'status', '--porcelain', check=False)
+    if status.returncode != 0 and links_in(path):
+        # A submodule linked to the main checkout's copy can't be read from here (its .git file points relative to the
+        # main checkout): it isn't this worktree's, so judge the worktree without its submodules.
+        status = git(path, 'status', '--porcelain', '--ignore-submodules=all', check=False)
     if status.returncode != 0:
         err = status.stderr.decode(errors='replace').strip().splitlines()
         return 'git status failed: ' + (err[0] if err else f'exit {status.returncode}')
@@ -110,23 +136,16 @@ def unlink_links(path):
     removal below can never delete through one into the main checkout's own copies. False if one couldn't be unlinked."""
     isjunction = getattr(os.path, 'isjunction', lambda _p: False)
     ok = True
-    for top in (path, os.path.join(path, 'external')):
+    for p in links_in(path):
         try:
-            names = os.listdir(top)
-        except OSError:
-            continue
-        for name in names:
-            p = os.path.join(top, name)
-            try:
-                if isjunction(p) or (os.path.islink(p) and os.path.isdir(p)):
-                    os.rmdir(p)  # the link only, never its target
-                    print(f'  unlinked {p}')
-                elif os.path.islink(p):
-                    os.unlink(p)
-                    print(f'  unlinked {p}')
-            except OSError as e:
-                print(f'  could not unlink {p}: {e}')
-                ok = False
+            if isjunction(p) or os.path.isdir(p):
+                os.rmdir(p)  # the link only, never its target
+            else:
+                os.unlink(p)
+            print(f'  unlinked {p}')
+        except OSError as e:
+            print(f'  could not unlink {p}: {e}')
+            ok = False
     return ok
 
 
@@ -142,6 +161,7 @@ def main(argv):
     ap.add_argument('--apply', action='store_true', help='remove them (without it, only list)')
     ap.add_argument('--idle-hours', type=float, default=12.0, help='keep worktrees changed more recently (default 12)')
     ap.add_argument('--keep', action='append', default=[], help='keep worktrees whose path contains this text (repeatable)')
+    ap.add_argument('--only', action='append', default=[], help='consider only worktrees whose path contains this text (repeatable)')
     ap.add_argument('--delete-branches', action='store_true', help="also delete each removed worktree's merged branch")
     args = ap.parse_args(argv[1:])
 
@@ -152,7 +172,11 @@ def main(argv):
     idle_s = args.idle_hours * 3600
 
     go, stay = [], []
-    for wt in entries[1:]:
+    considered = [wt for wt in entries[1:] if not args.only or any(o.lower() in wt['worktree'].lower() for o in args.only)]
+    if args.only and not considered:
+        print(f'no worktree path contains {" or ".join(args.only)}')
+        return 1
+    for wt in considered:
         why = verdict(repo, wt, main_rev, idle_s, args.keep)
         (stay if why else go).append((wt, why))
 
