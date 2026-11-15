@@ -251,12 +251,13 @@ void OnSwapChainPresent(void* swapChain, void* capturedSwapChain) noexcept {
 
 // ---- The display's HDR answer (IDXGIOutput6::GetDesc1) ---------------------------------------------------------------
 // As LE1's [Colour] hdrDisplay (plugin/HalcyonBridge's HdrDisplayDesc, research/27 7c): 1 answers HDR10 for an SDR display,
-// 0 (the default, LE1's) passes the display's own answer through, -1 answers SDR for an HDR display. On a display with
+// 0 (LE1's default) passes the display's own answer through, -1 (ME2's default) answers SDR for an HDR display. With
 // Windows HDR on, ME2 makes an R16G16B16A16_FLOAT swap chain in gameplay even with [HDR] DesiredRange = SDR (LE1 stays
 // 8-bit), and Halcyon's ME2 renderer is built for an 8-bit one (its SFR left eye and its UI treatment find nothing in a
 // float frame; plugin/EyeCopy keeps its eyes from going black). Answered SDR (-1), ME2 renders the 8-bit SDR frame ME1
-// does (research/le2-renderer-integration.md "The black eyes").
-constexpr int kHdrDisplayDefault = 0;
+// does (research/le2-renderer-integration.md "The black eyes"). -1 is an interim default (the owner, 2026-11-14: "a stop
+// gap"): when ME2's renderer handles its native HDR frame (the HDR study, research/le2-hdr.md), it goes back to 0.
+constexpr int kHdrDisplayDefault = -1;  // the ME2 fact that forces it: the float swap chain, above
 namespace {
 using GetDesc1Fn = HRESULT(STDMETHODCALLTYPE*)(IDXGIOutput6*, DXGI_OUTPUT_DESC1*);
 GetDesc1Fn gRealGetDesc1 = nullptr;

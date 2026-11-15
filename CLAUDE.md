@@ -146,7 +146,8 @@ external code candidates. Read these before sequel work. The current scope is pr
   **On an HDR display (this machine's) ME2's swap chain is R16G16B16A16_FLOAT in gameplay**, whatever `DesiredRange` says;
   Halcyon's ME2 renderer assumes 8 bits (its eye copies did nothing: black or stale eyes; no SFR left eye, no UI treatment):
   `plugin/EyeCopy` draws such a frame into the eyes, and `[Colour] hdrDisplay = -1` in `ASI\LE2MEVR.ini` answers the game's
-  `IDXGIOutput6::GetDesc1` SDR so it stays 8-bit (default 0 until the owner decides; research "The black eyes",
+  `IDXGIOutput6::GetDesc1` SDR so it stays 8-bit (LE2's default, an interim stop gap the owner approved 2026-11-14 until
+  native HDR works, research/le2-hdr.md; then back to 0, ME1's; research "The black eyes",
   gotchas/me2-float-swap-chain). ME2 snapshots also save each eye's source and the eye right after the copy.
 - **Never call ProcessEvent (or anything that runs UnrealScript) off the game thread** (the engine tick's).
   The script VM keeps its state in process-wide globals (GPropAddr, GRuntimeUCFlags...), so a call from the

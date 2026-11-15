@@ -40,7 +40,8 @@ is 4096x2304 format 10`. Windows' HDR state: DisplayConfig's advanced colour inf
   another format family is drawn through an sRGB view of the image instead of copied. The eyes show the game; both eyes
   are still one picture in a float frame.
 - `[Colour] hdrDisplay = -1` in `ASI\LE2MEVR.ini`: the game's `IDXGIOutput6::GetDesc1` is answered SDR, ME2 stays 8-bit,
-  and Halcyon's stereo pair and UI treatment work. The default is 0 (the display's answer) until the owner decides.
+  and Halcyon's stereo pair and UI treatment work. LE2's default, an interim stop gap (the owner, 2026-11-14) until
+  native HDR works (research/le2-hdr.md); then back to 0, the display's answer.
 - Never change Windows' HDR setting to get around it.
 
 # Citations

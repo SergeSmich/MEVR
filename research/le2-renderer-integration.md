@@ -700,9 +700,11 @@ nothing, so in a float frame both eyes are the same picture and the HUD gets no 
    first output's `IDXGIOutput6::GetDesc1` (vtable slot 27; the game's HDR question, research/27 7c), answered by
    `[Colour] hdrDisplay` in `ASI\LE2MEVR.ini` as LE1's key: 1 HDR10 for an SDR display, 0 the display's own answer (the
    default, ME1's), **-1 SDR for an HDR display** (new; on LE2 only). Log `hdr display: the display reports colour space 12
-   (HDR10), 8 bits, 400 nits; answered SDR ([Colour] hdrDisplay = -1)`. **Whether -1 becomes ME2's default waits for the
-   owner** (asked 2026-11-14; the commit that flips it is kept off main). Until then ME2 runs on this machine add
-   `[Colour]` / `hdrDisplay = -1` to `ASI\LE2MEVR.ini` after `prep.ps1` (which rewrites that file) for the 8-bit path.
+   (HDR10), 8 bits, 400 nits; answered SDR ([Colour] hdrDisplay = -1)`. **-1 is ME2's default, as an interim stop gap**
+   (the owner, 2026-11-14: "If it's cheap to do sdr, then we can do that as a stop gap while you figure out HDR"): when
+   ME2's renderer handles its native HDR frame (the HDR study, `research/le2-hdr.md`), the default goes back to 0,
+   ME1's. `[Colour] hdrDisplay = 0` in `ASI\LE2MEVR.ini` passes the display's answer through now (the float frame,
+   drawn by EyeCopy: one picture in both eyes).
    With -1 the frame is the game's own 8-bit SDR output, as ME1's: the swap chain format 28, copied raw into the sRGB eye
    (Halcyon's own copy, no blit), like LE1's raw copy with the neutral colour profile; darker than the float frame drawn
    by EyeCopy (mean 51/55/62 against 80/86/96 at the same spot), which is the SDR tonemap against the float frame's
