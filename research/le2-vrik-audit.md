@@ -66,8 +66,24 @@ SDK; **[verify]** each in Ghidra and the game before relying on it):
   must be read before `engine/BonePose` writes anything on ME2.
 - **Native RVAs** other than those lane A found: UpdateSkelPose's candidate is `0x79B8A0` (`execForceSkelUpdate` calls it
   as LE1's does), UpdateBounds `0x798350` (both unverified in the game).
-- **Behaviour:** whether ME2 puts recoil into the controller's rotation (ME1 did, research/24), aim assist's names and
-  effect, and the weapon's own first-person camera (`SFXWeapon.UseFirstPersonCamera`, `Engine.Weapon.WeaponCalcCamera`).
+- **Behaviour:** whether ME2's game also puts each shot's recoil into the controller's rotation, as ME1's game does
+  (research/24), aim assist's names and effect, and the weapon's own first-person camera (`SFXWeapon.UseFirstPersonCamera`,
+  `Engine.Weapon.WeaponCalcCamera`).
+
+## No camera recoil on ME2 either
+
+The mod removes the camera's recoil in ME1 (the owner, 2026-11-14: camera recoil "wasn't popular"): `game/ViewLevel` holds
+the view's pitch and roll at 0 each tick on foot while the hand aims (the recoil becomes a hand pulse), `game/GunKick`
+kicks the gun model in the hand instead, and `game/CameraShake` turns the guns' screen shakes off (`[Comfort]
+screenShake = 0`). On ME2 the same must hold from the first shot hand aim fires (M3):
+
+- `game/ViewLevel`: all 29 engine names it uses exist in ME2 (`python tools/le2-name-audit.py game/ViewLevel`): it ports
+  as it is.
+- `game/CameraShake`: ME1's shake sources (`SFXWeaponStatsBase:FiringShake`/`TightAimFiringShake`, `SFXCameraShakeBase`,
+  the Mako's `BoostShake`/`JumpShake`) don't exist in ME2, which plays the engine's own shakes (`Engine.Camera.PlayCameraShake`,
+  `CameraModifier_CameraShake.AddCameraShake`, `PlayerController.ClientPlayCameraShake`, `AnimNotify_ViewShake`). ME2's
+  firing shakes are to be found there [verify] and scaled to `[Comfort] screenShake` at the source, as ME1's are.
+- `game/GunKick`'s recoil source: `SFXWeapon.GetWeaponRecoil` / `SetWeaponRecoil` (the table above).
 
 ## Answer
 

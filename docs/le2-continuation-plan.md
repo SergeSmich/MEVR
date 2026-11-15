@@ -91,7 +91,10 @@ a snapshot in ME2 shows both eyes and the HUD panel.
 Waits for M1 and M2.
 
 1. **Hand aim (M):** `game/HandAim` on LE2 (`GetAdjustedAimFor`), the aim ray to the host, the hand reticle. `HeadAim`
-   stays off. **Check:** a replayed right controller turned 30 degrees: shots land along it (`hand aim: shot N`).
+   stays off. **No camera recoil, from the first shot** (ME1's, the owner: it "wasn't popular"): `game/ViewLevel` holds
+   the view level while the hand aims, and `game/CameraShake` turns ME2's firing shakes off at their source
+   (research/le2-vrik-audit.md "No camera recoil on ME2 either"). **Check:** a replayed right controller turned 30
+   degrees: shots land along it (`hand aim: shot N`), and the view's pitch and roll stay 0 through 20 shots (`view level:`).
 2. **Arms and body (M):** `engine/BonePose` (`UpdateSkelPose`'s LE2 RVA from Ghidra; ME2's bone names [verify]; never
    write `Camera` or `God`), `game/ArmIk`, `BodyFollow`, `BodyScale` and the floor lock, fingers. **Check:** a snapshot with
    replayed hands shows Shepard's hands on the controllers; `mevr camera trace` and `tools/skeleton-audit.py` clean.
