@@ -637,7 +637,17 @@ capture (the left). `GetGameSwapChain()` is the FIRST swap chain `CaptureSwapCha
 kept for the process. **[verify]** whether the game presents gameplay through another swap chain than the one captured
 (the borderless window of `vr-game-settings.ps1 -Game LE2` may make it make a second one), which would freeze or misroute
 the eyes in a real headset too: run with `prep.ps1 -Diagnostics` (its `[ME2DISC] game swapchain <ptr>` line) and log each
-Present's swap chain against it; compare with a run without the borderless window. The test loop copies the image the
+Present's swap chain against it; compare with a run without the borderless window. **Run again with lane A's scripted load**
+(session `20261114-201931-lane-b-eyes`, `prep.ps1 -Diagnostics`, `launch.ps1`, `load.ps1`: Freedom's Progress, game mode 0,
+`[VRSTATE] gm 0 -> VR`, `frame mode = SFR`, `[SFR] Draw replay #3000 ok=1 faults=0`): the eye snapshot is **black** in both
+eyes (lane A saw the same), the JSON's `hostView` valid. So the AER eye images hold whatever was last copied before
+gameplay (the menu's backdrop when the main menu came first, nothing when the load came straight from the title), and in
+SFR gameplay either nothing reaches them or the test loop reads another image than the runtime gets. The Diagnostics log
+has `[ME2DISC] hooked IDXGISwapChain::Present` and `first Present seen` (backbuffer 4096x2304, R8G8B8A8_UNORM; the eye
+swapchains are format 29, R8G8B8A8_UNORM_SRGB) but no `game swapchain` line: `CaptureSwapChainInfoOnce` logs it untagged by
+Diagnostics, or never ran. Next: read the compositor's own picture (SteamVR's VR View) once, to tell a renderer bug from a
+test-loop one; then the `GetGameSwapChain`/`CopyTextureToEyeFullFrame` path (`idx < g_aerImages[eye].size()`, the copy's
+format pair) in me2_xr.cpp and d3d_capture.cpp. The test loop copies the image the
 renderer releases (the same texture the runtime composites), so the snapshot is what the headset gets unless that copy is
 wrong, which LE1's identical path argues against. Until this is settled, an ME2 eye snapshot doesn't show the world.
 
