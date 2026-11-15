@@ -90,6 +90,13 @@ a snapshot in ME2 shows both eyes and the HUD panel.
 
 Waits for M1 and M2.
 
+**Lane C, 2026-11-14 (fake headset; [research/le2-vrik.md](../research/le2-vrik.md)):** the mod's side of steps 1-3 runs on
+ME2: hand aim (shots along the barrel, 30 degrees off the view with the controller turned 30), the view level (no camera
+recoil: the pitch held at 0 in every tick of 34 shots, ME2's extra yaw kick taken out), the camera shakes off, arm IK,
+the torso and the fingers through UpdateSkelPose (0x79B8A0), the weapon's frame and the gun kick. ME2's skeleton and camera
+hook are ME1's (`Camera` under `God`). Left for the host (lane B2): the reticle and sights' drawing, the two-handed grip,
+holsters, the floor lock; the mod-side sights (`game/Sights`) port once the host takes `setSight`.
+
 1. **Hand aim (M):** `game/HandAim` on LE2 (`GetAdjustedAimFor`), the aim ray to the host, the hand reticle. `HeadAim`
    stays off. **No camera recoil, from the first shot** (ME1's, the owner: it "wasn't popular"): `game/ViewLevel` holds
    the view level while the hand aims, and `game/CameraShake` turns ME2's firing shakes off at their source
