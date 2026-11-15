@@ -7,6 +7,11 @@ itself is written in one place only: `project(MEVR VERSION ...)` in `CMakeLists.
 
 ## Unreleased
 
+- **Windows HDR on your monitor no longer changes the game's picture.** With HDR switched on in Windows, the game could
+  render its HDR picture, which the headset can't show and our VR renderer wasn't built for. The game is now told the
+  display is SDR and keeps its normal picture whatever Windows or the game's own HDR setting says (Windows' setting is
+  left alone). `hdrDisplay = 0` under `[Colour]` in `ASI\LE1MEVR.ini` gives the game the display's own answer again.
+
 ## 0.3.1 (2026-11-14)
 
 0.3.0 was tagged but never released: its build drew character shadows in the right eye where the left eye sees them.
