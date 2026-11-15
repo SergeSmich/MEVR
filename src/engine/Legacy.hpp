@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
-// LE2 and LE3 until their reflection layouts exist (research/34, stage 5): the few engine reads and
-// calls the all-game modules (head tracking, the console request, the reflection fix, hand aim's
-// aim query) need there, still from LExSDKv2, but in our layer's types so the modules themselves
-// carry no LExSDKv2 code. LE1 never uses this: our reflection layer (ue3/) serves it, and these
-// functions aren't even built for it. Stage 5 deletes this file.
+// LE3 until its reflection layout exists (research/34, stage 5), and LE2's fallback while its layer is off (LE2 reads
+// through our layer since M1, docs/le2-continuation-plan.md; the LE2 diagnostic observers still use LExSDKv2 directly):
+// the few engine reads and calls the all-game modules (head tracking, the console request, the reflection fix, hand aim's
+// aim query) need there, still from LExSDKv2, but in our layer's types so the modules themselves carry no LExSDKv2 code.
+// LE1 never uses this: our reflection layer (ue3/) serves it, and these functions aren't even built for it. Stage 5
+// deletes this file.
 //
 // Game thread only, as the modules calling it.
 

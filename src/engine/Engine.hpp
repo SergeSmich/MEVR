@@ -3,8 +3,8 @@
 
 #include <cstdint>
 
-// The engine's world and object count, on our reflection layer (research/34, stage 3). LE2/LE3 (no
-// layout yet) answer from engine/Legacy.
+// The engine's world and object count, on our reflection layer (research/34, stage 3; LE2 since M1). LE3 (no
+// layout yet), and LE2 while its layer is off, answer from engine/Legacy.
 namespace mevr::engine {
 
 // Game thread, once ue3::runtime::Init is ready (Mod.cpp's startup gate): finds the path to the world

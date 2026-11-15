@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: MIT
 #include "engine/Engine.hpp"
 
-#if defined(MEVR_GAME_LE1)
+// LE1 and LE2: through our reflection layer (research/34; LE2's layout since M1, docs/le2-continuation-plan.md). On LE2 the
+// world and the object count fall back to LExSDKv2's GWorld (engine/Legacy) while the layer is off.
+#if defined(MEVR_GAME_LE1) || defined(MEVR_GAME_LE2)
 
 #include "core/Log.hpp"
 #include "ue3/Runtime.hpp"
+#if defined(MEVR_GAME_LE2)
+#include "engine/Legacy.hpp"
+#endif
 
 #include <atomic>
 #include <optional>
@@ -25,7 +30,7 @@ std::atomic<bool> gResolved{false};
 bool gToldMissing = false;
 
 void const* Find(char const** how) {
-    if (!gResolved.load(std::memory_order_acquire) || !ue3::runtime::Ready()) {
+    if (!gResolved.load(std::memory_order_acquire) || !ue3::runtime::Up()) {
         *how = "not resolved";
         return nullptr;
     }
@@ -53,7 +58,7 @@ bool ResolveWorld() {
     if (gResolved.load(std::memory_order_acquire)) {
         return true;
     }
-    if (!ue3::runtime::Ready()) {
+    if (!ue3::runtime::Up()) {
         return false;
     }
     ue3::Reflection& r = ue3::runtime::Get();
@@ -91,23 +96,38 @@ void ForgetWorld() {
 }
 
 void const* World() {
+#if defined(MEVR_GAME_LE2)
+    if (!gResolved.load(std::memory_order_acquire)) {
+        return legacy::World();
+    }
+#endif
     char const* how = nullptr;
     return Find(&how);
 }
 
 char const* WorldHow() {
+#if defined(MEVR_GAME_LE2)
+    if (!gResolved.load(std::memory_order_acquire)) {
+        return "GWorld (LExSDKv2: our reflection layer's path isn't resolved)";
+    }
+#endif
     char const* how = nullptr;
     Find(&how);
     return how;
 }
 
 std::int32_t ObjectCount() {
-    return ue3::runtime::Ready() ? ue3::runtime::Get().ObjectCount() : 0;
+#if defined(MEVR_GAME_LE2)
+    if (!ue3::runtime::Up()) {
+        return legacy::ObjectCount();
+    }
+#endif
+    return ue3::runtime::Up() ? ue3::runtime::Get().ObjectCount() : 0;
 }
 
 } // namespace mevr::engine
 
-#else  // LE2/LE3: no reflection layout yet (research/34, stage 5)
+#else  // LE3: no reflection layout yet (research/34, stage 5)
 
 #include "engine/Legacy.hpp"
 
@@ -124,7 +144,7 @@ void const* World() {
 }
 
 char const* WorldHow() {
-    return "GWorld (LExSDKv2: LE2/LE3)";
+    return "GWorld (LExSDKv2: LE3)";
 }
 
 std::int32_t ObjectCount() {

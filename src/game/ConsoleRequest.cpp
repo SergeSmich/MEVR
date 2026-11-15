@@ -76,16 +76,83 @@ std::filesystem::path Directory() {
     return std::filesystem::path(buffer) / L"MEVR";
 }
 
-#if defined(MEVR_GAME_LE1)
+#if defined(MEVR_GAME_LE1) || defined(MEVR_GAME_LE2)
 
-// Our reflection layer (research/34): the function, found once in the running game.
-ue3::FunctionRef gConsoleCommandRef{kConsoleCommand};
+// Our reflection layer (research/34; LE2's since M1, docs/le2-continuation-plan.md): the function, found once in the
+// running game. On LE2, LExSDKv2 (engine/Legacy) while the layer is off.
+ue3::FunctionRef gConsoleCommandRef{kConsoleCommand, ue3::kEveryGame};
 bool gToldNoMemory = false;
 bool gToldParameters = false;
 
 ue3::Object* PlayerController() {
+#if defined(MEVR_GAME_LE2)
+    if (!ue3::runtime::Up()) {
+        return engine::legacy::LocalPlayerController();
+    }
+#endif
     return ue3::runtime::LocalPlayerController();
 }
+
+ue3::Function* FindConsoleCommand() {
+#if defined(MEVR_GAME_LE2)
+    if (!ue3::runtime::Up()) {
+        return engine::legacy::FindFunction(kConsoleCommand);
+    }
+#endif
+    return gConsoleCommandRef.Get();
+}
+
+// One command; bWriteToLog false, so what it prints comes back as the return value instead of going to the log.
+// Both strings are in the engine's memory: ours goes in, the engine's comes back, and the block (ours) frees both.
+// Nullopt: it can't be run (no allocator, or the parameters aren't as expected; logged once).
+std::optional<std::string> Run(ue3::Object* pc, ue3::Function* function, std::string const& command) {
+#if defined(MEVR_GAME_LE2)
+    if (!ue3::runtime::Up()) {
+        return engine::legacy::ConsoleCommand(pc, function, command);
+    }
+#endif
+    if (!ue3::memory::Ready()) {
+        if (!gToldNoMemory) {
+            gToldNoMemory = true;
+            log::Warn("console: the engine's allocator wasn't found (see the 'reflect:' lines): commands aren't run");
+        }
+        return std::nullopt;
+    }
+    ue3::Params parms(ue3::runtime::Get(), function);
+    ue3::memory::OwnedString text(ue3::memory::Widen(command));
+    if (!text.Valid() || !parms.Set("Command", text.Get()) || !parms.SetBool("bWriteToLog", false) ||
+        !parms.Return<ue3::FString>()) {
+        if (!gToldParameters) {
+            gToldParameters = true;
+            log::Warn("console: ConsoleCommand's parameters aren't (Command, bWriteToLog, a string ReturnValue): commands aren't run");
+        }
+        return std::nullopt;
+    }
+    ue3::runtime::Call(pc, function, parms);  // the native directly, never a generated wrapper
+    ue3::FString returned = parms.Return<ue3::FString>().value_or(ue3::FString{});
+    std::string output = ue3::memory::Narrow(returned);
+    ue3::memory::FreeString(returned);
+    return output;
+}
+
+#else
+
+// LE3: LExSDKv2 until its layout (engine/Legacy, research/34).
+ue3::Object* PlayerController() {
+    return engine::legacy::LocalPlayerController();
+}
+
+ue3::Function* FindConsoleCommand() {
+    return engine::legacy::FindFunction(kConsoleCommand);
+}
+
+std::optional<std::string> Run(ue3::Object* pc, ue3::Function* function, std::string const& command) {
+    return engine::legacy::ConsoleCommand(pc, function, command);
+}
+
+#endif
+
+#if defined(MEVR_GAME_LE1)
 
 // Our own lines, for the measuring loop (research/35 attempt 42): "mevr loc" prints the player's pawn's Location and
 // Rotation, "mevr setloc X Y Z" moves the pawn there (Engine.Actor.SetLocation through ProcessEvent, on the game thread,
@@ -1557,53 +1624,6 @@ std::optional<std::string> RunOurs(ue3::Object* pc, std::string const& line) {
         return cockpit_probe::VehicleCommand(rest);  // what a console `open <map>` produced; `enter` gets in
     }
     return std::string("unknown: mevr loc | mevr setloc X Y Z | mevr density [cellUU] | mevr crowd [cellUU] | mevr stream list|touch|chunks|states|state | mevr weapon <pistol|shotgun|assault|sniper> | mevr vent heat|rack|part | mevr kick [recoilDeg] [shots] [ms] | mevr shake [screen <0..1> | view on|off] | mevr cockpit ... | mevr vehicle [enter] | mevr spectator ... | mevr omni <screen> | mevr holo ... | mevr inv ... | mevr guimouse | mevr guikey ... | mevr uiworld");
-}
-
-ue3::Function* FindConsoleCommand() {
-    return gConsoleCommandRef.Get();
-}
-
-// One command; bWriteToLog false, so what it prints comes back as the return value instead of going to the log.
-// Both strings are in the engine's memory: ours goes in, the engine's comes back, and the block (ours) frees both.
-// Nullopt: it can't be run (no allocator, or the parameters aren't as expected; logged once).
-std::optional<std::string> Run(ue3::Object* pc, ue3::Function* function, std::string const& command) {
-    if (!ue3::memory::Ready()) {
-        if (!gToldNoMemory) {
-            gToldNoMemory = true;
-            log::Warn("console: the engine's allocator wasn't found (see the 'reflect:' lines): commands aren't run");
-        }
-        return std::nullopt;
-    }
-    ue3::Params parms(ue3::runtime::Get(), function);
-    ue3::memory::OwnedString text(ue3::memory::Widen(command));
-    if (!text.Valid() || !parms.Set("Command", text.Get()) || !parms.SetBool("bWriteToLog", false) ||
-        !parms.Return<ue3::FString>()) {
-        if (!gToldParameters) {
-            gToldParameters = true;
-            log::Warn("console: ConsoleCommand's parameters aren't (Command, bWriteToLog, a string ReturnValue): commands aren't run");
-        }
-        return std::nullopt;
-    }
-    ue3::runtime::Call(pc, function, parms);  // the native directly, never a generated wrapper
-    ue3::FString returned = parms.Return<ue3::FString>().value_or(ue3::FString{});
-    std::string output = ue3::memory::Narrow(returned);
-    ue3::memory::FreeString(returned);
-    return output;
-}
-
-#else
-
-// LE2/LE3: LExSDKv2 until stage 5 (engine/Legacy, research/34).
-ue3::Object* PlayerController() {
-    return engine::legacy::LocalPlayerController();
-}
-
-ue3::Function* FindConsoleCommand() {
-    return engine::legacy::FindFunction(kConsoleCommand);
-}
-
-std::optional<std::string> Run(ue3::Object* pc, ue3::Function* function, std::string const& command) {
-    return engine::legacy::ConsoleCommand(pc, function, command);
 }
 
 #endif

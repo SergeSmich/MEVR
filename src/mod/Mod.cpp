@@ -270,15 +270,24 @@ void WaitForThisFrameToPresent() {
 }
 
 // The script packages are in once Engine.Camera.UpdateCamera exists (head tracking's first function,
-// the old gate). LE1 asks our reflection layer, retrying ue3::runtime::Init each second until it's up
-// (research/34 stage 3; before, LExSDKv2's object scan); LE2/LE3 (no layout yet) ask engine/Legacy.
+// the old gate). LE1 and LE2 ask our reflection layer, retrying ue3::runtime::Init each second until it's up
+// (research/34 stage 3; before, LExSDKv2's object scan; LE2 since M1); LE3 (no layout yet) asks engine/Legacy, and so
+// does LE2 if its layer is off.
 bool ScriptPackagesLoaded() {
     using namespace mevr;
-#if defined(MEVR_GAME_LE1)
+#if defined(MEVR_GAME_LE1) || defined(MEVR_GAME_LE2)
     if (!ue3::runtime::Init()) {
         if (ue3::runtime::Pending()) {
             return false;  // the game is still starting: the next try is in a second
         }
+#if defined(MEVR_GAME_LE2)
+        // Off for good (it said why): LExSDKv2's reads (engine/Legacy) carry on as before M1.
+        if (!gToldLayerOff) {
+            gToldLayerOff = true;
+            log::Warn("script hooks: our reflection layer is off; waiting for the script packages through LExSDKv2");
+        }
+        return engine::legacy::FindFunction("Engine.Camera.UpdateCamera") != nullptr;
+#else
         // Off for good (it said why): the game modules stand down, nothing is left to wait for.
         if (!gToldLayerOff) {
             gToldLayerOff = true;
@@ -286,6 +295,7 @@ bool ScriptPackagesLoaded() {
                       "without them (the game features stay off)");
         }
         return true;
+#endif
     }
     return ue3::runtime::Get().FindFunction("Engine.Camera.UpdateCamera") != nullptr;
 #else
