@@ -11,10 +11,15 @@
 #include "core/vr/Controllers.hpp"
 #include "core/vr/HostView.hpp"
 #include "game/GamepadMapping.hpp"
+#include "plugin/EyeCopy.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/TestLoop.hpp"
 #include "plugin/XrHost.hpp"
 
 #include <openxr/openxr.h>
+
+#include <d3d11.h>
+#include <dxgi1_6.h>
 
 #include <atomic>
 #include <cstring>
@@ -49,6 +54,7 @@ void WrapSessionFunctions(void** acquireSwapchainImage, void** waitSwapchainImag
 
 void OnSessionCreated(void* instance, void* session) noexcept {
     mevr::host::testloop::OnSessionCreated(static_cast<XrSession>(session));
+    mevr::host::eye_copy::Reset();
     if (mevr::host::xr_host::OnSessionCreated(static_cast<XrInstance>(instance), static_cast<XrSession>(session))) {
         mevr::log::Info("halcyon le2 bridge: our controller actions are attached to Halcyon's session");
     }
@@ -112,8 +118,219 @@ void OnRecentered() noexcept {
 
 void OnSessionStopped() noexcept {
     mevr::vr::host_view::Reset();
+    mevr::host::eye_copy::Reset();
     mevr::log::Info("halcyon le2 bridge: the session stopped");
 }
+
+namespace {
+D3D11_TEXTURE2D_DESC gSourceDesc[2]{};  // Present thread: the last eye source's, for the copy's log line
+D3D11_TEXTURE2D_DESC gLoggedSource{};
+D3D11_TEXTURE2D_DESC gLoggedImage{};
+int gCopyDescLogs = 0;
+
+bool SameDesc(D3D11_TEXTURE2D_DESC const& a, D3D11_TEXTURE2D_DESC const& b) {
+    return a.Width == b.Width && a.Height == b.Height && a.Format == b.Format && a.SampleDesc.Count == b.SampleDesc.Count &&
+        a.MiscFlags == b.MiscFlags && a.BindFlags == b.BindFlags && a.ArraySize == b.ArraySize && a.MipLevels == b.MipLevels;
+}
+} // namespace
+
+void OnEyeSource(int eye, void* source) noexcept {
+    if ((eye == 0 || eye == 1) && source != nullptr) {
+        static_cast<ID3D11Texture2D*>(source)->GetDesc(&gSourceDesc[eye]);
+    }
+    mevr::host::testloop::OnEyeSource(eye, static_cast<ID3D11Texture2D*>(source));
+}
+
+bool CopyIntoImage(void* context, void* image, void* source, int shiftX) noexcept {
+    return mevr::host::eye_copy::Copy(static_cast<ID3D11DeviceContext*>(context), static_cast<ID3D11Texture2D*>(image),
+        static_cast<ID3D11Texture2D*>(source), shiftX);
+}
+
+void OnEyeCopied(int eye, void* image, std::uint32_t index, int acquired, int waited) noexcept {
+    if (eye != 0 && eye != 1) {
+        return;
+    }
+    // Present thread only: per eye, the copies of the last minute and what refused them.
+    struct Counts {
+        unsigned copies = 0, acquireFailed = 0, waitFailed = 0, noImage = 0;
+        unsigned indices = 0;  // bit per image index seen
+        int lastAcquire = 0, lastWait = 0;
+    };
+    static Counts counts[2];
+    static ULONGLONG nextLogMs = 0;
+    static bool toldFailure = false;
+    Counts& c = counts[eye];
+    if (acquired != 0) {
+        ++c.acquireFailed;
+        c.lastAcquire = acquired;
+    } else if (waited != 0) {
+        ++c.waitFailed;
+        c.lastWait = waited;
+    } else if (image == nullptr) {
+        ++c.noImage;
+    } else {
+        ++c.copies;
+        c.indices |= index < 32 ? (1u << index) : 0u;
+        D3D11_TEXTURE2D_DESC desc{};
+        static_cast<ID3D11Texture2D*>(image)->GetDesc(&desc);
+        D3D11_TEXTURE2D_DESC const& s = gSourceDesc[eye];
+        if (gCopyDescLogs < 8 && (!SameDesc(s, gLoggedSource) || !SameDesc(desc, gLoggedImage))) {
+            ++gCopyDescLogs;
+            gLoggedSource = s;
+            gLoggedImage = desc;
+            mevr::log::Info("halcyon le2 bridge: eye copy from {}x{} format {} samples {} mips {} bind {:#x} misc {:#x} into "
+                            "{}x{} format {} samples {} mips {} bind {:#x} misc {:#x}",
+                s.Width, s.Height, static_cast<int>(s.Format), s.SampleDesc.Count, s.MipLevels, s.BindFlags, s.MiscFlags,
+                desc.Width, desc.Height, static_cast<int>(desc.Format), desc.SampleDesc.Count, desc.MipLevels, desc.BindFlags,
+                desc.MiscFlags);
+        }
+        mevr::host::testloop::OnEyeCopied(eye, static_cast<ID3D11Texture2D*>(image));
+    }
+    if ((acquired != 0 || waited != 0 || (image == nullptr && acquired == 0 && waited == 0)) && !toldFailure) {
+        toldFailure = true;
+        mevr::log::Warn("halcyon le2 bridge: an eye copy was refused ({} eye: acquire {}, wait {}, image index {}{})",
+            eye == 0 ? "left" : "right", acquired, waited, index, image == nullptr ? ", no image" : "");
+    }
+    ULONGLONG const now = GetTickCount64();
+    if (now >= nextLogMs) {
+        bool const first = nextLogMs == 0;
+        nextLogMs = now + 60000;
+        if (!first) {
+            mevr::log::Info("halcyon le2 bridge: eye copies in 60 s: left {} (indices {:#x}; acquire failed {} last {}, wait "
+                            "failed {} last {}, no image {}), right {} (indices {:#x}; acquire failed {} last {}, wait failed {} "
+                            "last {}, no image {})",
+                counts[0].copies, counts[0].indices, counts[0].acquireFailed, counts[0].lastAcquire, counts[0].waitFailed,
+                counts[0].lastWait, counts[0].noImage, counts[1].copies, counts[1].indices, counts[1].acquireFailed,
+                counts[1].lastAcquire, counts[1].waitFailed, counts[1].lastWait, counts[1].noImage);
+        }
+        counts[0] = {};
+        counts[1] = {};
+    }
+}
+
+void OnSwapChainPresent(void* swapChain, void* capturedSwapChain) noexcept {
+    // Present thread only. The captured swap chain's buffers: each change of size or format logged (ME2's is R8G8B8A8 at
+    // the title and R16G16B16A16_FLOAT in gameplay with Windows HDR on: plugin/EyeCopy). Checked every 90th Present.
+    static unsigned presents = 0;
+    static DXGI_MODE_DESC last{};
+    if (swapChain != nullptr && swapChain == capturedSwapChain && presents++ % 90 == 0) {
+        DXGI_SWAP_CHAIN_DESC desc{};
+        if (SUCCEEDED(static_cast<IDXGISwapChain*>(swapChain)->GetDesc(&desc)) &&
+            (desc.BufferDesc.Format != last.Format || desc.BufferDesc.Width != last.Width ||
+                desc.BufferDesc.Height != last.Height)) {
+            last = desc.BufferDesc;
+            mevr::log::Info("halcyon le2 bridge: the game's swap chain is {}x{} format {} ({} buffers, swap effect {})",
+                desc.BufferDesc.Width, desc.BufferDesc.Height, static_cast<int>(desc.BufferDesc.Format), desc.BufferCount,
+                static_cast<int>(desc.SwapEffect));
+        }
+    }
+    // The first few swap chains other than the captured one are named once each.
+    static void* seen[8] = {};
+    static int count = 0;
+    if (swapChain == nullptr || swapChain == capturedSwapChain) {
+        return;
+    }
+    for (int i = 0; i < count; ++i) {
+        if (seen[i] == swapChain) {
+            return;
+        }
+    }
+    if (count >= 8) {
+        return;
+    }
+    seen[count++] = swapChain;
+    DXGI_SWAP_CHAIN_DESC desc{};
+    bool const described = SUCCEEDED(static_cast<IDXGISwapChain*>(swapChain)->GetDesc(&desc));
+    mevr::log::Warn("halcyon le2 bridge: a Present on swap chain {} that isn't the one the renderer copies its eyes from "
+                    "({}): {}x{} format {} buffers {} swap effect {} window {:#x}{}",
+        swapChain, capturedSwapChain, described ? desc.BufferDesc.Width : 0, described ? desc.BufferDesc.Height : 0,
+        described ? static_cast<int>(desc.BufferDesc.Format) : 0, described ? desc.BufferCount : 0,
+        described ? static_cast<int>(desc.SwapEffect) : -1,
+        described ? reinterpret_cast<std::uintptr_t>(desc.OutputWindow) : 0, described ? "" : " (no description)");
+}
+
+// ---- The display's HDR answer (IDXGIOutput6::GetDesc1) ---------------------------------------------------------------
+// As LE1's [Colour] hdrDisplay (plugin/HalcyonBridge's HdrDisplayDesc, research/27 7c): 1 answers HDR10 for an SDR display,
+// 0 (the default, LE1's) passes the display's own answer through, -1 answers SDR for an HDR display. On a display with
+// Windows HDR on, ME2 makes an R16G16B16A16_FLOAT swap chain in gameplay even with [HDR] DesiredRange = SDR (LE1 stays
+// 8-bit), and Halcyon's ME2 renderer is built for an 8-bit one (its SFR left eye and its UI treatment find nothing in a
+// float frame; plugin/EyeCopy keeps its eyes from going black). Answered SDR (-1), ME2 renders the 8-bit SDR frame ME1
+// does (research/le2-renderer-integration.md "The black eyes").
+constexpr int kHdrDisplayDefault = 0;
+namespace {
+using GetDesc1Fn = HRESULT(STDMETHODCALLTYPE*)(IDXGIOutput6*, DXGI_OUTPUT_DESC1*);
+GetDesc1Fn gRealGetDesc1 = nullptr;
+std::atomic<int> gHdrAnswerLogs{0};
+
+HRESULT STDMETHODCALLTYPE GetDesc1Hook(IDXGIOutput6* self, DXGI_OUTPUT_DESC1* desc) {
+    HRESULT const hr = gRealGetDesc1 != nullptr ? gRealGetDesc1(self, desc) : E_FAIL;
+    if (FAILED(hr) || desc == nullptr) {
+        return hr;
+    }
+    std::wstring const& path = mevr::host::SettingsPath();
+    int const want = path.empty() ? kHdrDisplayDefault
+                                  : static_cast<int>(GetPrivateProfileIntW(L"Colour", L"hdrDisplay", kHdrDisplayDefault,
+                                        path.c_str()));
+    int const was = static_cast<int>(desc->ColorSpace);
+    bool const hdr = desc->ColorSpace == DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020;
+    char const* answered = "its own";
+    if (want > 0 && !hdr) {
+        desc->ColorSpace = DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020;
+        desc->BitsPerColor = 10;
+        answered = "HDR10";
+    } else if (want < 0 && hdr) {
+        desc->ColorSpace = DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709;
+        desc->BitsPerColor = 8;
+        answered = "SDR";
+    }
+    if (gHdrAnswerLogs.fetch_add(1, std::memory_order_relaxed) < 3) {
+        mevr::log::Info("hdr display: the display reports colour space {} ({}), {} bits, {:.0f} nits; answered {} "
+                        "([Colour] hdrDisplay = {})",
+            was, hdr ? "HDR10" : "SDR", desc->BitsPerColor, desc->MaxLuminance, answered, want);
+    }
+    return hr;
+}
+} // namespace
+
+void OnFactory(void* factory) noexcept {
+    static bool hooked = false;  // under Halcyon's hook mutex
+    if (hooked || factory == nullptr) {
+        return;
+    }
+    IDXGIFactory1* f1 = nullptr;
+    if (FAILED(static_cast<IUnknown*>(factory)->QueryInterface(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&f1))) ||
+        f1 == nullptr) {
+        return;
+    }
+    IDXGIAdapter1* adapter = nullptr;
+    IDXGIOutput* output = nullptr;
+    IDXGIOutput6* output6 = nullptr;
+    if (SUCCEEDED(f1->EnumAdapters1(0, &adapter)) && adapter != nullptr && SUCCEEDED(adapter->EnumOutputs(0, &output)) &&
+        output != nullptr &&
+        SUCCEEDED(output->QueryInterface(__uuidof(IDXGIOutput6), reinterpret_cast<void**>(&output6))) && output6 != nullptr) {
+        void** const slot = *reinterpret_cast<void***>(output6) + 27;  // IDXGIOutput6::GetDesc1
+        DWORD old = 0;
+        if (*slot != reinterpret_cast<void*>(&GetDesc1Hook) &&
+            VirtualProtect(slot, sizeof(void*), PAGE_EXECUTE_READWRITE, &old)) {
+            gRealGetDesc1 = reinterpret_cast<GetDesc1Fn>(*slot);
+            *slot = reinterpret_cast<void*>(&GetDesc1Hook);
+            VirtualProtect(slot, sizeof(void*), old, &old);
+            hooked = true;
+            mevr::log::Info("hdr display: IDXGIOutput6::GetDesc1 hooked (the game's HDR question; [Colour] hdrDisplay)");
+        }
+    }
+    if (output6 != nullptr) {
+        output6->Release();
+    }
+    if (output != nullptr) {
+        output->Release();
+    }
+    if (adapter != nullptr) {
+        adapter->Release();
+    }
+    f1->Release();
+}
+
 
 DWORD MergeMotionControllers(DWORD index, XINPUT_STATE* state, DWORD result) noexcept {
     if (index != 0 || state == nullptr) {

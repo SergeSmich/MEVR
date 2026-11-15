@@ -62,6 +62,13 @@ void OnFrameBegun(XrSession session, XrSpace appSpace, XrTime displayTime, bool 
 // Our own quads (HalcyonOverlays), right before a swapchain image is released: Halcyon's go through
 // the wrapped xrReleaseSwapchainImage instead.
 void OnImageWritten(XrSwapchain swapchain, ID3D11Texture2D* image);
+// The renderer is about to copy `source` into eye `eye`'s image (0 left, 1 right; ME2's CopyTextureToEyeFullFrame): a
+// snapshot armed now also saves the source as <stamp>-source-left/right.png, so an eye that comes out wrong tells whether
+// the game's picture or the copy into the eye was.
+void OnEyeSource(int eye, ID3D11Texture2D* source);
+// Right after that copy, before the image is released: saved as <stamp>-copied-left/right.png (the image the renderer
+// wrote, by its own pointer; the eye layer is the image the test loop finds by the acquired index at its release).
+void OnEyeCopied(int eye, ID3D11Texture2D* image);
 // A snapshot is armed: a quad that redraws only on change (the omni-tool's rail) draws and releases an image this frame,
 // or the snapshot has no copy of it. Any thread.
 bool SnapshotArmed();

@@ -2537,6 +2537,9 @@ HRESULT STDMETHODCALLTYPE PresentHook(IDXGISwapChain* swapChain, UINT syncInterv
     ReassertContextVtableHooks(g_gameContext);
     const auto n = g_presentCount.fetch_add(1, std::memory_order_relaxed) + 1;
     TryInstallBinkHooks();
+#if defined(MEVR_ASI)
+    ::ME2VR::MevrBridge::OnSwapChainPresent(swapChain, g_gameSwapChain);  // [MEVR] a second swap chain is logged
+#endif
     if (n == 1)
     {
         ME2VR::Log::Line("[ME2DISC] first Present seen. thread=" + std::to_string(GetCurrentThreadId()));
@@ -4590,5 +4593,8 @@ void TryInstallFactoryHooks(void* factory, const IID&) noexcept
     {
         g_createSwapChainForCompositionSlot = &vtable[kCreateSwapChainForCompositionSlot];
     }
+#if defined(MEVR_ASI)
+    ::ME2VR::MevrBridge::OnFactory(factory);  // [MEVR] the display's HDR answer to the game (LE1's [Colour] hdrDisplay)
+#endif
 }
 }

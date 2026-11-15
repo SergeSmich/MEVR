@@ -172,7 +172,7 @@ bool Blit::EnsureCopy(ID3D11Texture2D* source) {
 }
 
 void Blit::Draw(ID3D11DeviceContext* immediate, ID3D11Texture2D* source, ID3D11RenderTargetView* target,
-    UINT targetWidth, UINT targetHeight) {
+    UINT targetWidth, UINT targetHeight, int shiftX) {
     if (!state_ || !EnsureCopy(source)) {
         return;
     }
@@ -206,6 +206,12 @@ void Blit::Draw(ID3D11DeviceContext* immediate, ID3D11Texture2D* source, ID3D11R
     ctx->OMSetDepthStencilState(nullptr, 0);
     ctx->OMSetRenderTargets(1, &target, nullptr);
     ctx->Draw(3, 0);
+    if (shiftX != 0) {
+        D3D11_VIEWPORT shifted = viewport;
+        shifted.TopLeftX = static_cast<float>(shiftX);
+        ctx->RSSetViewports(1, &shifted);
+        ctx->Draw(3, 0);
+    }
 
     // Don't keep the XR swapchain image or our copy bound inside our state object.
     ID3D11ShaderResourceView* const nullSrv = nullptr;

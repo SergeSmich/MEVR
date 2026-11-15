@@ -45,6 +45,27 @@ void OnRecentered() noexcept;
 // The session stopped (STOPPING, after xrEndSession): our quads' swapchains and the published view go.
 void OnSessionStopped() noexcept;
 
+// Present thread: `source` (an ID3D11Texture2D) is about to be copied into eye `eye`'s image (me2_xr.cpp's
+// CopyTextureToEyeFullFrame; 0 left, 1 right). A snapshot armed now saves it too (plugin/TestLoop: <stamp>-source-*.png).
+void OnEyeSource(int eye, void* source) noexcept;
+// Right after the copy into eye `eye`'s image `image` (index `index`), before its release; `acquired`/`waited` the
+// XrResults of its acquire and wait (a failed one means no copy): counted, and logged when one fails.
+void OnEyeCopied(int eye, void* image, std::uint32_t index, int acquired, int waited) noexcept;
+
+// Present thread, in place of CopyResource(image, source) into an eye or the flat panel's image (ID3D11DeviceContext,
+// ID3D11Texture2D): true if it drew `source` into `image` because D3D11 can't copy between their formats (ME2's swap chain
+// is R16G16B16A16_FLOAT in gameplay, the images R8G8B8A8; plugin/EyeCopy), false when the caller's copy is right.
+// `shiftX`: the SFR convergence shift in pixels.
+bool CopyIntoImage(void* context, void* image, void* source, int shiftX) noexcept;
+
+// d3d_capture.cpp's TryInstallFactoryHooks, for each DXGI factory the game makes (an IDXGIFactory*): our hook on the
+// first output's IDXGIOutput6::GetDesc1, where the game asks whether the display is HDR (research/27 7c for LE1).
+void OnFactory(void* factory) noexcept;
+
+// Present thread, d3d_capture.cpp's PresentHook: the swap chain this Present is for. The renderer copies the eyes from
+// the FIRST swap chain it saw (CaptureSwapChainInfoOnce); a later one presenting is logged (once per swap chain).
+void OnSwapChainPresent(void* swapChain, void* capturedSwapChain) noexcept;
+
 // From Halcyon's XInput hooks, right after the real read: merges the motion controllers into pad 0 (Touch -> Xbox
 // mapping, game/GamepadMapping) before Halcyon's own pad handling (menu block, move-follows-head).
 DWORD MergeMotionControllers(DWORD index, XINPUT_STATE* state, DWORD result) noexcept;

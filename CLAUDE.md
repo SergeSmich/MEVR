@@ -143,6 +143,11 @@ external code candidates. Read these before sequel work. The current scope is pr
   **On LE2 `game/SystemSettings` waits until a level has been in gameplay for 3 s**: a `scale set` during the load with the
   game's depth of field on faulted the rendering thread in the first gameplay frame, the game hung (9 of 9 runs;
   "Defaults from ME1" there, gotchas/me2-scale-set-during-load).
+  **On an HDR display (this machine's) ME2's swap chain is R16G16B16A16_FLOAT in gameplay**, whatever `DesiredRange` says;
+  Halcyon's ME2 renderer assumes 8 bits (its eye copies did nothing: black or stale eyes; no SFR left eye, no UI treatment):
+  `plugin/EyeCopy` draws such a frame into the eyes, and `[Colour] hdrDisplay = -1` in `ASI\LE2MEVR.ini` answers the game's
+  `IDXGIOutput6::GetDesc1` SDR so it stays 8-bit (default 0 until the owner decides; research "The black eyes",
+  gotchas/me2-float-swap-chain). ME2 snapshots also save each eye's source and the eye right after the copy.
 - **Never call ProcessEvent (or anything that runs UnrealScript) off the game thread** (the engine tick's).
   The script VM keeps its state in process-wide globals (GPropAddr, GRuntimeUCFlags...), so a call from the
   Present/render thread races the game thread's script. That caused the 2026-10-23 crash (Halcyon's

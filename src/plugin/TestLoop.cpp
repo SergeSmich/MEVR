@@ -877,6 +877,14 @@ XrSpace ReferenceOf(std::vector<LayerShot> const& layers);
 // The spectator's picture as a snapshot source: a handle no runtime swapchain has.
 XrSwapchain const kSpectatorSwapchain = reinterpret_cast<XrSwapchain>(static_cast<std::uintptr_t>(0x5EC7A7025EC7A70ull));
 bool gSpectatorStaged = false;  // staged in this frame's xrEndFrame (Present thread)
+// What the renderer copied into each eye and the eye image right after the copy (OnEyeSource, OnEyeCopied): handles no
+// runtime swapchain has either. Left source, right source, left copy, right copy.
+XrSwapchain const kEyeCopySwapchain[4] = {
+    reinterpret_cast<XrSwapchain>(static_cast<std::uintptr_t>(0x5017CE0000000001ull)),
+    reinterpret_cast<XrSwapchain>(static_cast<std::uintptr_t>(0x5017CE0000000002ull)),
+    reinterpret_cast<XrSwapchain>(static_cast<std::uintptr_t>(0x5017CE0000000003ull)),
+    reinterpret_cast<XrSwapchain>(static_cast<std::uintptr_t>(0x5017CE0000000004ull))};
+char const* const kEyeCopyNames[4] = {"source-left", "source-right", "copied-left", "copied-right"};
 
 // The capture's last armed frame: what was submitted, where the quads are, the metadata.
 void FinishArming(XrFrameEndInfo const& info, std::vector<LayerShot> layers) {
@@ -908,6 +916,21 @@ void FinishArming(XrFrameEndInfo const& info, std::vector<LayerShot> layers) {
         shot.file = std::format("{}-spectator.png", gCapture.stamp);
         shot.swapchain = kSpectatorSwapchain;
         layers.push_back(shot);
+    }
+    // The renderer's sources of the eye images and the eyes right after its copies (OnEyeSource, OnEyeCopied: ME2's
+    // renderer): layers of their own, never composited.
+    for (int i = 0; i < 4; ++i) {
+        bool staged = false;
+        for (Staged const& s : gCapture.staged) {
+            staged = staged || (s.swapchain == kEyeCopySwapchain[i] && s.written);
+        }
+        if (staged) {
+            LayerShot shot;
+            shot.name = kEyeCopyNames[i];
+            shot.file = std::format("{}-{}.png", gCapture.stamp, shot.name);
+            shot.swapchain = kEyeCopySwapchain[i];
+            layers.push_back(shot);
+        }
     }
     job->meta = MetaJson(layers, info.displayTime, gCapture.trigger);
     job->layers = std::move(layers);
@@ -1645,6 +1668,18 @@ void OnImageWritten(XrSwapchain swapchain, ID3D11Texture2D* image) {
     }
     if (SpectatorWanted() && OnPresentThread()) {
         SpectatorImageReleased(swapchain, image);  // research/49
+    }
+}
+
+void OnEyeSource(int eye, ID3D11Texture2D* source) {
+    if ((eye == 0 || eye == 1) && source != nullptr && gArmed.load(std::memory_order_relaxed) && OnPresentThread()) {
+        StageImage(kEyeCopySwapchain[eye], source);
+    }
+}
+
+void OnEyeCopied(int eye, ID3D11Texture2D* image) {
+    if ((eye == 0 || eye == 1) && image != nullptr && gArmed.load(std::memory_order_relaxed) && OnPresentThread()) {
+        StageImage(kEyeCopySwapchain[2 + eye], image);
     }
 }
 

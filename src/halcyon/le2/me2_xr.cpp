@@ -1043,15 +1043,29 @@ bool EnsureAerHistory(ID3D11Texture2D* src) noexcept
 bool CopyTextureToEyeFullFrame(int eye, ID3D11Texture2D* src, int shiftPx = 0) noexcept
 {
     if (src == nullptr || g_aerSwap[eye] == nullptr) return false;
+#if defined(MEVR_ASI)
+    ::ME2VR::MevrBridge::OnEyeSource(eye, src);  // [MEVR] a snapshot armed now saves the source too (plugin/TestLoop)
+#endif
     uint32_t idx = 0;
     XrSwapchainImageAcquireInfo ai = {}; ai.type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO_VALUE;
-    if (!XrSucceeded(g_fn.acquireSwapchainImage(g_aerSwap[eye], &ai, &idx))) return false;
+    const XrResult acquired = g_fn.acquireSwapchainImage(g_aerSwap[eye], &ai, &idx);
+#if defined(MEVR_ASI)
+    if (!XrSucceeded(acquired))  // [MEVR] counted and logged
+        ::ME2VR::MevrBridge::OnEyeCopied(eye, nullptr, idx, static_cast<int>(acquired), 0);
+#endif
+    if (!XrSucceeded(acquired)) return false;
     bool copied = false;   // [AERBLINK] the caller must know if the image really changed
     XrSwapchainImageWaitInfo wi = {}; wi.type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO_VALUE; wi.timeout = XR_INFINITE_DURATION_VALUE;
-    if (XrSucceeded(g_fn.waitSwapchainImage(g_aerSwap[eye], &wi)) && idx < g_aerImages[eye].size())
+    const XrResult waited = g_fn.waitSwapchainImage(g_aerSwap[eye], &wi);  // [MEVR] kept for OnEyeCopied
+    if (XrSucceeded(waited) && idx < g_aerImages[eye].size())
     {
         ID3D11Texture2D* dst = g_aerImages[eye][idx];
         copied = true;
+#if defined(MEVR_ASI)
+        // [MEVR] a source CopyResource can't copy into the eye (ME2's float swap chain in gameplay) is drawn instead
+        if (::ME2VR::MevrBridge::CopyIntoImage(g_ctx, dst, src, shiftPx)) {}
+        else
+#endif
         if (shiftPx == 0)
         {
             g_ctx->CopyResource(dst, src);
@@ -1079,6 +1093,11 @@ bool CopyTextureToEyeFullFrame(int eye, ID3D11Texture2D* src, int shiftPx = 0) n
             g_ctx->CopySubresourceRegion(dst, 0, dstX, 0, 0, src, 0, &box);   // shifted overwrite
         }
     }
+#if defined(MEVR_ASI)
+    // [MEVR] the copy counted (and a snapshot armed now saves the image right after it: plugin/TestLoop)
+    ::ME2VR::MevrBridge::OnEyeCopied(eye, idx < g_aerImages[eye].size() ? g_aerImages[eye][idx] : nullptr, idx, 0,
+                                     static_cast<int>(waited));
+#endif
     XrSwapchainImageReleaseInfo ri = {}; ri.type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO_VALUE;
     g_fn.releaseSwapchainImage(g_aerSwap[eye], &ri);
     return copied;
@@ -1768,6 +1787,9 @@ void RunFrame() noexcept
             {
                 XrSwapchainImageWaitInfo wi = {}; wi.type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO_VALUE; wi.timeout = XR_INFINITE_DURATION_VALUE;
                 if (XrSucceeded(g_fn.waitSwapchainImage(g_monoSwap, &wi)) && idx < g_monoImages.size())
+#if defined(MEVR_ASI)
+                    if (!::ME2VR::MevrBridge::CopyIntoImage(g_ctx, g_monoImages[idx], backbuffer, 0))  // [MEVR] as the eyes
+#endif
                     g_ctx->CopyResource(g_monoImages[idx], backbuffer);
                 XrSwapchainImageReleaseInfo ri = {}; ri.type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO_VALUE;
                 g_fn.releaseSwapchainImage(g_monoSwap, &ri);
