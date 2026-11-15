@@ -143,6 +143,10 @@ outside every subtree we write`). Nothing to change for ME2.
 - `mevr camera trace 10` during the replay, `python tools/skeleton-audit.py <csv>`: every traced bone within 3 cm peak to
   peak of `Root` (Head 1.3 / 0.8 / 0.6 cm, the ankles 2.6 / 1.1 / 0.6), the game camera 3.5 / 0.4 / 1.6 cm against the pawn.
 
+**Again on main with lane B2's eye images** (21:41, the same replay): the same numbers (31 shots, the pitch held, the yaw
+kicks taken out, both hands 0.07 m from the grips), and the left eye's snapshot shows it: Shepard's open left hand low in
+front, the heavy pistol in his right hand turned 30 degrees right as the controller, its holographic sight lit.
+
 **LE1 unchanged** (the owner's career on Noveria, `tools/fake-headset-session.ps1` with the same replayed pose, the base
 commit's build against this one): the same arm IK targets ((24.8, -13.1, 156.8) and (24.8, 4.9, 156.8)) and elbows
 within 0.1 unit, `hostView` offsets identical (-43.3 / -4.1 / -18.1 uu), both hands 0.07 m from the grips, the same
