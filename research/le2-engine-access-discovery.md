@@ -250,6 +250,44 @@ The skeleton rows stay LE1's (ME2's bones are M3's). Output: the log line and `%
   `seed.ps1 -Game LE2` named 4,568 functions in the LE2 Ghidra project with it. Lanes B and C can ask for any native by
   name now (`decompile.ps1 -Game LE2 -Search <name>`).
 
+### A save loaded by script (M1.6)
+
+The owner (2026-11-14): no computer use for driving the game; every lane must reach gameplay by script. ME2's routes,
+read from SFXGame.pcc's script (`local-tools/le2-inspection-root/conversation-scan.exe <CookedPCConsole> <new file> --game
+LE2 --script <Class.Function> --only SFXGame`, the output kept out of git):
+
+| Route | What it does | Usable? |
+|---|---|---|
+| The console's `QuickLoad` (`BioPlayerController.QuickLoad`) | `ResumeGame()` → `SFXEngine.ResumeGame`: `QueueSaveGameCommand(1, GetCurrentSaveDescriptor(), FastResumeGameCallback)`, only while `TravelURL` is empty | loads whatever save the game would resume (the newest), not a named one; LE1's quicksave route would mean writing a save |
+| The cheat `LoadGame <name>` (`BioCheatManager.LoadGame`) | enumerates the careers (`QueueSaveGameCommand(7)`) and loads the save whose `SFXSaveGame.DebugName` matches | needs the cheat manager and debug names; not tried |
+| The Load screen (`SFXSFHandler_Load.LoadGame(SaveIdx, GuiMan)`, tools/qa-le2's `load-fixture`) | `Callback_ConfirmLoadGame` → `Engine.QueueSaveGameCommand(1, SaveList[i].SaveDescriptor, LoadGameCallback)` | works (the validation session's scripted load), but needs the main menu's Load screen opened and its list read first |
+| **`SFXEngine.QueueSaveGameCommand(SaveGame_Load = 1, descriptor, None)` directly** | what the two above end in; `ESFXSaveGameAction`: 0 nothing, 1 load, 2 save, 3 delete, 4-5 careers, 6-7 enumerate, 8-10 space and prepared saves | **the route taken**: no menu, no file written, any save by its descriptor |
+
+The descriptor (`SFXEngine.SFXSaveDescriptor`, 0x28 bytes): `Career` (FString, the career folder's name), `SaveName`
+(FString, the file's name without `.pcsav`), `Index` (int: a manual save's number, -1 for the others), `Type` (byte,
+`ESFXSaveGameType`: 0 manual, 1 quick, 2 auto, 3 chapter, 4 legacy), as the validation session saw the Load screen list
+them (`Save_0099` index 99 type 0, `AutoSave` and `ChapterSave` index -1 types 2 and 3; research/le2-validation-evidence.md).
+The callback is an optional delegate left None (zeroed): the Load screen's `LoadGameCallback` only re-enables its input.
+
+Built: the mod's console lines on ME2 (`game/ConsoleRequest`, `RunOursLe2`): `mevr load <career> <save name> <index>
+<type>` (the parameter block built from the UFunction, the descriptor's members through `kEveryGame` handles on the
+parameter, both strings `OwnedString`s: the queued command copies the descriptor), `mevr savedesc`
+(`GetCurrentSaveDescriptor`: the save QuickLoad would load) and `mevr state` (the world, the pawn and its place, the game
+mode). ReflectCheck rows: `SFXGame.SFXEngine`, `SFXGame.SFXSFHandler_Load` and its `SaveList[].SaveDescriptor` members, both
+functions and their parameters. `tools/le2-halcyon-run/load.ps1` derives the descriptor from the file's path, checks the
+file's hash before and after, sends `mevr load` and waits on `mevr state` for gameplay.
+
+**In the game (fake headset, 2026-11-14 20:12, session `%LOCALAPPDATA%\MEVR\sessions\20261114-201145-m1-load`):** at the
+title `mevr savedesc` gave `career 'VR_31_Soldier_141126_336072f' save '' index 4 type 0` (the resume save's descriptor
+carries no SaveName; the Load screen's list does) and `mevr state` `world World entrymenu.TheWorld; pawn None; game mode
+7`. `load.ps1` with no arguments queued `career 'VR_31_Soldier_141126_336072f' save 'Save_0004' index 4 type 0` at
+20:12:43.4; at 20:12:45.99 `mevr state` read `world World BioP_ProFre.TheWorld; pawn SFXPawn_PlayerSoldier
+BioP_ProFre.TheWorld.PersistentLevel.SFXPawn_PlayerSoldier_0 at (-1748, 21300, -11909); game mode 0` (Freedom's Progress,
+on foot), the same 15 s later; the save file's hash unchanged. The self-check with the new rows: 155 of 155. `restore.ps1`:
+`profile: 0 restored, 0 moved aside` (the run wrote no save at all), `verification: 0 differences`. The test loop's eye
+snapshots in ME2 had no world layer yet (both projection layers without a file: M2's work), so the gameplay evidence is
+`mevr state`.
+
 ### Addresses for the next lanes (candidates, [verify] before a hook)
 
 Found the same way (LE1's first bytes searched in ME2's dump, or a native that calls it), not yet hooked or checked in the

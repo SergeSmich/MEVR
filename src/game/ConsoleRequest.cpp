@@ -15,6 +15,7 @@
 
 #include "core/Ini.hpp"
 #include "core/Log.hpp"
+#include "engine/Engine.hpp"
 #include "engine/Legacy.hpp"
 #include "ue3/Handles.hpp"
 #include "ue3/Memory.hpp"
@@ -1628,6 +1629,125 @@ std::optional<std::string> RunOurs(ue3::Object* pc, std::string const& line) {
 
 #endif
 
+#if defined(MEVR_GAME_LE2)
+
+// ME2's saves by script (M1.6 of docs/le2-continuation-plan.md; research/le2-engine-access-discovery.md "A save loaded
+// by script"): SFXEngine.QueueSaveGameCommand(SaveGame_Load = 1, the save's descriptor, no callback), the call the Load
+// screen's Callback_ConfirmLoadGame and the console's QuickLoad (BioPlayerController.ResumeGame, SFXEngine.ResumeGame)
+// make. It reads a save; it never writes one. Game thread (the console request's tick).
+ue3::FunctionRef gQueueSaveCommand{"SFXGame.SFXEngine.QueueSaveGameCommand", ue3::kEveryGame};
+ue3::FieldRef gQueueDescriptor{gQueueSaveCommand, "SaveDescriptor"};
+ue3::FieldRef gQueueCareer{gQueueDescriptor, "Career"};
+ue3::FieldRef gQueueSaveName{gQueueDescriptor, "SaveName"};
+ue3::FieldRef gQueueIndex{gQueueDescriptor, "Index"};
+ue3::FieldRef gQueueType{gQueueDescriptor, "Type"};
+ue3::FunctionRef gCurrentSave{"SFXGame.SFXEngine.GetCurrentSaveDescriptor", ue3::kEveryGame};
+ue3::FieldRef gCurrentReturn{gCurrentSave, "ReturnValue"};
+ue3::FieldRef gCurrentCareer{gCurrentReturn, "Career"};
+ue3::FieldRef gCurrentSaveName{gCurrentReturn, "SaveName"};
+ue3::FieldRef gCurrentIndex{gCurrentReturn, "Index"};
+ue3::FieldRef gCurrentType{gCurrentReturn, "Type"};
+constexpr std::uint8_t kSaveGameLoad = 1;  // SFXEngine.ESFXSaveGameAction.SaveGame_Load
+
+std::string Describe(ue3::FString const* career, ue3::FString const* name, std::int32_t const* index, std::uint8_t const* type) {
+    if (career == nullptr || name == nullptr || index == nullptr || type == nullptr) {
+        return "(the descriptor's members aren't as expected: see the 'reflect:' lines)";
+    }
+    return std::format("career '{}' save '{}' index {} type {}", ue3::memory::Narrow(*career), ue3::memory::Narrow(*name), *index,
+        static_cast<int>(*type));
+}
+
+// "mevr savedesc": the save the game would resume (GetCurrentSaveDescriptor: the console's QuickLoad loads it).
+std::string CurrentSave(ue3::Object* engine) {
+    ue3::Function* const function = gCurrentSave.Get();
+    if (engine == nullptr || function == nullptr || !ue3::memory::Ready()) {
+        return "mevr savedesc: SFXEngine.GetCurrentSaveDescriptor isn't there (see the 'reflect:' lines)";
+    }
+    ue3::Params parms(ue3::runtime::Get(), function);
+    ue3::runtime::Call(engine, function, parms);
+    void* const descriptor = gCurrentReturn.Address(parms.Data());
+    ue3::FString* const career = gCurrentCareer.In<ue3::FString>(descriptor);
+    ue3::FString* const name = gCurrentSaveName.In<ue3::FString>(descriptor);
+    std::string const text = Describe(career, name, gCurrentIndex.In<std::int32_t>(descriptor), gCurrentType.In<std::uint8_t>(descriptor));
+    if (career != nullptr) {
+        ue3::memory::FreeString(*career);  // the engine's copies: the block is ours
+    }
+    if (name != nullptr) {
+        ue3::memory::FreeString(*name);
+    }
+    return "mevr savedesc: " + text;
+}
+
+// "mevr load <career> <save name> <index> <type>": the Load screen's own load of that save (types: 0 manual, 1 quick,
+// 2 auto, 3 chapter; a manual save's index is its number, the others' -1).
+std::string LoadSave(ue3::Object* engine, std::istringstream& words) {
+    std::string career;
+    std::string name;
+    int index = 0;
+    int type = 0;
+    if (!(words >> career >> name >> index >> type) || type < 0 || type > 3) {
+        return "mevr load <career> <save name> <index> <type 0 manual | 1 quick | 2 auto | 3 chapter>";
+    }
+    ue3::Function* const function = gQueueSaveCommand.Get();
+    if (engine == nullptr || function == nullptr || !ue3::memory::Ready()) {
+        return "mevr load: SFXEngine.QueueSaveGameCommand isn't there (see the 'reflect:' lines)";
+    }
+    ue3::Params parms(ue3::runtime::Get(), function);
+    void* const descriptor = gQueueDescriptor.Address(parms.Data());
+    ue3::FString* const careerField = gQueueCareer.In<ue3::FString>(descriptor);
+    ue3::FString* const nameField = gQueueSaveName.In<ue3::FString>(descriptor);
+    std::int32_t* const indexField = gQueueIndex.In<std::int32_t>(descriptor);
+    std::uint8_t* const typeField = gQueueType.In<std::uint8_t>(descriptor);
+    ue3::memory::OwnedString careerText(ue3::memory::Widen(career));
+    ue3::memory::OwnedString nameText(ue3::memory::Widen(name));
+    if (careerField == nullptr || nameField == nullptr || indexField == nullptr || typeField == nullptr || !careerText.Valid() ||
+        !nameText.Valid() || !parms.Set("Action", kSaveGameLoad)) {
+        return "mevr load: QueueSaveGameCommand's parameters aren't (Action, SaveDescriptor{Career, SaveName, Index, Type}, Callback)";
+    }
+    // The strings stay ours (the block is shallow; the queued command copies the descriptor): freed when this returns.
+    *careerField = careerText.Get();
+    *nameField = nameText.Get();
+    *indexField = index;
+    *typeField = static_cast<std::uint8_t>(type);
+    ue3::runtime::Call(engine, function, parms);  // the callback stays None
+    return "mevr load: queued " + Describe(careerField, nameField, indexField, typeField);
+}
+
+// "mevr state": where the player is, for scripts waiting on a load (tools/le2-halcyon-run/load.ps1).
+std::string State(ue3::Object* pc) {
+    ue3::Object* const pawn = player::Pawn(pc);
+    std::optional<ue3::Vector> const at = pawn != nullptr ? player::Location(pawn) : std::nullopt;
+    std::optional<std::uint8_t> const mode = player::GameMode(pc);
+    void const* const world = engine::World();
+    return std::format("mevr state: world {}; pawn {}{}; game mode {}",
+        world != nullptr ? ue3::runtime::FullName(static_cast<ue3::Object const*>(world)) : std::string("None"),
+        ue3::runtime::FullName(pawn), at ? std::format(" at ({:.0f}, {:.0f}, {:.0f})", at->x, at->y, at->z) : std::string(),
+        mode ? std::to_string(*mode) : std::string("none"));
+}
+
+// Our own lines on ME2 (LE1's are RunOurs'): "mevr load", "mevr savedesc", "mevr state". Nullopt for anything else.
+std::optional<std::string> RunOursLe2(ue3::Object* pc, std::string const& line) {
+    std::istringstream words(line);
+    std::string head;
+    std::string verb;
+    words >> head >> verb;
+    if (head != "mevr" || !ue3::runtime::Up()) {
+        return std::nullopt;
+    }
+    if (verb == "load") {
+        return LoadSave(ue3::runtime::GameEngine(), words);
+    }
+    if (verb == "savedesc") {
+        return CurrentSave(ue3::runtime::GameEngine());
+    }
+    if (verb == "state") {
+        return State(pc);
+    }
+    return std::string("unknown on ME2: mevr load <career> <save name> <index> <type> | mevr savedesc | mevr state");
+}
+
+#endif
+
 // Once, with a player there (so, on LE1, our reflection layer is up).
 bool LookUp() {
     if (!gLookedUp) {
@@ -1693,6 +1813,10 @@ void Tick(float deltaSeconds) {
         std::string output;
 #if defined(MEVR_GAME_LE1)
         if (std::optional<std::string> ours = RunOurs(pc, line)) {
+            output = *ours;
+        } else
+#elif defined(MEVR_GAME_LE2)
+        if (std::optional<std::string> ours = RunOursLe2(pc, line)) {
             output = *ours;
         } else
 #endif

@@ -16,6 +16,7 @@ driving ME2 by hand): leave it alone and wait.
 tools\le2-halcyon-run\run-lock.ps1 -Status
 tools\le2-halcyon-run\prep.ps1 -Holder <session name> [-Tag what] [-Diagnostics]   # once per stretch: backups, loader, deploy, fake headset
 tools\le2-halcyon-run\launch.ps1 [-Kill]                                           # each run: Steam's -game 2, waits for the XR session
+tools\le2-halcyon-run\load.ps1 [-Save <career>\<file>.pcsav]                         # a save's gameplay by script (default: Freedom's Progress)
 # ... the run: logs in ME2\Binaries\Win64\Logs\LE2MEVR.log and %LOCALAPPDATA%\MELE2VR\MELE2VR_Log.txt
 tools\le2-halcyon-run\launch.ps1 -Kill                                             # the next run (rebuild, then prep.ps1 again to redeploy)
 tools\le2-halcyon-run\restore.ps1 -Holder <session name>                          # once at the end of the task
@@ -25,8 +26,15 @@ tools\le2-halcyon-run\restore.ps1 -Holder <session name>                        
   settings, ME2's `BioGame\Config` and `Binaries\Win64` with hash manifests into `%LOCALAPPDATA%\MEVR\sessions\<stamp>-<tag>`;
   later preps by the same holder only redeploy. `restore.ps1` copies changed files back, moves files the runs added aside
   into the session folder (never deletes them), checks every file hash for hash, and only then releases the lock.
-- The Freedom's Progress save is the VR Shepard career's Save 4; the game loads it from its own Load menu (computer use:
-  bring `MassEffect2` to the front and click into it first, or the keys land in another window).
+- **Saves by script, no menus** (the owner, 2026-11-14: no computer use for driving the game): `load.ps1` loads the VR
+  Shepard career's Save 4 (Freedom's Progress) by default, or `-Save <career folder>\<file>` (or a full path), from the
+  title screen or in game, and waits for gameplay (another world, a pawn, game mode 0). It asks the mod's console for
+  `mevr load <career> <save name> <index> <type>`: the engine's own load of that save's descriptor
+  (`SFXEngine.QueueSaveGameCommand(SaveGame_Load)`, what ME2's Load screen and QuickLoad call; research/
+  le2-engine-access-discovery.md "A save loaded by script"). It reads the save and never writes one; the save file's hash
+  is checked before and after, and the game's own autosaves after a load are put back by `restore.ps1`. `mevr state`
+  (the world, the pawn, the game mode) and `mevr savedesc` (the save the game would resume) are the console's other ME2
+  lines. Needs a development build (the console request).
 - `-Diagnostics` turns `MELE2VR.ini`'s `[VR] Diagnostics` on for the stretch (Halcyon's `[ME2FP]`, `[ME2DISC]` lines; F3
   held 0.3 s dumps the camera graph).
 - Never run anything that takes the game slot (`tools/game-slot.ps1`) while a stretch is open, and never `return` a
