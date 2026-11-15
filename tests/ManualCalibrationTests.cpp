@@ -106,8 +106,8 @@ int RunManualCalibrationTests() {
             CHECK(it->number == 0 && it->min == -field.limit && it->max == field.limit && !it->local);
         }
     }
-    CHECK(ms::FormatValue(ms::Format::SignedCentimeters1, 0.005f) == "+0.5 cm");
-    CHECK(ms::FormatValue(ms::Format::SignedCentimeters1, -0.02f) == "-2.0 cm");
+    CHECK(ms::FormatValue(ms::Format::SignedCentimeters1, 0.005f) == "+0.5 см");
+    CHECK(ms::FormatValue(ms::Format::SignedCentimeters1, -0.02f) == "-2.0 см");
     // References follow the raw grip frame, including controller orientation; selection changes only their colour.
     {
         namespace markers = mevr::vr::calibration_markers;

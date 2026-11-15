@@ -6,7 +6,7 @@
 namespace mevr::vr::live_calibration {
 
 enum class Action { None, Done, Cancel };
-inline constexpr char const* kAxes[] = {"Out / in", "Up / down", "Forward / back", "Pitch", "Yaw", "Roll"};
+inline constexpr char const* kAxes[] = {"Наружу / внутрь", "Вверх / вниз", "Вперёд / назад", "Тангаж", "Рыскание", "Крен"};
 
 // A draft only. The host commits on Done; losing the session/profile or Cancel discards it.
 struct Session {

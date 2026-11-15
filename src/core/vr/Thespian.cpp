@@ -254,18 +254,18 @@ char const* MicClass(Mic mic) {
 std::string PromptText(Panel const& panel) {
     switch (static_cast<Mic>(panel.mic)) {
     case Mic::Off: return {};
-    case Mic::Armed: return "Read a line aloud";
-    case Mic::Hearing: return "Listening...";
-    case Mic::Unsure: return "Didn't catch that";
-    case Mic::More: return "Keep reading...";
-    case Mic::Doubt: return "Not sure which: read it again or say its label";
+    case Mic::Armed: return "Прочитайте реплику вслух";
+    case Mic::Hearing: return "Слушаю...";
+    case Mic::Unsure: return "Не разобрал";
+    case Mic::More: return "Продолжайте читать...";
+    case Mic::Doubt: return "Не понял, какая: повторите или назовите метку";
     case Mic::Understood:
         for (std::size_t i = 0; i < std::min<std::size_t>(panel.cardCount, kMaxCards); ++i) {
             if (static_cast<Look>(panel.cards[i].look) == Look::Committed || static_cast<Look>(panel.cards[i].look) == Look::Leading) {
                 return std::string(Text(panel.cards[i].label, kLabelChars));
             }
         }
-        return "Understood";
+        return "Понял";
     }
     return {};
 }

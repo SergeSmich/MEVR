@@ -6,7 +6,7 @@
      to the panel's height. -->
 <rml>
 <head>
-	<title>MEVR Thespian mode</title>
+	<title>Режим актёра MEVR</title>
 	<link type="text/rcss" href="thespian.rcss"/>
 </head>
 <body data-model="thespian">
@@ -23,7 +23,7 @@
 			<div class="split"/>
 			<div class="meter"><div class="fill" data-style-width="level_width"/></div>
 		</div>
-		<div class="hints">Read a line or say its label &#8226; or move the left stick to choose by hand</div>
+		<div class="hints">Прочитайте реплику или назовите её метку &#8226; либо выберите левым стиком вручную</div>
 	</div>
 </body>
 </rml>

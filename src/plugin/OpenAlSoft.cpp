@@ -49,7 +49,7 @@ std::atomic<bool> gSwitched{false};   // every function of the router's goes to 
 std::atomic<bool> gInstalled{false};  // ASI\audio\soft_oal.dll was there at attach
 
 std::mutex gDescribeMutex;
-std::string gDescribe = "the game's own OpenAL (not looked at yet)";
+std::string gDescribe = "собственный OpenAL игры (ещё не проверялся)";
 
 void SetDescribe(std::string text) {
     std::lock_guard lock(gDescribeMutex);
@@ -74,13 +74,13 @@ Mode ReadMode(std::filesystem::path const& settings) {
 
 char const* HrtfStatusName(int status) {
     switch (status) {
-    case 0: return "off";
-    case 1: return "on";
-    case 2: return "refused by the device";
-    case 3: return "on (required by the device)";
-    case 4: return "on (headphones detected)";
-    case 5: return "unavailable for the output format";
-    default: return "unknown";
+    case 0: return "выкл.";
+    case 1: return "вкл.";
+    case 2: return "отклонён устройством";
+    case 3: return "вкл. (требуется устройством)";
+    case 4: return "вкл. (обнаружены наушники)";
+    case 5: return "недоступен для формата вывода";
+    default: return "неизвестно";
     }
 }
 
@@ -96,11 +96,11 @@ void* OpenDevice(char const* name) {
     }
     char const* const opened = device != nullptr && gGetString != nullptr ? gGetString(device, kAlcDeviceSpecifier) : nullptr;
     log::Info("audio: the game opened {} through OpenAL Soft (it asked for {}{})",
-        device == nullptr ? std::string("no device") : std::format("\"{}\"", opened != nullptr ? opened : "?"),
-        name != nullptr ? std::format("\"{}\"", name) : std::string("the default device"),
+        device == nullptr ? std::string("нет устройства") : std::format("\"{}\"", opened != nullptr ? opened : "?"),
+        name != nullptr ? std::format("\"{}\"", name) : std::string("устройство по умолчанию"),
         fellBack ? ", which OpenAL Soft has not: its default instead" : "");
     if (device == nullptr) {
-        SetDescribe("OpenAL Soft, but it opened no device: the game has no sound");
+        SetDescribe("OpenAL Soft, но устройство не открылось: в игре нет звука");
     }
     return device;
 }
@@ -138,7 +138,7 @@ void* CreateContext(void* device, int const* attributes) {
         which != nullptr ? std::format(" (\"{}\")", which) : std::string());
     log::Info("audio: the game's context {} ({} attribute(s) of its own{}): {}", context != nullptr ? "made" : "NOT made", theirs,
         plain ? "; refused with HRTF's attribute, made without it" : "", description);
-    SetDescribe(context != nullptr ? description : "OpenAL Soft, but it made no context: the game has no sound");
+    SetDescribe(context != nullptr ? description : "OpenAL Soft, но контекст не создан: в игре нет звука");
     return context;
 }
 
@@ -210,23 +210,23 @@ void Attach(hook::Context& init) {
     gInstalled.store(std::filesystem::exists(dll, ec));
     if (gMode == Mode::Game) {
         log::Info("audio: the game's own OpenAL ([Audio] spatial = game)");
-        SetDescribe("the game's own OpenAL ([Audio] spatial = game)");
+        SetDescribe("собственный OpenAL игры ([Audio] spatial = game)");
         return;
     }
     if (!gInstalled.load()) {
         log::Info("audio: no {}: the game's own OpenAL (pans only; tools/fetch-openal-soft.ps1 builds OpenAL Soft)", ini::Utf8(dll));
-        SetDescribe("the game's own OpenAL (no ASI\\audio\\soft_oal.dll)");
+        SetDescribe("собственный OpenAL игры (нет ASI\\audio\\soft_oal.dll)");
         return;
     }
     HMODULE const router = GetModuleHandleW(L"OpenAL32.dll");
     if (router == nullptr) {
         log::Warn("audio: the game's OpenAL32.dll isn't loaded yet: its own OpenAL plays");
-        SetDescribe("the game's own OpenAL (its OpenAL32.dll wasn't loaded at attach)");
+        SetDescribe("собственный OpenAL игры (его OpenAL32.dll не была загружена к моменту подключения)");
         return;
     }
     if (GetModuleHandleW(L"wrap_oal.dll") != nullptr) {
         log::Warn("audio: the game has already opened its OpenAL device (wrap_oal.dll is loaded): its own OpenAL plays");
-        SetDescribe("the game's own OpenAL (its device was open before the host attached)");
+        SetDescribe("собственный OpenAL игры (его устройство было открыто до подключения хоста)");
         return;
     }
     // The whole mix louder by [Audio] gainDb (default 3): OpenAL Soft's mix is about 3 dB under Creative's (an unplaced
@@ -257,7 +257,7 @@ void Attach(hook::Context& init) {
     HMODULE const soft = LoadLibraryExW(dll.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
     if (soft == nullptr) {
         log::Warn("audio: {} didn't load (error {}): the game's own OpenAL", ini::Utf8(dll), GetLastError());
-        SetDescribe("the game's own OpenAL (ASI\\audio\\soft_oal.dll didn't load)");
+        SetDescribe("собственный OpenAL игры (ASI\\audio\\soft_oal.dll не загрузилась)");
         return;
     }
     gOpenDevice = reinterpret_cast<tOpenDevice>(GetProcAddress(soft, "alcOpenDevice"));
@@ -267,7 +267,7 @@ void Attach(hook::Context& init) {
     if (gOpenDevice == nullptr || gCreateContext == nullptr) {
         log::Warn("audio: {} has no alcOpenDevice or alcCreateContext: the game's own OpenAL", ini::Utf8(dll));
         FreeLibrary(soft);
-        SetDescribe("the game's own OpenAL (ASI\\audio\\soft_oal.dll isn't an OpenAL)");
+        SetDescribe("собственный OpenAL игры (ASI\\audio\\soft_oal.dll — не OpenAL)");
         return;
     }
     // Every function of the router's that OpenAL Soft has too goes to OpenAL Soft's: the game's audio engine reaches
@@ -284,7 +284,7 @@ void Attach(hook::Context& init) {
     MH_STATUS const status = MH_Initialize();
     if (status != MH_OK && status != MH_ERROR_ALREADY_INITIALIZED) {
         log::Error("audio: MinHook didn't start ({}): the game's own OpenAL", static_cast<int>(status));
-        SetDescribe("the game's own OpenAL (no MinHook)");
+        SetDescribe("собственный OpenAL игры (нет MinHook)");
         return;
     }
     std::vector<void*> created;
@@ -318,7 +318,7 @@ void Attach(hook::Context& init) {
     if (failed || created.empty()) {
         removeAll();
         log::Error("audio: OpenAL Soft not used (a function of the router's couldn't be redirected): the game's own OpenAL");
-        SetDescribe("the game's own OpenAL (its functions couldn't be redirected)");
+        SetDescribe("собственный OpenAL игры (не удалось перенаправить его функции)");
         return;
     }
     for (void* target : created) {
@@ -330,9 +330,9 @@ void Attach(hook::Context& init) {
     if (applied != MH_OK || GetModuleHandleW(L"wrap_oal.dll") != nullptr) {
         removeAll();
         log::Warn("audio: {}: everything put back, the game's own OpenAL", applied != MH_OK
-            ? std::format("the switch to OpenAL Soft failed (MinHook {})", static_cast<int>(applied))
+            ? std::format("переход на OpenAL Soft не удался (MinHook {})", static_cast<int>(applied))
             : std::string("the game opened its audio device through Creative's router just before the switch"));
-        SetDescribe("the game's own OpenAL (the switch came too late)");
+        SetDescribe("собственный OpenAL игры (переключение произошло слишком поздно)");
         return;
     }
     wchar_t trace[8] = {};
@@ -350,7 +350,7 @@ void Attach(hook::Context& init) {
               "file changed{}", created.size(), exports.size(), ini::Utf8(dll),
         gMode == Mode::Hrtf ? "asked for: [Audio] spatial = hrtf" : "off: [Audio] spatial = soft", gGainDb,
         notInSoft.empty() ? std::string() : std::format("; not in OpenAL Soft, left to the router: {}", notInSoft));
-    SetDescribe("OpenAL Soft, the game's device not open yet");
+    SetDescribe("OpenAL Soft, устройство игры ещё не открыто");
     gSwitched.store(true);
 }
 

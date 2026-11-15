@@ -172,9 +172,9 @@
 				<div class="seg"><button class="segb" data-class-on="walk == 'head'" data-event-click="pick('walk','head')">Куда смотрю</button><button class="segb" data-class-on="walk == 'hand'" data-event-click="pick('walk','hand')">Левая рука</button></div></div>
 			<div class="row" data-class-disabled="play_position == 'seated'"><div class="rl"><div class="rlab">Физическое приседание</div><div class="rdesc">Присядьте по-настоящему — Шепард присядет вместе с вами. При игре сидя это отключается; L3 всё равно переключает приседание.</div></div>
 				<button class="tog" data-class-on="crouch" data-event-click="toggle('crouch')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Camera shake</div><div class="rdesc">The game shakes the view when you fire and when the Mako's jets or boost fire. Off holds the world still.</div></div>
-				<div class="seg"><button class="segb" data-class-on="screen_shake == 'off'" data-event-click="pick('screen_shake','off')">Off</button><button class="segb" data-class-on="screen_shake == 'low'" data-event-click="pick('screen_shake','low')">Low</button><button class="segb" data-class-on="screen_shake == 'full'" data-event-click="pick('screen_shake','full')">Full</button></div></div>
-			<div class="row"><div class="rl"><div class="rlab">Running sway</div><div class="rdesc">The game sways the view with Shepard's run and sprint, shots and blasts. Off keeps your view where your head puts it.</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Тряска камеры</div><div class="rdesc">Игра трясёт вид при выстрелах и когда работают двигатели или ускорение «Мако». Выкл. — мир стоит неподвижно.</div></div>
+				<div class="seg"><button class="segb" data-class-on="screen_shake == 'off'" data-event-click="pick('screen_shake','off')">Выкл.</button><button class="segb" data-class-on="screen_shake == 'low'" data-event-click="pick('screen_shake','low')">Слабая</button><button class="segb" data-class-on="screen_shake == 'full'" data-event-click="pick('screen_shake','full')">Полная</button></div></div>
+			<div class="row"><div class="rl"><div class="rlab">Раскачивание при беге</div><div class="rdesc">Игра раскачивает вид при беге и спринте Шепарда, от выстрелов и взрывов. Выкл. — вид остаётся там, куда его ставит ваша голова.</div></div>
 				<button class="tog" data-class-on="view_shake" data-event-click="toggle('view_shake')"><div class="knob"/></button></div>
 		</div>
 		<div class="group">
@@ -293,33 +293,33 @@
 		</div>
 		<!-- Thespian mode (research/70): [Thespian] on, strictness, handPick; the mod's, live. -->
 		<div class="group">
-			<div class="gtitle"><span>Thespian mode (experimental)</span><div class="gline"/></div>
-			<div class="row" data-class-disabled="!voice_on"><div class="rl"><div class="rlab">Speak Shepard's lines</div><div class="rdesc">In a conversation the replies stand as a script: read one aloud, or say its short label, and it is taken. Shepard's recorded voice is skipped. The microphone listens only while the replies are up. English game text only.</div></div>
+			<div class="gtitle"><span>Режим актёра (экспериментально)</span><div class="gline"/></div>
+			<div class="row" data-class-disabled="!voice_on"><div class="rl"><div class="rlab">Произносите реплики Шепарда</div><div class="rdesc">В диалоге реплики лежат как сценарий: прочитайте одну вслух или назовите её короткую метку — и она будет выбрана. Записанный голос Шепарда пропускается. Микрофон слушает, только пока показаны реплики. Работает только с английским текстом игры.</div></div>
 				<button class="tog" data-class-on="thespian_on" data-event-click="toggle('thespian_on')"><div class="knob"/></button></div>
-			<div class="row" data-class-disabled="!voice_on || !thespian_on"><div class="rl"><div class="rlab">How much of the line</div><div class="rdesc">Relaxed: enough words to tell the replies apart. Performer: half the line, or its label. Method: the whole line.</div></div>
-				<div class="seg"><button class="segb" data-class-on="thespian_strictness == 'relaxed'" data-event-click="pick('thespian_strictness','relaxed')">Relaxed</button><button class="segb" data-class-on="thespian_strictness == 'performer'" data-event-click="pick('thespian_strictness','performer')">Performer</button><button class="segb" data-class-on="thespian_strictness == 'method'" data-event-click="pick('thespian_strictness','method')">Method</button></div></div>
-			<div class="row" data-class-disabled="!voice_on || !thespian_on"><div class="rl"><div class="rlab">A reply picked by hand</div><div class="rdesc">With the stick or the pointer instead of your voice: Shepard says it, or it passes in silence.</div></div>
-				<div class="seg"><button class="segb" data-class-on="thespian_hand == 'voice'" data-event-click="pick('thespian_hand','voice')">Shepard's voice</button><button class="segb" data-class-on="thespian_hand == 'silent'" data-event-click="pick('thespian_hand','silent')">Silent</button></div></div>
+			<div class="row" data-class-disabled="!voice_on || !thespian_on"><div class="rl"><div class="rlab">Сколько реплики нужно</div><div class="rdesc">Свободно: достаточно слов, чтобы различить реплики. Исполнитель: половина реплики или её метка. Метод: вся реплика.</div></div>
+				<div class="seg"><button class="segb" data-class-on="thespian_strictness == 'relaxed'" data-event-click="pick('thespian_strictness','relaxed')">Свободно</button><button class="segb" data-class-on="thespian_strictness == 'performer'" data-event-click="pick('thespian_strictness','performer')">Исполнитель</button><button class="segb" data-class-on="thespian_strictness == 'method'" data-event-click="pick('thespian_strictness','method')">Метод</button></div></div>
+			<div class="row" data-class-disabled="!voice_on || !thespian_on"><div class="rl"><div class="rlab">Реплика, выбранная вручную</div><div class="rdesc">Стиком или указателем вместо голоса: Шепард произносит её или она проходит молча.</div></div>
+				<div class="seg"><button class="segb" data-class-on="thespian_hand == 'voice'" data-event-click="pick('thespian_hand','voice')">Голос Шепарда</button><button class="segb" data-class-on="thespian_hand == 'silent'" data-event-click="pick('thespian_hand','silent')">Молча</button></div></div>
 		</div>
 	</div>
 
 	<!-- ===================================================================================== Sound -->
 	<!-- research/69 A3: [Audio] spatial and gainDb (the host's, read when the game starts), overheard and gun (the mod's, live). -->
 	<div data-if="section == 'sound'">
-		<div class="stitle">Sound</div>
-		<div class="sdesc">How the game's sound reaches your ears.</div>
+		<div class="stitle">Звук</div>
+		<div class="sdesc">Как звук игры доходит до ваших ушей.</div>
 		<div class="group">
-			<div class="gtitle"><span>3D sound</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">Sound for</div><div class="rdesc">Headphones 3D: every sound the game places reaches each ear as it would in the room, above and behind you too. Speakers: the same sounds panned between two speakers. The game's own: its original sound, left and right only.</div><div class="note">{{audio_note}}</div></div>
-				<div class="seg"><button class="segb" data-class-on="audio_spatial == 'hrtf'" data-event-click="pick('audio_spatial','hrtf')">Headphones 3D</button><button class="segb" data-class-on="audio_spatial == 'soft'" data-event-click="pick('audio_spatial','soft')">Speakers</button><button class="segb" data-class-on="audio_spatial == 'game'" data-event-click="pick('audio_spatial','game')">The game's own</button></div></div>
-			<div class="srow d" data-class-disabled="audio_spatial == 'game'"><div class="sl"><div class="slab">Loudness</div><div class="rdesc">Brings the 3D mix up to the game's own level. Applies when the game next starts.</div></div><input type="range" min="0" max="9" step="1" data-value="audio_gain"/><div class="sval">{{audio_gain_text}}</div></div>
-			<div class="info"><div class="ico i-info"/><span>Now: {{audio_now}}</span></div>
+			<div class="gtitle"><span>3D-звук</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Звук для</div><div class="rdesc">Наушники 3D: каждый звук, который игра размещает в пространстве, доходит до каждого уха так, как был бы в комнате, — в том числе сверху и сзади. Колонки: те же звуки распределяются между двумя колонками. Собственный звук игры: её исходный звук, только слева и справа.</div><div class="note">{{audio_note}}</div></div>
+				<div class="seg"><button class="segb" data-class-on="audio_spatial == 'hrtf'" data-event-click="pick('audio_spatial','hrtf')">Наушники 3D</button><button class="segb" data-class-on="audio_spatial == 'soft'" data-event-click="pick('audio_spatial','soft')">Колонки</button><button class="segb" data-class-on="audio_spatial == 'game'" data-event-click="pick('audio_spatial','game')">Собственный игры</button></div></div>
+			<div class="srow d" data-class-disabled="audio_spatial == 'game'"><div class="sl"><div class="slab">Громкость</div><div class="rdesc">Поднимает 3D-микшер до уровня собственного звука игры. Применяется при следующем запуске игры.</div></div><input type="range" min="0" max="9" step="1" data-value="audio_gain"/><div class="sval">{{audio_gain_text}}</div></div>
+			<div class="info"><div class="ico i-info"/><span>Сейчас: {{audio_now}}</span></div>
 		</div>
 		<div class="group">
-			<div class="gtitle"><span>Where sounds come from</span><div class="gline"/></div>
-			<div class="row"><div class="rl"><div class="rlab">People around you</div><div class="rdesc">People talking within a few steps of you are heard from where they stand, not inside your head. Off: as the game mixes them.</div></div>
+			<div class="gtitle"><span>Откуда идут звуки</span><div class="gline"/></div>
+			<div class="row"><div class="rl"><div class="rlab">Люди вокруг вас</div><div class="rdesc">Люди, говорящие в нескольких шагах от вас, слышны оттуда, где они стоят, а не внутри головы. Выкл.: так, как их смешивает игра.</div></div>
 				<button class="tog" data-class-on="audio_overheard" data-event-click="toggle('audio_overheard')"><div class="knob"/></button></div>
-			<div class="row"><div class="rl"><div class="rlab">Your gun</div><div class="rdesc">Your own weapon's sounds come from the gun in your hand.</div></div>
+			<div class="row"><div class="rl"><div class="rlab">Ваше оружие</div><div class="rdesc">Звуки вашего оружия исходят от оружия в вашей руке.</div></div>
 				<button class="tog" data-class-on="audio_gun" data-event-click="toggle('audio_gun')"><div class="knob"/></button></div>
 		</div>
 	</div>
@@ -359,36 +359,36 @@
 				<button class="btn" data-event-click="cmd('measure')"><div class="sweep"/><span>Измерить</span><div class="tick"/></button></div>
 		</div>
 		<div class="group" id="manual-calibration">
-			<div class="row"><div class="rl"><div class="rlab">Advanced calibration</div><div class="rdesc">Optional manual height and controller overrides.</div></div>
-				<button class="btn" id="manual-calibration-toggle" data-event-click="manual_expanded = !manual_expanded"><div class="sweep"/><span data-if="!manual_expanded">Show</span><span data-if="manual_expanded">Hide</span><div class="tick"/></button></div>
+			<div class="row"><div class="rl"><div class="rlab">Дополнительная калибровка</div><div class="rdesc">Необязательные ручные поправки роста и контроллеров.</div></div>
+				<button class="btn" id="manual-calibration-toggle" data-event-click="manual_expanded = !manual_expanded"><div class="sweep"/><span data-if="!manual_expanded">Показать</span><span data-if="manual_expanded">Скрыть</span><div class="tick"/></button></div>
 			<div data-if="manual_expanded">
-				<div class="hint">Fine-tune the automatic result for this headset and controller setup. Changes save automatically; resume to check them in the world. Start with height, then adjust one hand at a time.</div>
-				<div class="note" data-if="!position_known">Available once your controllers are tracked.</div>
-				<div class="note" data-if="cal_running">Finish or cancel the guided calibration before adjusting offsets.</div>
+				<div class="hint">Точная подстройка автоматического результата для этого шлема и набора контроллеров. Изменения сохраняются сами; вернитесь в игру, чтобы проверить их. Начните с роста, затем настраивайте по одной руке.</div>
+				<div class="note" data-if="!position_known">Доступно, когда контроллеры отслеживаются.</div>
+				<div class="note" data-if="cal_running">Завершите или отмените пошаговую калибровку, прежде чем менять смещения.</div>
 				<div data-class-disabled="!manual_ready">
-					<div class="srow d"><div class="sl"><div class="slab">Height offset</div><div class="rdesc">Positive raises your view and hands together on foot. Seated: sit comfortably and recenter first.</div></div><input type="range" min="-0.5" max="0.5" step="0.01" data-value="manual_height"/><div class="sval">{{manual_height_text}}</div></div>
-					<div class="row"><div class="rl"><div class="rlab">Controller to adjust</div><div class="rdesc">Moves and rotates this hand and its aim together. Position follows the controller's own axes, even as you turn it.</div></div><div class="seg"><button class="segb" data-class-on="manual_hand == 'left'" data-event-click="manual_hand = 'left'">Left</button><button class="segb" data-class-on="manual_hand == 'right'" data-event-click="manual_hand = 'right'">Right</button></div></div>
-					<div class="row"><div class="rl"><div class="rlab">Adjust this hand live</div><div class="rdesc">Keep this hand in view. Use the opposite controller to adjust its position and angles in real time.</div></div><button class="btn" data-event-click="cmd('manual_live')"><div class="sweep"/><span>Adjust live</span><div class="tick"/></button></div>
-					<div class="row" id="manual-baseline"><div class="rl"><div class="rlab">This hand's starting point</div><div class="rdesc">Guided calibration when available; otherwise the runtime's controller poses. Clear this hand's manual overrides to return to that baseline.</div></div><button class="btn" data-event-click="cmd('manual_baseline')"><div class="sweep"/><span>Use baseline</span><div class="tick"/></button></div>
+					<div class="srow d"><div class="sl"><div class="slab">Смещение роста</div><div class="rdesc">Положительное значение поднимает вид и руки вместе при игре стоя. Сидя: сядьте удобно и сначала выполните центрирование.</div></div><input type="range" min="-0.5" max="0.5" step="0.01" data-value="manual_height"/><div class="sval">{{manual_height_text}}</div></div>
+					<div class="row"><div class="rl"><div class="rlab">Контроллер для настройки</div><div class="rdesc">Двигает и поворачивает эту руку вместе с прицелом. Положение идёт по осям самого контроллера, даже когда вы его поворачиваете.</div></div><div class="seg"><button class="segb" data-class-on="manual_hand == 'left'" data-event-click="manual_hand = 'left'">Левый</button><button class="segb" data-class-on="manual_hand == 'right'" data-event-click="manual_hand = 'right'">Правый</button></div></div>
+					<div class="row"><div class="rl"><div class="rlab">Настроить эту руку вживую</div><div class="rdesc">Держите эту руку в поле зрения. Настраивайте её положение и углы другим контроллером в реальном времени.</div></div><button class="btn" data-event-click="cmd('manual_live')"><div class="sweep"/><span>Настроить вживую</span><div class="tick"/></button></div>
+					<div class="row" id="manual-baseline"><div class="rl"><div class="rlab">Исходное положение руки</div><div class="rdesc">Пошаговая калибровка, если она есть; иначе положения контроллеров от среды выполнения. Сбросьте ручные поправки этой руки, чтобы вернуться к исходному.</div></div><button class="btn" data-event-click="cmd('manual_baseline')"><div class="sweep"/><span>Вернуть исходное</span><div class="tick"/></button></div>
 					<div class="note" data-if="manual_live_note != ''">{{manual_live_note}}</div>
 					<div data-if="manual_hand == 'right'">
-						<div class="srow"><div class="slab">Out / in</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_right_out"/><div class="sval">{{manual_right_out_text}}</div></div>
-						<div class="srow"><div class="slab">Up / down</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_right_up"/><div class="sval">{{manual_right_up_text}}</div></div>
-						<div class="srow"><div class="slab">Forward / back</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_right_forward"/><div class="sval">{{manual_right_forward_text}}</div></div>
-						<div class="srow"><div class="slab">Controller pitch</div><input type="range" min="-45" max="45" step="1" data-value="manual_right_pitch"/><div class="sval">{{manual_right_pitch_text}}</div></div>
-						<div class="srow"><div class="slab">Controller yaw</div><input type="range" min="-45" max="45" step="1" data-value="manual_right_yaw"/><div class="sval">{{manual_right_yaw_text}}</div></div>
-						<div class="srow"><div class="slab">Controller roll</div><input type="range" min="-45" max="45" step="1" data-value="manual_right_roll"/><div class="sval">{{manual_right_roll_text}}</div></div>
+						<div class="srow"><div class="slab">Наружу / внутрь</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_right_out"/><div class="sval">{{manual_right_out_text}}</div></div>
+						<div class="srow"><div class="slab">Вверх / вниз</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_right_up"/><div class="sval">{{manual_right_up_text}}</div></div>
+						<div class="srow"><div class="slab">Вперёд / назад</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_right_forward"/><div class="sval">{{manual_right_forward_text}}</div></div>
+						<div class="srow"><div class="slab">Тангаж контроллера</div><input type="range" min="-45" max="45" step="1" data-value="manual_right_pitch"/><div class="sval">{{manual_right_pitch_text}}</div></div>
+						<div class="srow"><div class="slab">Рыскание контроллера</div><input type="range" min="-45" max="45" step="1" data-value="manual_right_yaw"/><div class="sval">{{manual_right_yaw_text}}</div></div>
+						<div class="srow"><div class="slab">Крен контроллера</div><input type="range" min="-45" max="45" step="1" data-value="manual_right_roll"/><div class="sval">{{manual_right_roll_text}}</div></div>
 					</div>
 					<div data-if="manual_hand == 'left'">
-						<div class="srow"><div class="slab">Out / in</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_left_out"/><div class="sval">{{manual_left_out_text}}</div></div>
-						<div class="srow"><div class="slab">Up / down</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_left_up"/><div class="sval">{{manual_left_up_text}}</div></div>
-						<div class="srow"><div class="slab">Forward / back</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_left_forward"/><div class="sval">{{manual_left_forward_text}}</div></div>
-						<div class="srow"><div class="slab">Controller pitch</div><input type="range" min="-45" max="45" step="1" data-value="manual_left_pitch"/><div class="sval">{{manual_left_pitch_text}}</div></div>
-						<div class="srow"><div class="slab">Controller yaw</div><input type="range" min="-45" max="45" step="1" data-value="manual_left_yaw"/><div class="sval">{{manual_left_yaw_text}}</div></div>
-						<div class="srow"><div class="slab">Controller roll</div><input type="range" min="-45" max="45" step="1" data-value="manual_left_roll"/><div class="sval">{{manual_left_roll_text}}</div></div>
+						<div class="srow"><div class="slab">Наружу / внутрь</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_left_out"/><div class="sval">{{manual_left_out_text}}</div></div>
+						<div class="srow"><div class="slab">Вверх / вниз</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_left_up"/><div class="sval">{{manual_left_up_text}}</div></div>
+						<div class="srow"><div class="slab">Вперёд / назад</div><input type="range" min="-0.15" max="0.15" step="0.005" data-value="manual_left_forward"/><div class="sval">{{manual_left_forward_text}}</div></div>
+						<div class="srow"><div class="slab">Тангаж контроллера</div><input type="range" min="-45" max="45" step="1" data-value="manual_left_pitch"/><div class="sval">{{manual_left_pitch_text}}</div></div>
+						<div class="srow"><div class="slab">Рыскание контроллера</div><input type="range" min="-45" max="45" step="1" data-value="manual_left_yaw"/><div class="sval">{{manual_left_yaw_text}}</div></div>
+						<div class="srow"><div class="slab">Крен контроллера</div><input type="range" min="-45" max="45" step="1" data-value="manual_left_roll"/><div class="sval">{{manual_left_roll_text}}</div></div>
 					</div>
-					<div class="hint">Positive position moves outward, up or forward. Positive pitch tilts down; yaw turns outward; roll tilts the top outward. Start with small changes.</div>
-					<div class="row"><div class="rl"><div class="rlab">Reset manual calibration</div><div class="rdesc">Zero the height and both controller offsets. Your automatic measurements and empty-hand model angles are kept.</div></div><button class="btn" data-event-click="cmd('manual_reset')"><div class="sweep"/><span>Reset offsets</span><div class="tick"/></button></div>
+					<div class="hint">Положительное положение двигает наружу, вверх или вперёд. Положительный тангаж наклоняет вниз; рыскание поворачивает наружу; крен наклоняет верх наружу. Начинайте с небольших изменений.</div>
+					<div class="row"><div class="rl"><div class="rlab">Сброс ручной калибровки</div><div class="rdesc">Обнуляет рост и смещения обоих контроллеров. Автоматические измерения и углы модели пустых рук сохраняются.</div></div><button class="btn" data-event-click="cmd('manual_reset')"><div class="sweep"/><span>Сбросить смещения</span><div class="tick"/></button></div>
 				</div>
 			</div>
 		</div>

@@ -185,7 +185,7 @@ void EndLive(bool save, char const* reason) {
 void BeginLive(Frame const& frame) {
     if (!frame.worldFrame || !frame.headValid || frame.gameMode != 0 || !g.live.active || GetTickCount64() - g.live.timeMs > 250 ||
         !g.live.left.gripValid || !g.live.right.gripValid || calibration::Running() || calibration::ProfileKey().empty()) {
-        g.model->SetText("manual_live_note", "Start on foot with the headset and both controllers tracked.");
+        g.model->SetText("manual_live_note", "Встаньте на ноги, наденьте шлем и дождитесь, пока оба контроллера начнут отслеживаться.");
         return;
     }
     g.settings->Closed(); // flush any sliders before taking the rollback baseline
@@ -198,11 +198,11 @@ void BeginLive(Frame const& frame) {
     g.model->SetNumber("manual_live", 1);
     g.model->SetNumber("manual_markers", 0);
     g.model->SetNumber("manual_live_left", gLiveEdit.target == 0 ? 1.0f : 0.0f);
-    g.model->SetText("manual_live_title", gLiveEdit.target == 0 ? "Adjust LEFT hand" : "Adjust RIGHT hand");
-    g.model->SetText("manual_live_controls", gLiveEdit.Editor() == 0 ? "LEFT controller: X = Done / Y = Cancel" : "RIGHT controller: A = Done / B = Cancel");
-    g.model->SetText("manual_live_axis", "Pitch");
-    g.model->SetText("manual_live_value", std::format("{:+.1f} deg", gLiveEdit.draft.values[gLiveEdit.Index()]));
-    g.model->SetText("manual_live_status", "Release the adjusting controller's stick, trigger and buttons.");
+    g.model->SetText("manual_live_title", gLiveEdit.target == 0 ? "Настройка ЛЕВОЙ руки" : "Настройка ПРАВОЙ руки");
+    g.model->SetText("manual_live_controls", gLiveEdit.Editor() == 0 ? "Левый контроллер: X = готово / Y = отмена" : "Правый контроллер: A = готово / B = отмена");
+    g.model->SetText("manual_live_axis", "Тангаж");
+    g.model->SetText("manual_live_value", std::format("{:+.1f}°", gLiveEdit.draft.values[gLiveEdit.Index()]));
+    g.model->SetText("manual_live_status", "Отпустите стик, курок и кнопки настраивающего контроллера.");
     g.ui->Context()->ProcessMouseLeave();
     g.hit = g.wasHit = g.pressing = false;
     g.submitted = false;
@@ -212,7 +212,7 @@ void BeginLive(Frame const& frame) {
 void TickLive(Frame const& frame, float dt) {
     if (!gLiveAdjusting.load()) return;
     if (gLiveProfile != calibration::ProfileKey() || !frame.worldFrame || frame.gameMode != 0 || calibration::Running()) {
-        EndLive(false, "Live adjustment cancelled: the controller setup or game view changed.");
+        EndLive(false, "Живая настройка отменена: сменился набор контроллеров или вид игры.");
         return;
     }
     bool const eligible = frame.headValid && GetTickCount64() - g.live.timeMs <= 250 && g.submitted;
@@ -220,15 +220,15 @@ void TickLive(Frame const& frame, float dt) {
     auto const action = gLiveEdit.Tick(g.live, dt, eligible);
     if (action != vr::live_calibration::Action::None) {
         EndLive(action == vr::live_calibration::Action::Done,
-            action == vr::live_calibration::Action::Done ? "Live offsets applied. Check the save status below." : "Live adjustment cancelled; starting offsets restored.");
+            action == vr::live_calibration::Action::Done ? "Живые смещения применены. Проверьте состояние сохранения ниже." : "Живая настройка отменена; исходные смещения восстановлены.");
         return;
     }
     auto const i = gLiveEdit.Index();
     g.model->SetText("manual_live_axis", vr::live_calibration::kAxes[gLiveEdit.axis]);
     g.model->SetText("manual_live_value", vr::manual_calibration::kFields[i].angle ?
-        std::format("{:+.1f} deg", gLiveEdit.draft.values[i]) : std::format("{:+.1f} cm", gLiveEdit.draft.values[i] * 100));
-    g.model->SetText("manual_live_status", !tracked ? "Tracking lost: adjustments paused." : !gLiveEdit.armed ?
-        "Release the adjusting controller's stick, trigger and buttons." : "Hold the selected hand naturally and watch it move.");
+        std::format("{:+.1f}°", gLiveEdit.draft.values[i]) : std::format("{:+.1f} см", gLiveEdit.draft.values[i] * 100));
+    g.model->SetText("manual_live_status", !tracked ? "Отслеживание потеряно: настройка приостановлена." : !gLiveEdit.armed ?
+        "Отпустите стик, курок и кнопки настраивающего контроллера." : "Держите выбранную руку естественно и смотрите, как она двигается.");
 }
 std::atomic<bool> gRecentered{false};
 // The watchdog's clocks (Present thread): the last VR frame that asked for our layers, and the last one that drew the
@@ -875,7 +875,7 @@ std::uint32_t ModFlags() {
 }
 
 void SetOpen(bool open, char const* why) {
-    if (!open) EndLive(false, "Live adjustment cancelled; starting offsets restored.");
+    if (!open) EndLive(false, "Живая настройка отменена; исходные смещения восстановлены.");
     if (open == gOpen.load()) {
         return;
     }
@@ -927,7 +927,7 @@ void SetOpen(bool open, char const* why) {
 
 void Toggle(char const* why) {
     if (LiveAdjusting()) {
-        EndLive(false, "Live adjustment cancelled; starting offsets restored.");
+        EndLive(false, "Живая настройка отменена; исходные смещения восстановлены.");
         return;
     }
     SetOpen(!gOpen.load(), why);
@@ -936,7 +936,7 @@ void Toggle(char const* why) {
 void NoteControllers(vr::controllers::State const& live) {
     g.live = live;
     if (LiveAdjusting() && gLiveProfile != calibration::ProfileKey()) {
-        EndLive(false, "Live adjustment cancelled: the controller setup changed.");
+        EndLive(false, "Живая настройка отменена: набор контроллеров изменился.");
     }
 }
 
@@ -982,7 +982,7 @@ void Recentered() {
 XrCompositionLayerQuad const* Layer(Frame const& frame) {
     gLastLayerMs = GetTickCount64();
     if (frame.session != g.session) {
-        EndLive(false, "Live adjustment cancelled: the VR session changed.");
+        EndLive(false, "Живая настройка отменена: VR-сеанс изменился.");
         swapchains::Forget(g.swapchain.handle);
         g.swapchain = {};  // the old session's swapchain died with it
         g.session = frame.session;
@@ -1094,7 +1094,7 @@ XrCompositionLayerQuad const* Layer(Frame const& frame) {
         g.gpuPending = true;
     }
     if (!g.submitted) {
-        EndLive(false, "Live adjustment cancelled: its panel could not be displayed.");
+        EndLive(false, "Живая настройка отменена: не удалось показать её панель.");
         return nullptr;
     }
     g.quad = {XR_TYPE_COMPOSITION_LAYER_QUAD};

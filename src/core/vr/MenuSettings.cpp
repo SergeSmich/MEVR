@@ -343,7 +343,7 @@ std::vector<Field> const& Schema() {
         {"audio_spatial", Type::Choice, 0, "hrtf"},                                                       // [Audio] spatial
         {"audio_gain", Type::Number, kAudioGainDefaultDb, "", kAudioGainMinDb, kAudioGainMaxDb, F::SignedDecibels},  // [Audio] gainDb
         {"audio_now", Type::Text, 0, ""},                            // what the game's audio runs on now (openal_soft::Describe)
-        {"audio_note", Type::Text, 0, "Applies when the game next starts"},  // AudioNote
+        {"audio_note", Type::Text, 0, "Применится при следующем запуске игры"},  // AudioNote
         {"audio_overheard", Type::Flag, 1},                          // [Audio] overheard: people near the player from where they stand
         {"audio_gun", Type::Flag, 1},                                // [Audio] gun: the player's gun from the gun
     };
@@ -835,11 +835,11 @@ std::string AudioNote(std::string_view chosen, float chosenGainDb, std::string_v
     std::string const want = AudioSpatialChoice(chosen);
     std::string const now = AudioSpatialChoice(running);
     if (want != "game" && !softInstalled) {
-        return "OpenAL Soft isn't installed, so the game's own sound plays: MEVR Setup's Repair puts it back";
+        return "OpenAL Soft не установлен, поэтому звучит собственный звук игры: «Восстановление» в MEVR Setup вернёт его";
     }
     bool const gainMatters = want != "game";
     bool const same = want == now && (!gainMatters || std::abs(chosenGainDb - runningGainDb) < 0.05f);
-    return same ? "In use now" : "Applies when the game next starts";
+    return same ? "Используется сейчас" : "Применится при следующем запуске игры";
 }
 
 void PendingWrites::Put(std::string section, std::string key, std::string value, std::uint64_t dueMs) {

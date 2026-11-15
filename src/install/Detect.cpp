@@ -127,12 +127,16 @@ bool IsGameRoot(fs::path const& root) {
 
 std::optional<fs::path> RootFromPicked(fs::path const& picked) {
     std::optional<fs::path> best;
+    bool bestWrapped = false;
     std::error_code ec;
     for (fs::path dir = picked; !dir.empty(); dir = dir.parent_path()) {
         if (IsGameRoot(dir)) {
-            // A Steam / EA app root above its own Game folder wins over reading that folder as a flat install.
-            if (!best || fs::exists(dir / L"Game" / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe", ec)) {
+            bool const wrapped = fs::exists(dir / L"Game" / L"ME1" / L"Binaries" / L"Win64" / L"MassEffect1.exe", ec);
+            // The deepest root keeps the path the player gave (a trailing separator and all); only a Steam / EA app
+            // root above its own Game folder wins over reading that folder as a flat install.
+            if (!best || (wrapped && !bestWrapped)) {
                 best = dir;
+                bestWrapped = wrapped;
             }
         }
         if (dir == dir.parent_path()) {

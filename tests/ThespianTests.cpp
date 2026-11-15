@@ -198,7 +198,7 @@ void TestDoubt() {
     CHECK(out.mic == th::Mic::Unsure && !out.restart);
     th::Panel panel;
     panel.mic = static_cast<std::uint8_t>(th::Mic::Doubt);
-    CHECK(th::PromptText(panel).starts_with("Not sure which") && std::string(th::MicClass(th::Mic::Doubt)) == "unsure");
+    CHECK(th::PromptText(panel).starts_with("Не понял, какая") && std::string(th::MicClass(th::Mic::Doubt)) == "unsure");
 }
 
 void TestTones() {
@@ -237,7 +237,7 @@ void TestPanel() {
     CHECK(rml.find("<span>Goodbye</span>.") != std::string::npos);  // a menu card: its label is the script
     CHECK(rml.find("<div class=\"divider\"/><div class=\"row investigate idle topic\">") != std::string::npos);
     panel.mic = static_cast<std::uint8_t>(th::Mic::Armed);
-    CHECK(th::PromptText(panel) == "Read a line aloud");
+    CHECK(th::PromptText(panel) == "Прочитайте реплику вслух");
     panel.mic = static_cast<std::uint8_t>(th::Mic::Understood);
     CHECK(th::PromptText(panel) == "Who's <that>?");
 

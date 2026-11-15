@@ -933,8 +933,8 @@ void StepAim(bool rifle, XrPosef const& head, XrVector3f const eyes[2], float dt
         board = "КОНТРОЛЛЕРЫ НЕ ОТСЛЕЖИВАЮТСЯ";
         logWhy = "untracked";
     } else if (!rifle && !gRun.weaponVisible) {
-        why = "The training weapon isn't visible. Wait, or Skip to keep your previous aim.";
-        board = "WAITING FOR TRAINING WEAPON";
+        why = "Учебное оружие не видно. Подождите или нажмите «Пропустить», чтобы сохранить прежний прицел.";
+        board = "ЖДЁМ УЧЕБНОЕ ОРУЖИЕ";
         logWhy = "weapon not visible";
     } else if (!gRun.rightHeld || (rifle && !gRun.leftHeld)) {
         why = !rifle             ? "Сожмите правый хват: держите пистолет"

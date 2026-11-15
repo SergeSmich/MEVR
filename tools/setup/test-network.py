@@ -546,8 +546,8 @@ def test_packs(setup, root, payload, local):
     check(rc == 1 and "isn't there" in out, "pack: a missing download refused")
 
     rc, out = setup.run(["--status", "--game", root])
-    check("textures marked by MEM: yes" in out and "texture packs installed: ALOT for ME1 (alot-le1, mem, " in out and
-          "LEUITM (Updated Improved Textures) (leuitm-le1" in out and "Mass Effect Modder: downloaded" in out, "status: the packs, the marker, MEM")
+    check("текстуры отмечены MEM: да" in out and "наборы текстур установлены: ALOT for ME1 (alot-le1, mem, " in out and
+          "LEUITM (Updated Improved Textures) (leuitm-le1" in out and "Mass Effect Modder: скачан" in out, "status: the packs, the marker, MEM")
 
     # Uninstall: the mod goes, the textures stay (and it says so), the scratch %LOCALAPPDATA%\MEVR goes with --remove-local-data.
     rc, out = setup.run(["--uninstall", "--remove-local-data", "--game", root])
@@ -581,9 +581,9 @@ def test_request(setup, root, payload, local):
     waiting = next((p for p in parts if p.startswith("while waiting")), "")
     after = next((p for p in parts if p.startswith("after the game exited")), "")
     check(rc == 0, "request: the setup's copy started as the game starts it (exit 0)")
-    check("page: content" in first and "request text: Choose what to add below" in first, "request: opens on Optional content, 'Choose what to add below'")
+    check("page: content" in first and "request text: Выберите, что добавить: файлы голосовых приказов или набор текстур." in first, "request: opens on Optional content, 'Choose what to add below'")
     check(f"game: {root}" in first and "game ok: 1" in first and "installed: 1" in first, "request: found its own game from the ASI folder")
-    check("waiting: 1" in first and "waiting: 1" in waiting and "Changes start once the game has exited." in waiting,
+    check("waiting: 1" in first and "waiting: 1" in waiting and "Изменения начнутся после выхода из игры." in waiting,
           "request: waits while the game still runs (installs disabled)")
     check("waiting: 0" in after and took > 3, f"request: goes on once the game has exited ({took:.0f} s)")
     check(not request.exists(), "request: the request file read and removed")
@@ -593,10 +593,10 @@ def test_request(setup, root, payload, local):
     # A request naming packs (the format allows it), and a broken one.
     request.write_text(json.dumps({"page": "content", "packs": ["alot-le1", "nope", "alot-le1"], "pid": 1}), encoding="utf-8")
     rc, out = setup.run(["--preview", shots / "named", "--warp", "--request"], exe=asi_setup, timeout=240)
-    check(rc == 0 and "request text: You asked for: ALOT for ME1." in out and not request.exists(), "request: named packs shown (unknown ids dropped)")
+    check(rc == 0 and "request text: Вы просили: ALOT for ME1." in out and not request.exists(), "request: named packs shown (unknown ids dropped)")
     request.write_text("{ not json", encoding="utf-8")
     rc, out = setup.run(["--preview", shots / "broken", "--warp", "--request"], exe=asi_setup, timeout=240)
-    check(rc == 0 and "page: content" in out and "request text: Choose what to add below" in out and not request.exists(),
+    check(rc == 0 and "page: content" in out and "request text: Выберите, что добавить: файлы голосовых приказов или набор текстур." in out and not request.exists(),
           "request: a broken request file: Optional content anyway, the file removed")
     rc, out = setup.run(["--uninstall", "--game", root])
     check(rc == 0, "uninstall after the request tests")
@@ -732,7 +732,7 @@ def test_voice(setup, base, root, payload, local, repo, cache):
     request.write_text(json.dumps({"page": "content", "packs": ["voice"], "pid": 1}), encoding="utf-8")
     shots = setup.scratch / "voice-shots"
     rc, out = setup.run(["--preview", shots, "--warp", "--request", "--game", root], timeout=240)
-    check(rc == 0 and "request text: You asked for: Voice orders." in out and "(installed)" in out.split("voice:")[-1].splitlines()[0],
+    check(rc == 0 and "request text: Вы просили: Voice orders." in out and "(installed)" in out.split("voice:")[-1].splitlines()[0],
           "voice: the game's request names the voice orders; the card says installed")
     rc, out = setup.run(["--remove-voice", "--game", root])
     check(rc == 0 and not (voice / "onnxruntime.dll").exists() and not llm.exists() and not (voice / "models").exists(),

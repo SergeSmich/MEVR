@@ -1127,7 +1127,7 @@ void Settings::Command(std::string const& name, std::string const& argument, men
                 Put(section.c_str(), f.ini, "0", true);
             }
             calibration::InvalidateManualAdjustments();
-            v.texts["manual_live_note"] = "This hand's manual overrides are zero. Guided calibration and runtime poses remain in use.";
+            v.texts["manual_live_note"] = "Ручные поправки этой руки обнулены. Действуют пошаговая калибровка и положения от среды выполнения.";
         }
     } else if (name == "manual_live") {
         if (v.Flag("manual_ready")) after_ = After::LiveAdjust;
