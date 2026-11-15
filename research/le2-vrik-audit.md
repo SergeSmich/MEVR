@@ -92,3 +92,28 @@ Yes, it applies. The IK, the body and the engine-generic glue port as they are; 
 in ME2, and reload replaces the vent. The open risks are the skeleton (which bones the eye hangs off in ME2) and the
 behaviours a name list can't show. Other modules: run the tool on them before porting (it already shows the menu's pause:
 ME2 has no `Engine.WorldInfo.PauseGame`, lane D's concern).
+
+## ME1's cover system on ME2
+
+Asked by the owner (2026-11-14): "We have a cover system for me1 that we need to ensure transfers here." ME1's system has
+three parts (CLAUDE.md, research/23):
+- **no cover snapping:** `engine/CoverAcquire` pre-hooks BioPawn's native cover test (LE1 `0xAB1430`) and skips it for
+  the player, because LE1 takes cover by itself;
+- **physical crouch:** `game/Posture`, `core/ik/Posture`; a real crouch is `BioPawn.ShouldCrouch`;
+- **VR cover:** `core/vr/VrCover` (all three games), `game/VrCover` (LE1). The game's cover protection is given to a
+  player whose head is hidden from the shooter by a surface within reach, by answering `IsInCover` and
+  `IsInCoverLeaning` inside the damage call.
+
+`python tools/le2-name-audit.py game/VrCover game/Posture engine/CoverAcquire core/vr/VrCover core/ik/Posture`: of the 42
+engine names, ME2 has 29.
+
+| ME1 part | On ME2 | What it takes |
+|---|---|---|
+| No cover snapping | **Doesn't apply as it is.** ME2 takes cover only on A (no automatic test), and its vault needs that cover: A into cover, A again to vault (the owner). | Keep ME2's A cover. Whether its snap into the slot needs a VR presentation (the move and the cover camera) is lane E's question, with the vault. |
+| Physical crouch | **Ports.** `Engine.Pawn.ShouldCrouch` (ME1 calls `BioPawn.ShouldCrouch`); ME2 also has `BioPawn.SetShouldCrouch`, `StartCrouch`, `EndCrouch`, `SetCrouchStateInstantly`. All other Posture names exist. | Swap the one function; check that ME2's crouch toggle and its cover don't fight a physical crouch. |
+| VR cover (protection) | **The rule ports; the hook doesn't.** ME1 answers `IsInCover`/`IsInCoverLeaning` inside `BioPawnBehavior.ProxyTakeDamage`, which ME2 doesn't have. ME2's damage rule is `SFXGame.ModifyDamage` (research/23 6.1: in cover and not leaning, damage from within the cone is **zero**, otherwise in cover x0.75, leaning x0.75). | research/23 6.3's plan: answer `BioPawn.IsInCover` true and `IsInCoverLeaning` false for the player in `ModifyDamage`'s frame. The cone reads `CurrentLink.GetSlotRotation(CurrentSlotIdx)` (`BioPawn:CurrentLink` 0x8AC, `CurrentSlotIdx` 0x9C0), which a VR player hiding without the game's cover has no link for: answer `GetSlotRotation` too, or apply the cone ourselves and set `Damage` after the call. ME1's test tools (`mevr cover hit`, `probe`) need ME2's damage call (`Engine.Actor.TakeDamage`) and shield and health reads (ME1's `BioAttributesShield`, `m_HealthCurrent` don't exist in ME2). |
+
+**Design point:** ME1's VR cover gives the protection only to a player hidden by their own body. On ME2 the player can
+also take the game's own cover with A, so the two coexist: the game's cover keeps its full rules (and the vault), and the
+VR rule covers a player who hides physically without pressing A. ME2 also shortens the shield regeneration's wait in
+cover (`bFastCoverRegen`, research/23 6.1): whether the VR rule should grant that too is open.
