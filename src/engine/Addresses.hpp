@@ -10,7 +10,8 @@
 // engine functions LExSDKv2 also lists (ProcessEvent, CallFunction, GameEngine::Tick, GNatives), the same facts:
 // numbers, not code. The self-check (engine/ReflectCheck, `rva` rows) compares those four with LExSDKv2's.
 // Patterns: tools/rva-patterns.py over the decrypted .text dump (engine/CodeDump), each unique in LE1's .text;
-// the tests check them against the dump when it's on the machine. LE2 and LE3 have no dump yet: structure only.
+// the tests check them against the dump when it's on the machine. LE2's likewise over ME2's dump (M1, research/
+// le2-engine-access-discovery.md); LE3 has no dump yet: structure only.
 //
 // plugin/RenderLevers keeps its own constants (the performance session's file); its entries here mirror them, and
 // ctest `mevr-rva-table` (tools/check-rva-table.py) fails if a `k...Rva = 0x...` constant anywhere in src/ is missing.
@@ -236,8 +237,11 @@ inline constexpr Entry kTable[] = {
 
 } // le1
 
-// LE2 and LE3 (2.0.0.48602): the hooks they run today; .pdata-checked with tools/verify_rvas.py, no patterns yet (no
-// .text dump of these exes so far). The LE1-only features have no address there (0).
+// LE2 (2.0.0.48602, timestamp 0x60AEEFA5): the hooks it runs today and our reflection layer's globals (M1,
+// research/le2-engine-access-discovery.md "M1: what ME2's code showed"); patterns from tools/rva-patterns.py over ME2's
+// .text dump (MassEffect-60AEEFA5.text.bin), each unique there; the tests check them against the dump when it's on the
+// machine. LE3 (2.0.0.48602): the hooks it runs today, .pdata-checked with tools/verify_rvas.py, no patterns yet (no .text
+// dump). The LE1-only features have no address there (0).
 MEVR_ADDRESSES_LE2 {
 
 inline constexpr std::uint32_t kProcessEvent = 0xD8D50;
@@ -258,24 +262,46 @@ inline constexpr std::uint32_t kUpdateSelection = 0;
 inline constexpr std::uint32_t kConversationSetPositionRotator = 0;
 inline constexpr std::uint32_t kInterruptConversation = 0;
 inline constexpr std::uint32_t kMoveWithInterpMoveTrack = 0;
-// GObjects (TArray<UObject*>): Halcyon's ME2 code uses it (engine_probe.cpp, pchud.cpp) and LExSDKv2's LE2 build agrees
-// (research/le2-engine-access-discovery.md); the host's queue for Halcyon's off-thread ProcessEvent calls checks objects
-// against it (plugin/HalcyonLe2). No pattern yet (no LE2 .text dump): the gate checks only that it is in a data section.
+// Our reflection layer's globals (ue3/Runtime, engine/GameAdapter): GObjects (TArray<UObject*>; Halcyon's ME2 code uses it
+// too, engine_probe.cpp, pchud.cpp, and the host's queue for Halcyon's off-thread ProcessEvent calls checks objects against
+// it, plugin/HalcyonLe2), the name pools, the engine's allocator (appMalloc, appFree and the GMalloc both load) and
+// GNatives. Each is where ME2's code uses it: ~UObject (0x104F80), FName::AppendString (0x75820), appMalloc (0x9C900),
+// appFree (0x9C8C0); LExSDKv2's LE2 build has the same four data RVAs.
 inline constexpr std::uint32_t kGObjects = 0x173CC48;
-inline constexpr std::uint32_t kNamePools = 0;
-inline constexpr std::uint32_t kGMalloc = 0;
-inline constexpr std::uint32_t kAppMalloc = 0;
-inline constexpr std::uint32_t kAppFree = 0;
-inline constexpr std::uint32_t kGNatives = 0;
+inline constexpr std::uint32_t kNamePools = 0x1668A10;
+inline constexpr std::uint32_t kGMalloc = 0x1682378;
+inline constexpr std::uint32_t kAppMalloc = 0x9C900;
+inline constexpr std::uint32_t kAppFree = 0x9C8C0;
+inline constexpr std::uint32_t kGNatives = 0x16A99B0;
 
 inline constexpr Entry kTable[] = {
-    {"UObject::ProcessEvent", kProcessEvent, Kind::Function, nullptr, 0, 0, "host, mod"},
-    {"UGameEngine::Tick", kGameEngineTick, Kind::Function, nullptr, 0, 0, "host"},
-    {"UObject::CallFunction", kCallFunction, Kind::Function, nullptr, 0, 0, "mod"},
-    {"ULocalPlayer::CalcSceneView", kCalcSceneView, Kind::Function, nullptr, 0, 0, "mod (scene view)"},
-    {"FViewportClient::Draw", kViewportDraw, Kind::Function, nullptr, 0, 0, "mod (scene view)"},
+    // The host's hooks.
+    {"UObject::ProcessEvent", kProcessEvent, Kind::Function, "40 55 41 56 41 57 48 81 EC 90 00 00 00 48 8D 6C 24 20 48 C7", 0, 0,
+        "host, mod"},
+    {"UGameEngine::Tick", kGameEngineTick, Kind::Function, "48 8B C4 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 A8 FC FF", 0, 0,
+        "host"},
+    // The mod's hooks.
+    {"UObject::CallFunction", kCallFunction, Kind::Function, "40 55 53 56 57 41 54 41 55 41 56 41 57 48 81 EC A8 04 00 00", 0,
+        0, "mod"},
+    {"ULocalPlayer::CalcSceneView", kCalcSceneView, Kind::Function,
+        "48 8B C4 55 53 56 57 41 54 41 55 41 56 41 57 48 8D A8 88 FD", 0, 0, "mod (scene view)"},
+    {"FViewportClient::Draw", kViewportDraw, Kind::Function,
+        "48 8B C4 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 58 FC FF FF 48 81 EC D0 04 00 00", 0, 0, "mod (scene view)"},
     {"FViewportClient::Draw (end)", kViewportDrawEnd, Kind::End, nullptr, 0, 0, "mod (scene view)"},
-    {"GObjects", kGObjects, Kind::Data, nullptr, 0, 0, "host (Halcyon LE2's game-thread queue)"},
+    // Our reflection layer's globals and the engine's allocator (ue3/Runtime has its own patterns too).
+    {"GObjects", kGObjects, Kind::Data, "C9 74 5B EB F0 4C 8B 05 ?? ?? ?? ?? 4B 8B 04 06", 8, 0x9B24B,
+        "mod (reflection), host (Halcyon LE2's game-thread queue)"},
+    {"the name pools", kNamePools, Kind::Data, "74 2B 48 8B D8 48 8D 15 ?? ?? ?? ?? 48 C1 F8 1D", 8, 0x7450B, "mod (reflection)"},
+    {"GMalloc", kGMalloc, Kind::Data, "48 85 DB 74 2A 48 8B 0D ?? ?? ?? ?? 48 85 C9 75", 8, 0x96B03, "mod (engine strings)"},
+    {"appMalloc", kAppMalloc, Kind::Function,
+        "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 8B F1 41 8B D8 48 8B 0D ?? ?? ?? ?? 8B FA 48 85 C9 75 0C "
+        "E8 ?? ?? ?? ?? 48 8B 0D ?? ?? ?? ?? 48 8B 01 44 8B CB 44 8B C7 8B D6",
+        0, 0, "mod (engine strings)"},
+    {"appFree", kAppFree, Kind::Function,
+        "48 89 5C 24 08 57 48 83 EC 20 48 8B F9 8B DA 48 8B 0D ?? ?? ?? ?? 48 85 C9 75 0C E8 ?? ?? ?? ?? "
+        "48 8B 0D ?? ?? ?? ?? 48 8B 01 44 8B C3 48 8B D7 48 8B 5C 24 30 48 83 C4 20 5F 48 FF 60 18",
+        0, 0, "mod (engine strings)"},
+    {"GNatives", kGNatives, Kind::Data, "74 13 0F B7 C0 48 8D 0D ?? ?? ?? ?? 48 8B 04 C1", 8, 0xAEF81, "mod (diagnostics)"},
 };
 
 } // le2

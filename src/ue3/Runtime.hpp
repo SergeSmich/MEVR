@@ -23,6 +23,12 @@ namespace mevr::ue3::runtime {
 // again (the mod calls it once a second until it's ready; research/34 stage 3). After
 // kMaxPendingTries such tries it gives up for good.
 bool Init();
+// The layer is found and checked on this game: lookups, calls, names, the engine's allocator. Engine access (the self-check,
+// the console, the world's path, head tracking's reads) and the handles declared kEveryGame (ue3/Handles) ask this.
+bool Up();
+// Up, and this game's ME1 modules use the layer (engine::adapter::kModulesOnLayer): LE1. On LE2 the layer is up (M1) but
+// a module not yet ported to ME2 (docs/le2-continuation-plan.md M3, M6) sees Ready() false and stands down, as it did
+// before LE2 had a layout. A module ported to every game asks Up() and declares its handles kEveryGame.
 bool Ready();
 // The last Init found the game still starting: call it again later.
 bool Pending();
@@ -31,7 +37,7 @@ std::string const& Status();
 // Drops the layer (the mod unloads); Init finds it again.
 void Shutdown();
 
-// Valid only while Ready().
+// Valid only while Up().
 Reflection& Get();
 
 // How each global was found, for the self-check and the log.
@@ -59,7 +65,7 @@ bool Guarded(void (*fn)(void*), void* context);
 // UObject::ProcessEvent through the object's vtable (the way the engine itself calls it, so the
 // host's hook and Halcyon's see it). `parms` must be the function's full parameter block.
 void CallProcessEvent(Object* object, Function* function, void* parms);
-// The same with a Params block; false (nothing called) if not Ready or either pointer is null. A native with an opcode of
+// The same with a Params block; false (nothing called) if not Up or either pointer is null. A native with an opcode of
 // its own (UFunction.iNative, e.g. Actor.Trace) has that index cleared for the call: ProcessEvent skips it otherwise.
 bool Call(Object* object, Function* function, Params& params);
 

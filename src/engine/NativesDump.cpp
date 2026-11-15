@@ -94,7 +94,7 @@ void SaveIfRequested() {
     if (!Requested()) {
         return;
     }
-    if (!ue3::runtime::Ready()) {
+    if (!ue3::runtime::Up()) {  // engine access: LE2 too (its Ghidra project's names, tools/ghidra/seed.ps1 -Game LE2)
         log::Warn("natives dump: our reflection layer is off ({}): nothing written", ue3::runtime::Status());
         return;
     }

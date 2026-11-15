@@ -264,7 +264,7 @@ bool Locate() {
     std::optional<Layout> const layout = engine::adapter::ReflectionLayout();
     std::optional<engine::adapter::ReflectionGlobals> const globals = engine::adapter::ReflectionGlobalsForGame();
     if (!layout || !globals) {
-        gStatus = "no reflection layout for this game yet (LE1 only, research/34)";
+        gStatus = "no reflection layout for this game yet (LE1 and LE2 only, research/34)";
         return false;
     }
     gFound = {};
@@ -393,7 +393,7 @@ void InitMemory() {
     memory::Use({});
     std::optional<engine::adapter::AllocatorGlobals> const globals = engine::adapter::AllocatorGlobalsForGame();
     if (!globals) {
-        log::Warn("reflect: no allocator for this game yet (LE1 only, research/34): engine strings unavailable");
+        log::Warn("reflect: no allocator for this game yet (LE1 and LE2 only, research/34): engine strings unavailable");
         return;
     }
     std::string mallocWhy;
@@ -456,6 +456,10 @@ bool Init() {
                               gFound.processEvent - gFound.module,
                               gFound.processEventMatchesRva ? "" : " (not the expected RVA)");
         log::Info("reflect: {}", gStatus);
+        if (!engine::adapter::kModulesOnLayer) {
+            log::Info("reflect: engine access only on this game: the ME1 modules not yet ported to it stand down "
+                      "(docs/le2-continuation-plan.md M3, M6)");
+        }
         InitMemory();
     } else {
         log::Warn("reflect: our reflection layer is off: {}", gStatus);
@@ -464,8 +468,12 @@ bool Init() {
     return gReady;
 }
 
-bool Ready() {
+bool Up() {
     return gReady;
+}
+
+bool Ready() {
+    return gReady && engine::adapter::kModulesOnLayer;
 }
 
 bool Pending() {
