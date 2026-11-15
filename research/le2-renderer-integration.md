@@ -433,7 +433,7 @@ ME1's baseline mapped to ME2's keys (ME2's mode numbers differ: 0 Mono, 2 AER, 3
 | keys only with the game in front (`MevrBridge::KeyDown`) | its ten hotkey polls | `MevrBridge::HotkeyDown` |
 | recenter on R (ME1 has no reload key) | `RecenterKey=82`: R is ME2's reload | off R (`RecenterKeyEnabled` is saved but never read upstream, so the key is cleared); double-tap Back, the menu's Recenter view and opening the menu still recenter |
 | life-size stereo (research/30) | none (`HalfEyeUU`, `Convergence`, `SwapEyes`) | a port, later |
-| no head aim; conversations on the 3D screen; `decoupledPitch` | `HeadAim=1`, `CineVrConvo=1`, `DecoupledPitch=0` | upstream's kept: the owner's to decide (ME2 has no hand aim yet) |
+| no head aim; conversations on the 3D screen; `decoupledPitch` | `HeadAim=1`, `CineVrConvo=1`, `CineVrCutscene=1`, `DecoupledPitch=0` | pinned to ME1's (the owner, 2026-11-14): head aim off (VRIK fast-tracked; the stick or mouse aims until then), conversations and cutscenes on Halcyon's flat cine panel until the 3D screen is ported, `DecoupledPitch` on |
 
 **Checked on the fake headset** (runs `20261114-171033-le2-baseline` and `-171437-le2-baseline-borderless`): `[MEVR-BASELINE]
 2 setting(s) in MELE2VR.ini set to the MEVR baseline: profile hotkeys (ProfileHotkeys), the recenter key R (RecenterKey)`;

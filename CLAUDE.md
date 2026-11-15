@@ -129,7 +129,11 @@ external code candidates. Read these before sequel work. The current scope is pr
   stereo and the queue work, first person is off until that ini has `[FirstPerson] Enabled=1` (K toggles it), the eyes
   take the monitor's shape; research/le2-renderer-integration.md "The first run on the fake headset"). **ME1's choices on
   ME2's keys:** `[MEVR]` `ApplyMevrBaseline` in `me2_menu.cpp` after every ini load (stereo, flat menus, no profile
-  hotkeys, no recenter on R, ME2's reload, first person), its hotkeys only with the game in front (`MevrBridge::HotkeyDown`);
+  hotkeys, no recenter on R, ME2's reload, first person, no head aim, no stick pitch, conversations and cutscenes on
+  Halcyon's flat cine panel until ME1's 3D cinema screen is ported), its hotkeys only with the game in front
+  (`MevrBridge::HotkeyDown`). **ME2 continues ME1** (the owner, 2026-11-14): ME1's systems and defaults, deviating only
+  where ME2 forces it; the order (the host's services, then VRIK fast-tracked, then menus, then the cinema screen) is
+  docs/le2-from-le1.md sections 0 and 4;
   the deploy installs upstream's `MELE2VR.ini` (eyes 2048x2304 with `vr-game-settings.ps1 -Game LE2`'s borderless window).
   **On LE2 `game/SystemSettings` waits until a level has been in gameplay for 3 s**: a `scale set` during the load with the
   game's depth of field on faulted the rendering thread in the first gameplay frame, the game hung (9 of 9 runs;

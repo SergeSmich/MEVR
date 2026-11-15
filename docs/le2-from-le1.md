@@ -8,8 +8,9 @@ does not replace them. Status words as there: **confirmed** (seen in the running
 
 ## Summary
 
-1. **ME2 has not rendered in VR yet.** Everything that ran in ME2 (2026-11-14) ran flat, in an opt-in monolithic
-   diagnostic ASI with no Present hook and no OpenXR (`MEVR_LE2_DIAGNOSTIC`). The renderer (P2) is an audit only.
+1. **ME2 had not rendered in VR when this was written.** Everything that ran in ME2 had run flat, in an opt-in monolithic
+   diagnostic ASI with no Present hook and no OpenXR (`MEVR_LE2_DIAGNOSTIC`). Later the same day Halcyon's ME2 renderer ran
+   inside our LE2 host on the fake headset (section 3.1's status); section 0 is the owner's rule for everything after.
 2. **The ME2 code reads the engine only through LExSDKv2**, which can't ship (no licence). LE1 solved this with its own
    reflection layer (`src/ue3`, research/34); LE2 has no `ReflectionLayout()` yet, so none of LE1's reflection-based
    modules can run there, and no LE2 players' build is possible.
@@ -23,6 +24,31 @@ does not replace them. Status words as there: **confirmed** (seen in the running
    window has focus, and menus can be driven without the pad. The console's allocator and string question: `ue3/Memory`.
    Halcyon's 50 units per metre with forward emphasis: metric stereo (research/30). Two full renders a frame: one-Draw
    stereo (research/37).
+
+## 0. The rule: ME2 continues ME1 (the owner, 2026-11-14)
+
+> "For Mass Effect 1, this should really just feel like a continuation of the prior mod, not a radically new
+> experience... Everything should really try to use ME1 as default and only deviate where necessary."
+
+So ME2 gets **ME1's systems and ME1's defaults, with the same resources**: the omni-tool tap that opens the menu, our
+in-game main menu, the guided calibration, VRIK, the 3D cinema screen, the HUD pieces, the comfort options. A port, not a
+redesign. Every deviation names the game fact that forces it (ME2's omni-tool model is different; R is ME2's reload and
+1-8 its power keys; ME2 reloads thermal clips; it has interrupts and the Hammerhead). The owner's three answers that day:
+
+| Choice | ME2 now | Until |
+|---|---|---|
+| Aiming | **no head aim** (`ApplyMevrBaseline` pins `HeadAim` off) | VRIK's hand aim reaches ME2, **fast-tracked**; until then the stick or mouse aims |
+| Conversations and cutscenes | **on a screen, ME1's way**: Halcyon's flat cine panel (`CineVrConvo`, `CineVrCutscene` off) | ME1's 3D cinema screen is ported (research/52) |
+| The stick's pitch | **off**, ME1's `decoupledPitch` (`DecoupledPitch` pinned on) | stays |
+
+**What every ME1 feature stands on, and ME2 lacks:** the host's services. LE1's host gives the mod about forty
+(`src/plugin/ModLoader.cpp`, `gServices` under `MEVR_WITH_HALCYON`: the view, the aim ray, haptics, the floor, sights,
+the squad and wheel panels, calibration, the main menu, the vignette, the HUD pieces, the world UI, the power wheel...);
+LE2's host gives three (controllers, the ProcessEvent callback, crash breadcrumbs). The first ME2 runs showed the mod
+refusing feature after feature for it: `the host ASI is older than this mod (services v39): no view to aim with, so hand
+aim stays off`, `host state sizes differ ... view 0 vs 136`, `... older than services v10 / v11 / v15 / v17 / v19 / v28`.
+The second floor is the mod's engine access on LE2 (`reflect: our reflection layer is off: no reflection layout for this
+game yet`, section 3.2). Section 4 orders the work by that.
 
 ## 1. Where ME2 stands (facts)
 
@@ -224,7 +250,7 @@ The LE1 modules below are each LE1-guarded today. What blocks each in LE2:
 
 | LE1 module | Needs in LE2 | ME2 native names known so far |
 |---|---|---|
-| Host-side: main menu (RmlUi), calibration, vignette, transition fade, colour, recenter, swapchains | 3.1 only: they live in the host and draw quads, not game data | none |
+| Host-side: main menu (RmlUi), calibration, vignette, transition fade, colour, recenter, swapchains | 3.1, and section 4's F2: they live in the host and draw quads, not game data, but reach the renderer through Halcyon ME1's seams (`MELEVR::MevrBridge`, `xr_session.cpp`'s layers, `render_hook`'s view), which ME2's renderer needs as well | none |
 | `engine/BonePose`, `game/ArmIk`, `game/BodyFollow`, fingers | 3.2; `USkeletalMeshComponent` UpdateSkelPose hook RVA; the skeleton's bone names [verify] (LE1: `Root`, `Camera`, `God`, `LeftWrist`...). **Never write the Camera or God bones** | none |
 | `game/HandAim`, `Weapon`, `SupportGrip`, `Sights`, `GunKick` | 3.2; `GetAdjustedAimFor` (`engine/Legacy` already has the LE2 block), the weapon mesh and muzzle sockets | `SFXWeapon` (`CurrentSpareAmmo` `0x908`, `AmmoUsedCount` `0x90C` in the SDK) |
 | `game/Holsters`, `core/ik/BodySlots` | weapon switching through the game mode | `SFXGameModeDefault` weapon functions [verify] |
@@ -278,6 +304,42 @@ This is where ME1 has the most built (research/52, 59, 69, 70). Do it in this or
   `le2-weapon-observation.md:205` say "pending" or "untested" for things `le2-validation-evidence.md` records as done.
 
 ## 4. Order of work
+
+**Since 2026-11-14 (section 0): ME1's systems on ME2, VRIK first.** Done that day: Halcyon's ME2 renderer in our LE2 host
+(A1), its first sessions on the fake headset, ME1's renderer choices on its keys (`ApplyMevrBaseline`), upstream's
+`MELE2VR.ini` from the deploy and the first-gameplay-frame fault it exposed (research/le2-renderer-integration.md). In order
+from there:
+
+1. **F1, the mod's engine access on LE2** (section 3.2): `ReflectionLayout()` for `MEVR_GAME_LE2`, its rows in
+   `engine/Addresses.hpp` and `engine/ReflectCheck`. ME2's decrypted `.text` is on disk since the first runs
+   (`%LOCALAPPDATA%\MEVR\dump\MassEffect-60AEEFA5.text.bin`, 60AEEFA5 is `MassEffect2.exe`'s timestamp): open it in Ghidra
+   as `tools/ghidra` does LE1's. Check: `reflect: N of N checks agree` in an LE2 development build.
+2. **F2, the host's services on LE2.** About 25 host modules (`HalcyonOverlays`, `SightLayers`, `MainMenu`, `Calibration`,
+   `WorldUi`, `CineScreen`, `TestLoop`, `MainMenuSettings` ...) call Halcyon ME1 directly (`MELEVR::`, 86 functions in
+   `src/halcyon/le1/mevr_bridge.h`). Put one renderer interface between them and whichever Halcyon is linked, implement it
+   for ME2 with `[MEVR]` seams in `me2_xr.cpp` (the view per frame as LE1's `OnViewBuilt`; our composition layers appended at
+   `xrEndFrame`; the STAGE floor; `WrapSessionFunctions` for the test loop's snapshots and replays), and build LE2's
+   `gServices` from the same list as LE1's. Not a copy of each module per game. Check: the LE2 mod's start no longer says
+   `older than services v..` or `no view to aim with`.
+3. **VRIK, fast-tracked:** hand aim (`game/HandAim`; `GetAdjustedAimFor` is in `engine/Legacy`'s LE2 block), arm IK and
+   the body (`engine/BonePose`'s `UpdateSkelPose` RVA for LE2, ME2's bone names [verify]; never write `Camera` or `God`),
+   the weapon in the hand, sights and gun kick, then holsters (ME2's weapon switching) and **reload** (new: ME2's thermal
+   clips; the ME2 lead's `PhysicalReloadRequest` coordinator with `core/ik/BodySlots` and `core/ik/Vent`'s gesture
+   pattern). Then `HeadAim` stays off for good. Check: the minimal proof's "Firing" on the fake headset with a replayed
+   hand.
+4. **The menus, as ME1 has them:** our main menu (RmlUi, `MEVR_MAIN_MENU`: today `LE1 only`), the guided calibration, the
+   omni-tool tap on the left wrist and its rail (ME2's omni-tool model and screens differ: `game/OmniTool`'s effect names,
+   `GuiKey` for ME2's screens, section 3.4).
+5. **Conversations and cutscenes on ME1's 3D cinema screen** (`plugin/CineScreen`, research/52: the decision, park,
+   projection, submit and pacing seams, now in `me2_xr.cpp`), replacing the interim flat cine panel; then ME2's interrupts
+   (section 3.7).
+6. **The rest of ME1, one module at a time** (section 3.6): comfort and the vignette, the HUD pieces, the world UI screens,
+   the power wheel, squad orders and voice, conversations in the world, Thespian mode, the galaxy, the Hammerhead (the
+   Mako's controls and cockpit where they fit).
+
+Each step keeps ME1's defaults and resources; a deviation goes in the step's notes with its reason.
+
+**The earlier waves, for the record** (written before the owner's rule; A1 and Wave B's first session are done).
 
 **Wave A: offline, no game.**
 - A1: the Halcyon ME2 import (3.1 steps 1-2) and its seams (step 3), compile and link in all three builds.
