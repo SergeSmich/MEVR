@@ -10,6 +10,8 @@
 
 #include <cstdint>
 
+struct ID3D11DeviceContext;
+
 namespace ME2VR::MevrBridge
 {
 // The statically linked OpenXR loader's xrGetInstanceProcAddr (upstream loads openxr_loader.dll, which our ASI doesn't
@@ -44,6 +46,52 @@ void OnRecentered() noexcept;
 
 // The session stopped (STOPPING, after xrEndSession): our quads' swapchains and the published view go.
 void OnSessionStopped() noexcept;
+
+// Present thread: `source` (an ID3D11Texture2D) is about to be copied into eye `eye`'s image (me2_xr.cpp's
+// CopyTextureToEyeFullFrame; 0 left, 1 right). A snapshot armed now saves it too (plugin/TestLoop: <stamp>-source-*.png).
+void OnEyeSource(int eye, void* source) noexcept;
+// Right after the copy into eye `eye`'s image `image` (index `index`), before its release; `acquired`/`waited` the
+// XrResults of its acquire and wait (a failed one means no copy): counted, and logged when one fails.
+void OnEyeCopied(int eye, void* image, std::uint32_t index, int acquired, int waited) noexcept;
+
+// Present thread, in place of CopyResource(image, source) into an eye or the flat panel's image (ID3D11DeviceContext,
+// ID3D11Texture2D): true if it drew `source` into `image` because D3D11 can't copy between their formats (ME2's swap chain
+// is R16G16B16A16_FLOAT in gameplay, the images R8G8B8A8; plugin/EyeCopy), false when the caller's copy is right.
+// `shiftX`: the SFR convergence shift in pixels.
+bool CopyIntoImage(void* context, void* image, void* source, int shiftX) noexcept;
+
+// What RunFrame knows about the frame it is submitting, for our layers (LE1's MevrBridge::OverlayFrame, the same names;
+// the fields LE2 has so far). Present thread.
+struct OverlayFrame
+{
+    void* session = nullptr;    // XrSession
+    void* appSpace = nullptr;   // XrSpace: Halcyon's recentered LOCAL app space (the projection layer's)
+    void* viewSpace = nullptr;  // XrSpace: VIEW (head-locked quads)
+    ID3D11DeviceContext* context = nullptr;   // the game's immediate context
+    bool worldFrame = false;    // this frame submits the head-tracked world (the projection layer), not a flat panel
+    bool menuOpen = false;      // Halcyon's Insert menu is open
+    int gameMode = -1;          // the engine's game mode (EngineProbe::ReadGameModeSEH), -1 unreadable
+    // The world layer's views as submitted (each eye's swapchain, rect, pose and FOV), when projectionValid.
+    bool projectionValid = false;
+    void* projectionSwapchain[2] = {nullptr, nullptr};   // XrSwapchain
+    int projectionRect[2][4] = {};                       // x, y, width, height (pixels)
+    float projectionOrientation[2][4] = {{0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}};
+    float projectionPosition[2][3] = {};
+    float projectionFov[2][4] = {};                      // angleLeft, angleRight, angleUp, angleDown (radians)
+};
+
+// Present thread (RunFrame), every frame right before xrEndFrame, after Halcyon's own layers are made: our quads (the
+// host modules on LE2 so far: plugin/Vignette), up to `capacity` XrCompositionLayerQuad* into `layersOut`, drawn over
+// Halcyon's. Returns how many. LE1's MevrBridge::OverlayLayers.
+unsigned OverlayLayers(const OverlayFrame& frame, const void** layersOut, unsigned capacity) noexcept;
+
+// d3d_capture.cpp's TryInstallFactoryHooks, for each DXGI factory the game makes (an IDXGIFactory*): our hook on the
+// first output's IDXGIOutput6::GetDesc1, where the game asks whether the display is HDR (research/27 7c for LE1).
+void OnFactory(void* factory) noexcept;
+
+// Present thread, d3d_capture.cpp's PresentHook: the swap chain this Present is for. The renderer copies the eyes from
+// the FIRST swap chain it saw (CaptureSwapChainInfoOnce); a later one presenting is logged (once per swap chain).
+void OnSwapChainPresent(void* swapChain, void* capturedSwapChain) noexcept;
 
 // From Halcyon's XInput hooks, right after the real read: merges the motion controllers into pad 0 (Touch -> Xbox
 // mapping, game/GamepadMapping) before Halcyon's own pad handling (menu block, move-follows-head).

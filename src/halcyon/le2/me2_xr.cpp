@@ -1043,15 +1043,29 @@ bool EnsureAerHistory(ID3D11Texture2D* src) noexcept
 bool CopyTextureToEyeFullFrame(int eye, ID3D11Texture2D* src, int shiftPx = 0) noexcept
 {
     if (src == nullptr || g_aerSwap[eye] == nullptr) return false;
+#if defined(MEVR_ASI)
+    ::ME2VR::MevrBridge::OnEyeSource(eye, src);  // [MEVR] a snapshot armed now saves the source too (plugin/TestLoop)
+#endif
     uint32_t idx = 0;
     XrSwapchainImageAcquireInfo ai = {}; ai.type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO_VALUE;
-    if (!XrSucceeded(g_fn.acquireSwapchainImage(g_aerSwap[eye], &ai, &idx))) return false;
+    const XrResult acquired = g_fn.acquireSwapchainImage(g_aerSwap[eye], &ai, &idx);
+#if defined(MEVR_ASI)
+    if (!XrSucceeded(acquired))  // [MEVR] counted and logged
+        ::ME2VR::MevrBridge::OnEyeCopied(eye, nullptr, idx, static_cast<int>(acquired), 0);
+#endif
+    if (!XrSucceeded(acquired)) return false;
     bool copied = false;   // [AERBLINK] the caller must know if the image really changed
     XrSwapchainImageWaitInfo wi = {}; wi.type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO_VALUE; wi.timeout = XR_INFINITE_DURATION_VALUE;
-    if (XrSucceeded(g_fn.waitSwapchainImage(g_aerSwap[eye], &wi)) && idx < g_aerImages[eye].size())
+    const XrResult waited = g_fn.waitSwapchainImage(g_aerSwap[eye], &wi);  // [MEVR] kept for OnEyeCopied
+    if (XrSucceeded(waited) && idx < g_aerImages[eye].size())
     {
         ID3D11Texture2D* dst = g_aerImages[eye][idx];
         copied = true;
+#if defined(MEVR_ASI)
+        // [MEVR] a source CopyResource can't copy into the eye (ME2's float swap chain in gameplay) is drawn instead
+        if (::ME2VR::MevrBridge::CopyIntoImage(g_ctx, dst, src, shiftPx)) {}
+        else
+#endif
         if (shiftPx == 0)
         {
             g_ctx->CopyResource(dst, src);
@@ -1079,6 +1093,11 @@ bool CopyTextureToEyeFullFrame(int eye, ID3D11Texture2D* src, int shiftPx = 0) n
             g_ctx->CopySubresourceRegion(dst, 0, dstX, 0, 0, src, 0, &box);   // shifted overwrite
         }
     }
+#if defined(MEVR_ASI)
+    // [MEVR] the copy counted (and a snapshot armed now saves the image right after it: plugin/TestLoop)
+    ::ME2VR::MevrBridge::OnEyeCopied(eye, idx < g_aerImages[eye].size() ? g_aerImages[eye][idx] : nullptr, idx, 0,
+                                     static_cast<int>(waited));
+#endif
     XrSwapchainImageReleaseInfo ri = {}; ri.type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO_VALUE;
     g_fn.releaseSwapchainImage(g_aerSwap[eye], &ri);
     return copied;
@@ -1768,6 +1787,9 @@ void RunFrame() noexcept
             {
                 XrSwapchainImageWaitInfo wi = {}; wi.type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO_VALUE; wi.timeout = XR_INFINITE_DURATION_VALUE;
                 if (XrSucceeded(g_fn.waitSwapchainImage(g_monoSwap, &wi)) && idx < g_monoImages.size())
+#if defined(MEVR_ASI)
+                    if (!::ME2VR::MevrBridge::CopyIntoImage(g_ctx, g_monoImages[idx], backbuffer, 0))  // [MEVR] as the eyes
+#endif
                     g_ctx->CopyResource(g_monoImages[idx], backbuffer);
                 XrSwapchainImageReleaseInfo ri = {}; ri.type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO_VALUE;
                 g_fn.releaseSwapchainImage(g_monoSwap, &ri);
@@ -2614,11 +2636,44 @@ void RunFrame() noexcept
         }
     }
 
-    const XrCompositionLayerBaseHeader* layers[4] = {};
+    const XrCompositionLayerBaseHeader* layers[4 + 12] = {};   // [MEVR] + our quads
     uint32_t layerCount = 0;
     if (rendered)   layers[layerCount++] = reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer);
     if (haveMono)   layers[layerCount++] = reinterpret_cast<XrCompositionLayerBaseHeader*>(&monoQuad);
     if (haveGameUi) layers[layerCount++] = reinterpret_cast<XrCompositionLayerBaseHeader*>(&gameUiQuad);
+#if defined(MEVR_ASI)
+    {
+        // [MEVR] our layers (LE1's OverlayLayers): over Halcyon's world and panels, under its Insert menu
+        ::ME2VR::MevrBridge::OverlayFrame mevrFrame;
+        mevrFrame.session = g_session;
+        mevrFrame.appSpace = g_localSpace;
+        mevrFrame.viewSpace = g_viewSpace;
+        mevrFrame.context = g_ctx;
+        mevrFrame.worldFrame = rendered && !flatPresentation;
+        mevrFrame.menuOpen = ME2VR::Menu::IsOpen();
+        mevrFrame.gameMode = gmRaw;
+        mevrFrame.projectionValid = rendered;
+        for (int e = 0; e < 2 && rendered; ++e)
+        {
+            const XrCompositionLayerProjectionView& pv = projViews[e];
+            mevrFrame.projectionSwapchain[e] = pv.subImage.swapchain;
+            mevrFrame.projectionRect[e][0] = pv.subImage.imageRect.offset.x;
+            mevrFrame.projectionRect[e][1] = pv.subImage.imageRect.offset.y;
+            mevrFrame.projectionRect[e][2] = pv.subImage.imageRect.extent.width;
+            mevrFrame.projectionRect[e][3] = pv.subImage.imageRect.extent.height;
+            mevrFrame.projectionOrientation[e][0] = pv.pose.orientation.x; mevrFrame.projectionOrientation[e][1] = pv.pose.orientation.y;
+            mevrFrame.projectionOrientation[e][2] = pv.pose.orientation.z; mevrFrame.projectionOrientation[e][3] = pv.pose.orientation.w;
+            mevrFrame.projectionPosition[e][0] = pv.pose.position.x; mevrFrame.projectionPosition[e][1] = pv.pose.position.y;
+            mevrFrame.projectionPosition[e][2] = pv.pose.position.z;
+            mevrFrame.projectionFov[e][0] = pv.fov.angleLeft; mevrFrame.projectionFov[e][1] = pv.fov.angleRight;
+            mevrFrame.projectionFov[e][2] = pv.fov.angleUp; mevrFrame.projectionFov[e][3] = pv.fov.angleDown;
+        }
+        const void* mevrQuads[12] = {};
+        const unsigned mevrQuadCount = ::ME2VR::MevrBridge::OverlayLayers(mevrFrame, mevrQuads, 12);
+        for (unsigned i = 0; i < mevrQuadCount && layerCount < 4 + 12 - 1; ++i)   // room for the menu
+            layers[layerCount++] = static_cast<const XrCompositionLayerBaseHeader*>(mevrQuads[i]);
+    }
+#endif
     if (haveUi)     layers[layerCount++] = reinterpret_cast<XrCompositionLayerBaseHeader*>(&uiQuad);
 
     XrFrameEndInfo fei = {};

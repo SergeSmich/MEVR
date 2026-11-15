@@ -28,3 +28,4 @@
 
 ## 2026-11-14
 * **Create**: [In ME2 a console scale set during a level load, with depth of field on, kills the rendering thread](gotchas/me2-scale-set-during-load.md), after nine hung runs of Halcyon's ME2 renderer were blamed in turn on first person, the eye size, the body hides and the HUD.
+* **Create**: [On an HDR display ME2's swap chain is float in gameplay, and Halcyon's ME2 eye copies drop it](gotchas/me2-float-swap-chain.md), after two agents' ME2 eye snapshots were black or held the loading screen for an afternoon.

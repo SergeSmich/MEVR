@@ -18,8 +18,10 @@ public:
 
     // `target` should be an _SRGB view: output is linear. Sources in plain UNORM formats are
     // assumed to hold sRGB-encoded values (typical SDR backbuffer) and are decoded first.
+    // `shiftX` != 0: drawn a second time over the first, moved that many pixels right (left if negative), as Halcyon's
+    // ME2 renderer applies its convergence to an eye (the vacated strip keeps the unshifted picture).
     void Draw(ID3D11DeviceContext* immediate, ID3D11Texture2D* source, ID3D11RenderTargetView* target,
-        UINT targetWidth, UINT targetHeight);
+        UINT targetWidth, UINT targetHeight, int shiftX = 0);
 
 private:
     bool EnsureCopy(ID3D11Texture2D* source);

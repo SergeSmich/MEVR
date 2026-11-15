@@ -927,6 +927,12 @@ function(mevr_add_plugin game)
             src/halcyon/le2/mevr_bridge.h src/core/CallQueue.hpp src/game/GamepadMapping.cpp src/game/GamepadMapping.hpp
             src/core/vr/Controllers.cpp src/core/vr/Controllers.hpp src/core/xr/Input.cpp src/core/xr/Input.hpp
             src/plugin/Renderer.hpp src/plugin/RendererLe2.cpp
+            # The game's float swap chain drawn into the eye images (plugin/EyeCopy over core/d3d11/Blit).
+            src/plugin/EyeCopy.cpp src/plugin/EyeCopy.hpp src/core/d3d11/Blit.cpp src/core/d3d11/Blit.hpp
+            # Our layers at xrEndFrame (MevrBridge::OverlayLayers): the swapchain budget and the modules that run on LE2.
+            src/plugin/Swapchains.cpp src/plugin/Swapchains.hpp
+            src/core/vr/SwapchainBudget.hpp src/plugin/Vignette.cpp src/plugin/Vignette.hpp src/core/vr/Comfort.cpp
+            src/core/vr/Comfort.hpp
             # Our actions, vibration and the floor on Halcyon's session (plugin/XrHost, as LE1's).
             src/plugin/XrHost.cpp src/plugin/XrHost.hpp src/core/vr/Haptics.cpp src/core/vr/Haptics.hpp src/core/xr/Floor.cpp
             src/core/xr/Floor.hpp src/core/vr/Floor.hpp
@@ -982,7 +988,7 @@ function(mevr_add_plugin game)
     endif ()
     if (with_halcyon_le2)
         # windowscodecs: WIC, the test loop's PNG snapshots (plugin/TestLoop).
-        target_link_libraries(${host} PRIVATE halcyon-le2 OpenXR::openxr_loader windowscodecs)
+        target_link_libraries(${host} PRIVATE halcyon-le2 OpenXR::openxr_loader windowscodecs d3dcompiler)
         target_compile_definitions(${host} PRIVATE MEVR_WITH_HALCYON_LE2)
     endif ()
     if (MEVR_LE2_DIAGNOSTIC AND game STREQUAL "LE2")

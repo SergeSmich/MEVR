@@ -650,6 +650,142 @@ test-loop one; then the `GetGameSwapChain`/`CopyTextureToEyeFullFrame` path (`id
 format pair) in me2_xr.cpp and d3d_capture.cpp. The test loop copies the image the
 renderer releases (the same texture the runtime composites), so the snapshot is what the headset gets unless that copy is
 wrong, which LE1's identical path argues against. Until this is settled, an ME2 eye snapshot doesn't show the world.
+(Settled below, "The black eyes": the "main menu's backdrop" is ME2's loading screen, and the eyes were stale because
+the copy into them was dropped.)
+
+### The black eyes (lane B, second agent, 2026-11-14)
+
+**Symptom** (every wording it had): after `load.ps1` both ME2 eye snapshots are black; after the main menu's Resume both
+eyes show "the main menu's animated backdrop" (it is ME2's loading screen, the mass relay wireframe with its counter); the
+desktop mirror shows gameplay; SFR runs (`[SFR] Draw replay #3000 ok=1`).
+
+**Cause: the game's swap chain is R16G16B16A16_FLOAT in gameplay, and D3D11 drops a CopyResource from it into the 8-bit
+eye images without a word.** Halcyon's `CopyTextureToEyeFullFrame` (me2_xr.cpp) and the flat panel's copy both use
+`CopyResource`, valid only within one typeless format family. The eye images kept whatever reached them while the swap
+chain was still 8-bit (black from the session's start, or the loading screen's last frame). Why float: **Windows HDR is on
+for this machine's monitor** (DisplayConfig's advanced colour: supported and enabled, 10 bits per channel), and **ME2 makes a
+float swap chain in gameplay on an HDR display even with `[HDR] DesiredRange = DynamicRange_SDR`** (GamerSettings.ini;
+`vr-game-settings.ps1 -Game LE2` writes it). At the title the swap chain is R8G8B8A8_UNORM (28), the same as LE1's on this
+machine (`[HDRBLIT] backbuffer format 0 -> 28`), which keeps 8 bits with that setting. Upstream's ME2 renderer assumes an
+8-bit swap chain throughout: besides the copies, its UI classifier (`IsUiDrawNow`: the bound target must be format 28) and
+its SFR left-eye capture (the backbuffer snapshot at pass 1's opening clear: in the float frame every scene clear comes
+before the one backbuffer draw, `[CLEARMAP] clears=5 bbDraws=1 ... e2060@0 e2060@0 ...`, `[SFRDIAG] totalCaps=0`) find
+nothing, so in a float frame both eyes are the same picture and the HUD gets no treatment.
+
+**How it was found** (each step one run of `prep.ps1`, `launch.ps1`, `load.ps1`, `tools/snapshot.ps1`; the stretch
+`%LOCALAPPDATA%\MEVR\sessions\20261114-203401-lane-b2-eyes`):
+1. The snapshot JSON's projection layers had images and no errors, and the PNGs were RGB 0 with alpha 255: the test loop
+   read real images that were black, not a failed copy of its own.
+2. A seam saving what the renderer copies **from** (`MevrBridge::OnEyeSource`, below): `<stamp>-source-left/right.png`
+   showed Freedom's Progress while the eyes showed the loading screen. So the game's picture was there and the copy wasn't.
+3. A seam saving the eye image right **after** the copy, by the renderer's own pointer (`OnEyeCopied`): `-copied-*.png` was
+   as stale as the eye: the test loop reads the right image; the copy does nothing. Acquire and wait succeed (`eye copies in
+   60 s: left 784 (indices 0x7; acquire failed 0 ...)`).
+4. Its log line gave the formats: `eye copy from 4096x2304 format 10 ... bind 0xa8 into 4096x2304 format 27 ... bind 0x28
+   misc 0x2` (format 10 R16G16B16A16_FLOAT; 27 R8G8B8A8_TYPELESS, what SteamVR backs a format-29 swapchain with).
+5. With the game told the display is SDR (`[Colour] hdrDisplay = -1`, below): `the game's swap chain is 4096x2304 format 28
+   (2 buffers, swap effect 4)` in gameplay, the left source the pass-0 capture (`bind 0x20`) and different from the right
+   (mean difference 15/255: a real stereo pair), and Halcyon's UI treatment shrinks the HUD into the middle of the eye as
+   upstream does. Answered with the display's own HDR10 (`hdrDisplay = 0`), the swap chain is format 10 in gameplay.
+
+**Fixes** (all `[MEVR]`-marked in src/halcyon/le2, the rest ours):
+1. **`plugin/EyeCopy`** (`eye_copy::Copy`, over `core/d3d11/Blit`): `MevrBridge::CopyIntoImage(ctx, image, source, shiftX)` is
+   called in place of the `CopyResource` in `CopyTextureToEyeFullFrame` and the flat panel's copy (`RunFrame`, the
+   `flatPresentation` branch). Where the two formats are one family it returns false and Halcyon's own copy runs, unchanged;
+   otherwise it draws the source through an R8G8B8A8_UNORM_SRGB view of the image (the float source is linear scRGB; values
+   over 1.0 clip), with Halcyon's convergence shift as a second draw moved `shiftX` pixels (`Blit::Draw`'s new `shiftX`,
+   default 0). Log `eye copy: the game's picture (4096x2304, format 10) is drawn into the eye images ...` once. Checked: the
+   float run's eyes show Freedom's Progress (mean RGB 80/86/96, the source's). Still one picture in both eyes there.
+2. **The display's HDR answer**: `MevrBridge::OnFactory` (end of d3d_capture.cpp's `TryInstallFactoryHooks`) patches the
+   first output's `IDXGIOutput6::GetDesc1` (vtable slot 27; the game's HDR question, research/27 7c), answered by
+   `[Colour] hdrDisplay` in `ASI\LE2MEVR.ini` as LE1's key: 1 HDR10 for an SDR display, 0 the display's own answer (the
+   default, ME1's), **-1 SDR for an HDR display** (new; on LE2 only). Log `hdr display: the display reports colour space 12
+   (HDR10), 8 bits, 400 nits; answered SDR ([Colour] hdrDisplay = -1)`. **-1 is ME2's default, as an interim stop gap**
+   (the owner, 2026-11-14: "If it's cheap to do sdr, then we can do that as a stop gap while you figure out HDR"): when
+   ME2's renderer handles its native HDR frame (the HDR study, `research/le2-hdr.md`), the default goes back to 0,
+   ME1's. `[Colour] hdrDisplay = 0` in `ASI\LE2MEVR.ini` passes the display's answer through now (the float frame,
+   drawn by EyeCopy: one picture in both eyes).
+   With -1 the frame is the game's own 8-bit SDR output, as ME1's: the swap chain format 28, copied raw into the sRGB eye
+   (Halcyon's own copy, no blit), like LE1's raw copy with the neutral colour profile; darker than the float frame drawn
+   by EyeCopy (mean 51/55/62 against 80/86/96 at the same spot), which is the SDR tonemap against the float frame's
+   linear values. LE1's colour profiles and FSR are not on LE2 yet.
+
+**Diagnostics kept** (cheap; for the next "the eyes look wrong"):
+- `tools/snapshot.ps1` on ME2 also writes `<stamp>-source-left/right.png` (what the renderer copied into each eye) and
+  `<stamp>-copied-left/right.png` (the eye image right after that copy, by the renderer's pointer): `testloop::OnEyeSource`,
+  `OnEyeCopied`, fed by `MevrBridge::OnEyeSource` / `OnEyeCopied` in `CopyTextureToEyeFullFrame`. Source right but copied
+  wrong: the copy; copied right but the eye wrong: the test loop's image lookup; source wrong: the game's picture or the
+  swap chain.
+- Host log: `halcyon le2 bridge: eye copy from ... into ...` (each new pair of formats, at most 8), `eye copies in 60 s:
+  ...` (counts, image indices, refused acquires and waits), `an eye copy was refused (...)` once, `the game's swap chain is
+  WxH format F (...)` at each change (checked every 90th Present), and `a Present on swap chain X that isn't the one the
+  renderer copies its eyes from` (never seen: one swap chain).
+- Note for log readers: `[ME2DISC]` lines written before Halcyon's menu reads `MELE2VR.ini` are dropped even with
+  `Diagnostics=1` (the flag is set by that read), which is why `CaptureSwapChainInfoOnce`'s `game swapchain` line never
+  shows.
+
+### Step 3 (the rest begun): our layers at xrEndFrame on ME2
+
+**What:** ME2's renderer now submits our quads after its own world and panels (and under its Insert menu), as LE1's
+`OverlayLayers` does, and the LE2 host has the two host modules that need nothing of LE1's renderer: the swapchain budget
+(`plugin/Swapchains`) and the comfort vignette (`plugin/Vignette`). This is the place every later host module on LE2 adds
+its quad (the HUD panel, the reticle, the sights, our main menu, the calibration).
+
+**How, file by file:**
+1. `src/halcyon/le2/mevr_bridge.h`: `struct OverlayFrame` (LE1's field names, the ones LE2 can fill: session, `appSpace`
+   = `g_localSpace`, `viewSpace`, the game's context, `worldFrame`, `menuOpen`, `gameMode`, the world layer's views as
+   submitted) and `OverlayLayers(frame, layersOut, capacity)`.
+2. `src/halcyon/le2/me2_xr.cpp`, `RunFrame` right before `xrEndFrame`: a `[MEVR]` block fills the frame and appends up to
+   12 of our quads after the projection layer, the flat panel and the game-UI quad, before the Insert menu's quad (so the
+   menu stays on top); the layer array grew from 4 to 16.
+3. `src/plugin/HalcyonLe2Bridge.cpp`: `OverlayLayers` asks each LE2 host module for its quad: so far `vignette::Layer`
+   (the same call LE1's HalcyonOverlays makes). `OnSessionCreated` tells `swapchains::OnSessionCreated`.
+4. `src/plugin/TestLoop.cpp`: `swapchains::AfterEndFrame` (which of ours were shown; room for refused creates) and the
+   snapshot's `"swapchains"` block run in both Halcyon hosts.
+5. `src/plugin/ModLoader.cpp`: `WithVignette` (HostServices v17's `setVignette`) and `vignette::Forget` moved out of the
+   LE1-only lists into the both-hosts part (`BuildServices`).
+6. `CMakeLists.txt`: the LE2 host gains `plugin/Swapchains`, `core/vr/SwapchainBudget`, `plugin/Vignette`, `core/vr/Comfort`.
+
+**Checked on the fake headset** (stretch `%LOCALAPPDATA%\MEVR\sessions\20261114-212412-lane-b2-layers`, Freedom's Progress Save 4 by
+`load.ps1`, no `[Colour]` key in the ini): `hdr display: ... answered SDR ([Colour] hdrDisplay = -1)` (the default), `the
+game's swap chain is 4096x2304 format 28`, the snapshot's `"swapchains"` block now live on LE2 (`ours 0, halcyons 3`),
+the eye sources a stereo pair (mean difference 15/255), the eyes Freedom's Progress. No quad of ours yet (nothing asks
+for the vignette on LE2).
+
+**LE1 after steps 1 and 3 (this section): unchanged.** The same pose run as step 2's (`le1-pose.ps1`: 20 s in the world,
+`make-walk-recording.py --plan stand:600 --hands view` looped, 8 s, the console's `pause`, two snapshots 1 s apart;
+`tools/fake-headset-session.ps1 -Tag laneb2-pose`, build-mono, session `2026-11-14_21-26-07-laneb2-pose`) against the first
+agent's 20:09:55 snapshot: the same six layers at the same places (the omni-tool target 0.4 mm apart), `hostView`
+identical, the HUD panel identical pixel for pixel, the eyes 0.86% of pixels apart by more than 32/255, all on what
+animates between launches (the edges of the idle hands and the gun, the console's flicker, the window's stars; the two
+snapshots of one run differ by 0.3% over 8/255). The comparison script: PIL `ImageChops.difference` over the two
+snapshots' PNGs and the JSON's layers and `hostView`.
+
+**Not yet:** the floor lock (`plugin/FloorLock`: LE1's camera and first-person state through Halcyon's LE1 seams; ME2's
+`OnViewBuilt` passes `floorWorld` but nothing uses it). The mod's comfort module (`game/Comfort`) is LE1 game code, so on
+LE2 nobody asks for the vignette yet: the service is there for lane C/D's comfort work.
+
+### Step 4, the HUD panel: the plan (not built)
+
+What a next agent needs, in order. The 8-bit frame is a prerequisite (`[Colour] hdrDisplay = -1`, LE2's default): ME2's
+UI classifier `IsUiDrawNow` (d3d_capture.cpp) only sees UI drawn into a format-28 backbuffer.
+1. **Where ME2's UI goes today:** each of `MhDrawIndexed`, `MhDrawIndexedInstanced` and `MhDraw` (d3d_capture.cpp, the
+   MinHooked draws) asks `IsUiDrawNow` (full-width R8G8B8A8_UNORM target, alpha-blended) and in SFR (`GetVrMode() == 4`)
+   draws it with `SfrDrawUiBothEyes`: into the backbuffer, shrunk to the middle of the eye (the HUD seen in the SDR
+   snapshot of "The black eyes"). That is the seam: before the `uiMode == 4` branch, a `[MEVR]` call like LE1's
+   `MevrHudPanelDraw` (src/halcyon/le1/d3d_capture.cpp, around its `[MEVR]` HUD panel block: the bound target read live,
+   the panel's render target from `MevrBridge::HudPanelTarget`, the blend from `HudPanelBlend`, Scaleform's other blend
+   modes into the tint target, `NoteHudPanelDraw`) that returns true when the draw went to the panel.
+2. **The panel itself** lives in plugin/HalcyonOverlays.cpp (`HudPanelArmed`, `HudPanelTarget`, `HudPanelBlend`,
+   `HudPanelTintBlends`, `HudPanelTintTarget`, `HudPanelNoWrites`, `NoteHudPanelDraw`, `NoteHudPanelTint`, and in
+   `OverlayLayers` the copy of the panel texture into its swapchain and the body-locked quad's placement through
+   `core/vr/OverlayPlacement`). Move those into a module of their own (`plugin/HudPanel`, game-independent: it needs the
+   device, the frame's head and the settings `renderer::Hud()`), called by HalcyonOverlays on LE1 (no behaviour change:
+   the LE1 same-pose check) and by `HalcyonLe2Bridge`'s `OverlayLayers` and new `HudPanel*` seams on LE2.
+3. Arm it only for a head-tracked world frame (`OverlayFrame::worldFrame`), as LE1 does; ME2's flat panel (menus,
+   conversations) keeps the UI in the picture.
+4. **Check:** a snapshot in Freedom's Progress gameplay has both eyes without the HUD and a `hud` layer with it (the
+   panel's swapchain named "hud" through `testloop::NameSwapchain`).
 
 **What the mod on LE2 still says** (each line a module the LE2 host doesn't serve yet, all LE1 host modules that come over
 with steps 4-5): holsters (v9: `rightGripFree`, keeping the squeeze from the game; v10 `gripHolds`), throwables, vent, squad
