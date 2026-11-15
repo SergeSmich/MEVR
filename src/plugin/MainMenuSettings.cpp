@@ -18,6 +18,7 @@
 #include "plugin/Calibration.hpp"
 #include "plugin/Colour.hpp"
 #include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/OpenAlSoft.hpp"
 #include "plugin/PerfProbe.hpp"
 #include "plugin/ReportRequest.hpp"
@@ -212,7 +213,7 @@ Settings::Settings() {
 }
 
 std::filesystem::path Settings::File() const {
-    return std::filesystem::path(MELEVR::MevrBridge::SettingsPath());
+    return std::filesystem::path(mevr::host::SettingsPath());
 }
 
 std::filesystem::path Settings::Assets() const {
@@ -228,7 +229,7 @@ std::filesystem::path Settings::Fonts() const {
 }
 
 void Settings::ReadMenuSection() {
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     if (path.empty()) {
         return;
     }
@@ -253,7 +254,7 @@ void Settings::ReadMenuSection() {
 
 void Settings::Read(menu::Values& v) {
     calibration::Summary const cal = calibration::GetSummary();
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     Ini ini;
     ini.pending = &pending_;
     if (!path.empty()) {
@@ -616,7 +617,7 @@ void Settings::ReadVoice(menu::Values& v, bool enabled, std::string const& model
 }
 
 void Settings::WriteVoiceDevice(std::string const& name) {
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     if (path.empty()) {
         return;
     }
@@ -656,7 +657,7 @@ void Settings::Put(char const* section, char const* key, std::string const& valu
 }
 
 void Settings::Flush(bool all) {
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     std::uint64_t const now = Now();
     for (ms::PendingWrites::Edit const& edit : pending_.TakeDue(now, all)) {
         if (path.empty()) {
@@ -734,7 +735,7 @@ bool Settings::SetResolution(std::string const& choice) {
 void Settings::ClearCullTenths() {
     // plugin/RenderLevers reads minScreenRadiusTenths before minScreenRadiusPx: a file that has it would keep its cull whatever
     // the row or a mode writes. Emptied (an empty value is the default, so minScreenRadiusPx counts), never added.
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     if (path.empty()) {
         return;
     }
@@ -900,12 +901,12 @@ void Settings::Write(std::string const& key, menu::Values const& v, bool final) 
     } else if (key == "sight_rifle") {
         // A red dot by default (research/21 section 15). A scope is the assault rifle's own (its model has one: section 14),
         // 1.5x unless it had another zoom.
-        std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+        std::wstring const& path = mevr::host::SettingsPath();
         wchar_t previous[64]{};
         GetPrivateProfileStringW(L"Sights", L"assaultRifle", L"dot", previous, 64, path.c_str());
         Put("Sights", "assaultRifle", ms::SightValue(v.Text(key), Narrow(previous), 1.5f), true);
     } else if (key == "sight_sniper") {
-        std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+        std::wstring const& path = mevr::host::SettingsPath();
         wchar_t previous[64]{};
         GetPrivateProfileStringW(L"Sights", L"sniperRifle", L"scope auto", previous, 64, path.c_str());
         Put("Sights", "sniperRifle", ms::SightValue(v.Text(key), Narrow(previous), 0.0f), true);
@@ -1347,7 +1348,7 @@ void FirstStartEyeSize() {
         return;  // VR hasn't started yet: the runtime's recommendation comes with the session
     }
     done = true;
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     bool const already = GetPrivateProfileIntW(L"Display", L"eyeSizeSet", 0, path.c_str()) != 0;
     bool const wanted = setup_request::EyeSizeAtFirstStart();
     if (!wanted || already) {

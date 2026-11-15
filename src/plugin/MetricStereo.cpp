@@ -3,10 +3,10 @@
 // ([MEVR] seams in xr_session.cpp's RunFrame), the [MEVR-STEREO] log, the snapshot's "stereo" block.
 
 #include "plugin/MetricStereo.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/CineScreen.hpp"
 #include "plugin/RenderLevers.hpp"
 
-#include "halcyon/le1/logger.h"
 #include "halcyon/le1/mevr_bridge.h"
 
 #include "core/Log.hpp"
@@ -64,7 +64,7 @@ std::uint64_t gLastSubmitLogMs = 0;
 
 void LogBoth(std::string const& line) {
     log::Info("{}", line);
-    MELEVR::Logger::LogLine(line);
+    mevr::host::renderer::LogLine(line);
 }
 
 std::string FovDeg(float const f[4]) {

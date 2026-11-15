@@ -4,9 +4,8 @@
 
 #include "plugin/Colour.hpp"
 
-#include "halcyon/le1/logger.h"
 #include "halcyon/le1/mevr_bridge.h"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 
 #include "core/Log.hpp"
 #include "core/vr/TestRequest.hpp"
@@ -85,7 +84,7 @@ cv::Section ReadSection(std::wstring const& path, std::wstring const& name) {
 }
 
 void WriteValue(wchar_t const* key, std::wstring const& value) {
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     if (!path.empty()) {
         WritePrivateProfileStringW(SectionName().c_str(), key, value.c_str(), path.c_str());
     }
@@ -128,7 +127,7 @@ void Publish() {
     if (line != gLastLogged) {
         gLastLogged = line;
         log::Info("colour: {}", line);
-        MELEVR::Logger::LogLine("[MEVR-COLOUR] " + line);
+        mevr::host::renderer::LogLine("[MEVR-COLOUR] " + line);
     }
 }
 
@@ -141,7 +140,7 @@ void Refresh(bool force) {
     if (gDirty) {
         return;
     }
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     WIN32_FILE_ATTRIBUTE_DATA data{};
     bool const exists = !path.empty() && GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &data);
     if (!force && gLoaded && exists && CompareFileTime(&data.ftLastWriteTime, &gStamp) == 0) {
@@ -444,7 +443,7 @@ void SetHeadset(std::string const& runtimeName, std::string const& systemName, s
     std::string const line = std::format("headset: runtime '{}', system '{}', vendor 0x{:04X} -> [Colour.{}]; automatic: {} ({})",
         runtimeName, systemName, vendorId, key, cv::Name(detection.automatic), detection.why);
     log::Info("colour: {}", line);
-    MELEVR::Logger::LogLine("[MEVR-COLOUR] " + line);
+    mevr::host::renderer::LogLine("[MEVR-COLOUR] " + line);
     gHeadsetChanged.store(true);  // the Present thread reads its section on its next tick
 }
 

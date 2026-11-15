@@ -54,7 +54,7 @@ std::uintptr_t Dispatch(Proxy& proxy) {
 } // namespace
 
 // Dependencies not involved in the detour test. No engine, runtime, or headset is required.
-namespace MELEVR::MevrBridge { std::wstring const& SettingsPath() noexcept { static std::wstring path; return path; } }
+namespace mevr::host { std::wstring const& SettingsPath() noexcept { static std::wstring path; return path; } }
 namespace mevr::log { void Write(std::string_view, std::string_view) {} }
 namespace mevr::exe {
 std::uintptr_t Base() { return 0; }

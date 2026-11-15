@@ -5,7 +5,7 @@
 
 #include "core/Log.hpp"
 #include "core/vr/SwapchainBudget.hpp"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/TestLoop.hpp"
 
 #include <Windows.h>
@@ -107,7 +107,7 @@ std::uint32_t TestCap() {
         return cap;
     }
     readMs = now;
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     std::uint32_t const value = path.empty() ? 0u : GetPrivateProfileIntW(L"Debug", L"swapchainCap", 0, path.c_str());
     if (value != cap) {
         log::Info("swapchains: [Debug] swapchainCap = {}{}", value, value != 0 ? ": ours past it are refused as the runtime would" : " (off)");

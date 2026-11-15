@@ -16,7 +16,7 @@
 #include "core/vr/OmniPower.hpp"
 #include "core/vr/OverlayPlacement.hpp"
 #include "halcyon/le1/mevr_bridge.h"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/RailArt.hpp"
 #include "plugin/Halcyon.hpp"
 #include "plugin/TestLoop.hpp"
@@ -197,7 +197,7 @@ void ReadSettings() {
         return;
     }
     g.settingsMs = now;
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     if (path.empty()) {
         return;
     }

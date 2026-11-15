@@ -21,4 +21,16 @@ void BringToForeground(HWND window) {
     log::Info("game window to foreground: {}", ok ? "ok" : "refused by Windows");
 }
 
+bool KeyDownInGame(int vk) {
+    if (vk <= 0 || (GetAsyncKeyState(vk) & 0x8000) == 0) {
+        return false;
+    }
+    HWND const foreground = GetForegroundWindow();
+    DWORD process = 0;
+    if (foreground != nullptr) {
+        GetWindowThreadProcessId(foreground, &process);
+    }
+    return process == GetCurrentProcessId();
+}
+
 } // namespace mevr::window

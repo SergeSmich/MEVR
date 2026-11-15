@@ -9,12 +9,11 @@
 #include "core/vr/WorldUi.hpp"
 
 #include "halcyon/le1/mevr_bridge.h"
-#include "halcyon/le1/head_aim.h"
 #include "plugin/Calibration.hpp"
 #include "plugin/ConversationWorld.hpp"
 #include "plugin/GalaxyHologram.hpp"
 #include "plugin/Halcyon.hpp"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 
 #include "core/Hook.hpp"
 #include "core/Ini.hpp"
@@ -191,7 +190,7 @@ void RefreshSettings(std::uint64_t now) {
     }
     gSettingsReadMs = now;
     Settings s;
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     if (!path.empty()) {
         auto readBool = [&](wchar_t const* key, bool fallback) {
             return GetPrivateProfileIntW(L"Pointer", key, fallback ? 1 : 0, path.c_str()) != 0;
@@ -612,7 +611,7 @@ static bool StepInner(Frame const& frame, Dot& dot) {
     RefreshSettings(now);
     float const dt = gLastStepMs == 0 ? 0.0f : static_cast<float>(now - gLastStepMs) / 1000.0f;
     gLastStepMs = now;
-    HWND const window = MELEVR::MevrBridge::GameWindow();
+    HWND const window = mevr::host::renderer::GameWindow();
 
     bool const shown = gQuadMs != 0 && now - gQuadMs < kQuadFreshMs && gQuad.width > 0.0f;
     if (!shown) {
@@ -1007,7 +1006,7 @@ bool GalaxyViewSwapBegin() noexcept {
     // backdrop stage of its own): the view held at Shepard's for the main view's build only.
     gGalaxySwap.active = false;
     auto const scene = mevr::vr::galaxy_holo::Latest(500);
-    if (scene && mevr::vr::galaxy_map::TableView(MELEVR::HeadAim::ReadGameModeSEH(), scene->inWorld != 0 && scene->onFoot == 0,
+    if (scene && mevr::vr::galaxy_map::TableView(mevr::host::renderer::GameMode(), scene->inWorld != 0 && scene->onFoot == 0,
             scene->suspended != 0) && scene->holdRender != 0 && scene->povLocationAddress != 0 &&
             scene->povRotationAddress != 0 && scene->povFovAddress != 0) {
         gGalaxySwap.location = reinterpret_cast<float*>(scene->povLocationAddress);
@@ -1039,7 +1038,7 @@ bool GalaxyViewSwapBegin() noexcept {
         return true;
     }
     auto const ui = mevr::vr::world_ui::Latest(500);
-    if (!mevr::vr::world_ui::ScreenMode(MELEVR::HeadAim::ReadGameModeSEH()) ||
+    if (!mevr::vr::world_ui::ScreenMode(mevr::host::renderer::GameMode()) ||
         !ui || ui->holdRender == 0 || ui->povLocationAddress == 0 || ui->povRotationAddress == 0 || ui->povFovAddress == 0) {
         return false;
     }

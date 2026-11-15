@@ -6,7 +6,7 @@
 #include "core/Log.hpp"
 #include "core/WriteJournal.hpp"
 #include "engine/Addresses.hpp"
-#include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 
 #include <Windows.h>
 
@@ -79,7 +79,7 @@ bool Verified(std::uint32_t rva) {
 bool Install(hook::Context& context) {
     if (gInstalled.load(std::memory_order_acquire)) return true;
     if (GetPrivateProfileIntW(L"Performance", L"motionBlurGuard", 1,
-                             MELEVR::MevrBridge::SettingsPath().c_str()) == 0) {
+                             mevr::host::SettingsPath().c_str()) == 0) {
         log::Info("motion blur guard: disabled at startup for diagnosis");
         return false;
     }

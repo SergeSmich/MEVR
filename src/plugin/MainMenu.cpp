@@ -12,7 +12,6 @@
 #include "plugin/menu/MenuUi.hpp"
 
 #include "halcyon/le1/mevr_bridge.h"
-#include "halcyon/le1/vr_menu.h"
 
 #include "core/Ini.hpp"
 #include "core/Log.hpp"
@@ -24,6 +23,7 @@
 #include "plugin/Colour.hpp"
 #include "plugin/Halcyon.hpp"
 #include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/OmniToolRail.hpp"
 #include "plugin/PerfProbe.hpp"
 #include "plugin/TestLoop.hpp"
@@ -780,7 +780,7 @@ void AfterCommand(After after, Frame const& frame) {
         return;
     case After::Classic:
         SetOpen(false, "the classic renderer menu");
-        MELEVR::Menu::SetOpen(true);
+        mevr::host::renderer::SetOwnMenuOpen(true);
         return;
     case After::Align:
         SetOpen(false, "Align");
@@ -804,7 +804,7 @@ void AfterCommand(After after, Frame const& frame) {
 // True while the controller guide hasn't been shown to this player ([Menu] controlsShown, read once).
 bool FirstRunWanted() {
     if (!gFirstRun.checked) {
-        std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+        std::wstring const& path = mevr::host::SettingsPath();
         if (path.empty()) {
             return false;
         }
@@ -822,7 +822,7 @@ bool FirstRunWanted() {
 void FirstRunShown(char const* why) {
     gFirstRun.done = true;
     gOpenOnGuide = true;
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     bool const wrote = !path.empty() && WritePrivateProfileStringW(L"Menu", L"controlsShown", L"1", path.c_str()) != 0;
     log::Info("main menu: first run: on the controller guide ({}){}", why,
         wrote ? "" : "; [Menu] controlsShown couldn't be written, so it may show again next launch");
@@ -841,7 +841,7 @@ void FirstRunTick(Frame const& frame) {
         return;
     }
     bool const quiet = frame.session != XR_NULL_HANDLE && frame.worldFrame && frame.headValid && frame.gameMode == 0 &&
-        !gOpen.load(std::memory_order_relaxed) && !MELEVR::Menu::IsOpen() && !calibration::Running() &&
+        !gOpen.load(std::memory_order_relaxed) && !mevr::host::renderer::OwnMenuOpen() && !calibration::Running() &&
         !calibration::PromptPending() && calibration::Focused();
     gFirstRun.seconds = quiet ? gFirstRun.seconds + dt : 0.0f;
     if (gFirstRun.seconds >= kFirstRunSeconds) {
@@ -879,8 +879,8 @@ void SetOpen(bool open, char const* why) {
     if (open == gOpen.load()) {
         return;
     }
-    if (open && MELEVR::Menu::IsOpen()) {
-        MELEVR::Menu::SetOpen(false);  // one menu at a time
+    if (open && mevr::host::renderer::OwnMenuOpen()) {
+        mevr::host::renderer::SetOwnMenuOpen(false);  // one menu at a time
     }
     if (open && calibration::Running()) {
         log::Info("main menu: not opened ({}): the calibration runs", why != nullptr ? why : "?");
@@ -955,7 +955,7 @@ void PutGameRequest(vr::game_menu::Action action, vr::game_menu::Origin origin) 
 
 std::filesystem::path AssetsFolder() {
     // As Settings::Assets: [Menu] assets when it holds main.rml, else ASI\menu.
-    std::filesystem::path const file(MELEVR::MevrBridge::SettingsPath());
+    std::filesystem::path const file(mevr::host::SettingsPath());
     wchar_t assets[MAX_PATH]{};
     GetPrivateProfileStringW(L"Menu", L"assets", L"", assets, MAX_PATH, file.c_str());
     std::error_code ec;
@@ -966,7 +966,7 @@ std::filesystem::path AssetsFolder() {
 }
 
 std::filesystem::path FontsFolder() {
-    return std::filesystem::path(MELEVR::MevrBridge::SettingsPath()).parent_path() / L"fonts";
+    return std::filesystem::path(mevr::host::SettingsPath()).parent_path() / L"fonts";
 }
 
 void NotePad(XINPUT_GAMEPAD const& pad) {
@@ -993,7 +993,7 @@ XrCompositionLayerQuad const* Layer(Frame const& frame) {
         return nullptr;  // closed: nothing at all
     }
     auto const start = std::chrono::steady_clock::now();
-    if (MELEVR::Menu::IsOpen()) {
+    if (mevr::host::renderer::OwnMenuOpen()) {
         SetOpen(false, "Halcyon's menu opened");
         return nullptr;
     }

@@ -61,7 +61,7 @@ void Frame(bool session) {
 } // namespace
 
 // Host dependencies: settings, headset classifier, logging and the idle perf probe.
-namespace MELEVR::MevrBridge { std::wstring const& SettingsPath() noexcept { return gSettings; } }
+namespace mevr::host { std::wstring const& SettingsPath() noexcept { return gSettings; } }
 namespace mevr::host::colour { bool StreamedHeadset() { return false; } MenuState GetMenuState() { return {}; } }
 namespace mevr::host::perf {
 void FrameSubmitted(std::int64_t, bool) {}

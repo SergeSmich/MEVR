@@ -8,10 +8,10 @@
 #include "core/vr/Floor.hpp"
 #include "core/vr/MenuPointer.hpp"
 #include "core/vr/TestRequest.hpp"
-#include "halcyon/le1/vr_menu.h"
 #include "plugin/CalibrationDraw.hpp"
 #include "plugin/Halcyon.hpp"
 #include "plugin/MevrMenu.hpp"
+#include "plugin/Renderer.hpp"
 #include "plugin/TestLoop.hpp"
 #include "plugin/Swapchains.hpp"
 
@@ -214,7 +214,7 @@ std::wstring Wide(std::string const& text) {
 }
 
 std::string ReadIni(std::string const& section, char const* key, char const* fallback = "") {
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     if (path.empty()) {
         return fallback;
     }
@@ -237,7 +237,7 @@ std::string ReadIni(std::string const& section, char const* key, char const* fal
 }
 
 void WriteIni(std::string const& section, char const* key, std::string const& value) {
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     if (!path.empty()) {
         WritePrivateProfileStringW(Wide(section).c_str(), Wide(key).c_str(), Wide(value).c_str(), path.c_str());
     }
@@ -369,8 +369,8 @@ bool EnsureGpu(ID3D11Device* device, ID3D11DeviceContext* context) {
     std::string chosen;
     // Rajdhani and Titillium Web (SIL OFL) if dropped into ASI\fonts, else Windows' own.
     std::vector<std::filesystem::path> folders;
-    if (!MELEVR::MevrBridge::SettingsPath().empty()) {
-        folders.push_back(std::filesystem::path(MELEVR::MevrBridge::SettingsPath()).parent_path() / L"fonts");
+    if (!mevr::host::SettingsPath().empty()) {
+        folders.push_back(std::filesystem::path(mevr::host::SettingsPath()).parent_path() / L"fonts");
     }
     gGpu.fonts = draw::LoadFonts(io, folders, chosen);
     bool const ok = ImGui_ImplDX11_Init(device, context);
@@ -1263,7 +1263,7 @@ void Save() {
         return;
     }
     std::string const section = Section(gKey);
-    std::wstring const& path = MELEVR::MevrBridge::SettingsPath();
+    std::wstring const& path = mevr::host::SettingsPath();
     // What this run didn't measure keeps the last calibration's (2026-11-06: a run whose aiming board couldn't be shown saved
     // without the gun stances and erased the player's): its lines, read before the section is cleared, by group.
     std::vector<std::pair<std::wstring, std::wstring>> previous;
@@ -1667,7 +1667,7 @@ unsigned PromptLayers(Frame const& frame, XrCompositionLayerQuad const** out, un
 // ---- Public ---------------------------------------------------------------------------------------------------
 
 bool Active() {
-    return gRunning.load(std::memory_order_relaxed) && !gPaused.load(std::memory_order_relaxed) && !MELEVR::Menu::IsOpen();
+    return gRunning.load(std::memory_order_relaxed) && !gPaused.load(std::memory_order_relaxed) && !mevr::host::renderer::OwnMenuOpen();
 }
 
 bool OwnsTriggers() {
