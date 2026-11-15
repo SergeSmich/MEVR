@@ -12,7 +12,7 @@
 struct ID3D11Texture2D;
 
 // The headset test loop (CLAUDE.md, "Test loop"): lets Claude check VR changes without the player
-// describing what they see. LE1, with Halcyon's renderer in the host.
+// describing what they see. LE1 and LE2, with Halcyon's renderer in the host.
 //
 // Eye snapshots: what each eye shows, saved as PNGs to %LOCALAPPDATA%\MEVR\snapshots\<stamp>-left.png
 // and -right.png (the world with our HUD panel, reticle, squad weapon menu and Halcyon's menu drawn
@@ -39,9 +39,19 @@ struct ID3D11Texture2D;
 //   eyediff.request   [tag=word]   (one paired frame's two D3D11 streams compared, plugin/DrawReplay)
 // %LOCALAPPDATA%\MEVR\testloop.status (JSON, rewritten once a second while it changes) says what is
 // recording or replaying and the last snapshot's JSON.
+//
+// Both of Halcyon's renderers (LE1's and ME2's) give it the same: their session's function slots once resolved
+// (WrapSessionFunctions), each new session, each begun frame (with the controllers) and the game thread's tick. On LE2 the
+// perf.request and eyediff.request files are taken and ignored (the probe and the draw replay are LE1's host only so far).
 namespace mevr::host::testloop {
 
 // ---- Present thread (Halcyon's frame loop) ----------------------------------------------------------
+// The renderer has resolved its session functions (MevrBridge::WrapSessionFunctions, either game): each slot is
+// replaced with our wrapper, the real function kept (xrAcquireSwapchainImage and xrReleaseSwapchainImage: the images for
+// snapshots; xrEndFrame: the layers; xrLocateViews: the head recorded, or a replay's put in its place). A slot already
+// holding our wrapper is left alone.
+void WrapSessionFunctions(void** acquireSwapchainImage, void** releaseSwapchainImage, void** endFrame,
+    void** locateViews) noexcept;
 // A new session: forget every swapchain seen (their handles die with the old session).
 void OnSessionCreated(XrSession session);
 // After xrBeginFrame and the live controller sync, before the sample is published: records the frame,

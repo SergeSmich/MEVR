@@ -480,6 +480,55 @@ its `logs` keep every report):
 LE2 the key is missing, read as LE1's default 5, so ME2 gets it too. Halcyon's ME2 replays its second eye as well
 (`replays=600`), so it may be right there, but nobody decided it: [verify] the characters' shadows in both eyes.
 
+## M2: the host's services on ME2 (lane B, 2026-11-14)
+
+The work list is [the continuation plan](../docs/le2-continuation-plan.md) M2. What each step changed, so the next one (or
+a lane that builds on it) can follow without the conversation that did it.
+
+### Step 1: the test loop on ME2
+
+**What:** `plugin/TestLoop` (eye snapshots, pose recording, replay; CLAUDE.md "Test loop") runs in the LE2 host as in LE1's.
+The same request files and tools (`tools/snapshot.ps1`, `tools/record.ps1`, `tools/replay.ps1`) work on ME2.
+
+**How, file by file:**
+1. `src/halcyon/le2/me2_xr.cpp`, `BringUp` right after `ResolveFunctions()`: a `[MEVR]` call
+   `ME2VR::MevrBridge::WrapSessionFunctions(&g_fn.acquireSwapchainImage, &g_fn.waitSwapchainImage,
+   &g_fn.releaseSwapchainImage, &g_fn.waitFrame, &g_fn.beginFrame, &g_fn.endFrame, &g_fn.locateViews)` (as `void**`). Every
+   upstream call goes through `g_fn`, so the wrappers see each image release, each frame's layers and each located view.
+   Declared in `src/halcyon/le2/mevr_bridge.h`.
+2. `plugin/TestLoop.hpp`: a public `testloop::WrapSessionFunctions(acquire, release, endFrame, locateViews)` holds the
+   wrapping that used to be the body of LE1's `MELEVR::MevrBridge::WrapSessionFunctions` in `TestLoop.cpp`. LE1's seam
+   moved to `plugin/HalcyonBridge.cpp` (it calls the test loop's, then `perf::WrapFrameFunctions` as before, and logs the same
+   line); ME2's is in `plugin/HalcyonLe2Bridge.cpp` (the test loop's only; log `test loop: wrapped Halcyon's ME2 ...`).
+3. `plugin/HalcyonLe2Bridge.cpp`: `OnSessionCreated` calls `testloop::OnSessionCreated`; `OnFrameBegun` syncs the controllers
+   (if their actions exist), then `testloop::OnFrameBegun(session, space, time, focused, state)` (records the live sample or
+   puts a replay's in its place), then publishes, as LE1's bridge does. A replay now drives the controllers even when our
+   actions failed.
+4. `plugin/HalcyonLe2.cpp`: `halcyon_le2::AfterTick(deltaSeconds)` (after the engine tick, `plugin/Entry.cpp`) calls
+   `testloop::Tick` (the End and Home keys, the request files once a second, `testloop.status`).
+5. `plugin/TestLoop.cpp` builds into both hosts. What the LE2 host doesn't link yet is compiled only with
+   `MEVR_WITH_HALCYON` (LE1's Halcyon host): the spectator, our swapchains' budget (`swapchains::AfterEndFrame`), each module's
+   block of the snapshot JSON (`ModuleStatus()`: `null` on LE2), and `perf.request` / `eyediff.request` (taken and ignored on
+   LE2 with a warning). Halcyon's own menu (`"halcyonMenuOpen"`) is asked through the renderer interface,
+   `renderer::OwnMenuOpen()` (`plugin/Renderer.hpp`; LE1 `MELEVR::Menu::IsOpen`, LE2 `ME2VR::Menu::IsOpen`).
+6. `CMakeLists.txt`: the LE2 host's sources gain `plugin/Renderer.hpp`, `plugin/RendererLe2.cpp`, `plugin/TestLoop.*` and what
+   it needs (`core/vr/AimRay`, `HostView`, `ImageConvert`, `LayerComposite`, `PoseRecording`, `TestRequest`, `core/Hotkey`,
+   `core/PngFile`), and links `windowscodecs` (WIC: the PNGs). LE1's Halcyon sources gain `plugin/Renderer.hpp`,
+   `plugin/RendererLe1.cpp`.
+
+**Checked on the fake headset** (session `%LOCALAPPDATA%\MEVR\sessions\20261114-191506-lane-b-testloop`, logs kept there):
+the host logged `test loop: wrapped Halcyon's ME2 xrAcquireSwapchainImage, ...` right before `VR session ready`, and
+`tools/snapshot.ps1` at the title wrote `<stamp>.json` and `<stamp>-quad0.png`: Halcyon's flat menu quad (4096x1152, 2.2 m
+wide, 1.6 m ahead), the title picture in it. At the title there is no projection layer and ME2 locates no views in its app
+space, so the JSON's `head` is invalid and no `-left`/`-right` composites are written (as on LE1's flat panel). The game
+could not be taken into gameplay that run (the desktop was in use: computer use was interrupted), so both eyes in
+gameplay are still to be seen: load Save 4 from the Load menu, then `tools/snapshot.ps1`.
+
+**Using it on ME2:** as on LE1, with the stretch from `tools/le2-halcyon-run` (its build is the hot-reload one, so the request
+files are read). `tools/snapshot.ps1 -Tag x`, `tools/record.ps1 -Seconds N`, `tools/replay.ps1 -Path f -Loop [-Inputs]`.
+Quads ME2's renderer submits are named `quadN` (LE1's are named by `testloop::NameSwapchain` in our own modules; Halcyon's
+menu quad is "menu" through `NoteMenuQuad`, which ME2 has no seam for yet).
+
 ## Native verification after explicit handoff
 
 Use the protected LE2 session workflow and recheck shared ownership, profiles,

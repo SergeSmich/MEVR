@@ -18,4 +18,8 @@ void Attach();
 // (MevrBridge::QueueProcessEvent), on objects still in GObjects.
 void Tick();
 
+// Game thread, after each engine tick: the test loop's keys and request files (plugin/TestLoop), as LE1's
+// halcyon::Tick.
+void AfterTick(float deltaSeconds);
+
 } // namespace mevr::host::halcyon_le2

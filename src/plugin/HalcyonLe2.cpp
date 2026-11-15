@@ -12,6 +12,7 @@
 #include "halcyon/le2/logger.h"
 #include "halcyon/le2/mevr_bridge.h"
 #include "plugin/CrashBreadcrumbs.hpp"
+#include "plugin/TestLoop.hpp"
 
 #include <MinHook.h>
 
@@ -191,6 +192,10 @@ void Tick() {
                   "{} dropped (queue full), {} refused (parameters too big)",
             gQueue.Pushed(), gRun, gSkipped, gFailed, gQueue.Dropped(), gQueue.Refused());
     }
+}
+
+void AfterTick(float deltaSeconds) {
+    testloop::Tick(deltaSeconds);  // snapshot / recording keys and request files, as LE1's halcyon::Tick
 }
 
 } // namespace mevr::host::halcyon_le2
