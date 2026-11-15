@@ -91,7 +91,10 @@ a snapshot in ME2 shows both eyes and the HUD panel.
 Waits for M1 and M2.
 
 1. **Hand aim (M):** `game/HandAim` on LE2 (`GetAdjustedAimFor`), the aim ray to the host, the hand reticle. `HeadAim`
-   stays off. **Check:** a replayed right controller turned 30 degrees: shots land along it (`hand aim: shot N`).
+   stays off. **No camera recoil, from the first shot** (ME1's, the owner: it "wasn't popular"): `game/ViewLevel` holds
+   the view level while the hand aims, and `game/CameraShake` turns ME2's firing shakes off at their source
+   (research/le2-vrik-audit.md "No camera recoil on ME2 either"). **Check:** a replayed right controller turned 30
+   degrees: shots land along it (`hand aim: shot N`), and the view's pitch and roll stay 0 through 20 shots (`view level:`).
 2. **Arms and body (M):** `engine/BonePose` (`UpdateSkelPose`'s LE2 RVA from Ghidra; ME2's bone names [verify]; never
    write `Camera` or `God`), `game/ArmIk`, `BodyFollow`, `BodyScale` and the floor lock, fingers. **Check:** a snapshot with
    replayed hands shows Shepard's hands on the controllers; `mevr camera trace` and `tools/skeleton-audit.py` clean.
@@ -186,3 +189,9 @@ main (`tools/land-on-main.py`) only after `build-trilogy`, `build`, `build-mono`
 2. **Lanes:** **parallel sessions** (the table above).
 3. **The Hammerhead** (M6): **ME1's Mako controls and cockpit**, for now.
 4. **When to ship ME2:** **after M5** (M1-M5 in the first release; M6 after it).
+5. **HDR** (later the same day): ME2 makes a 16-bit float swap chain whenever Windows HDR is on for the monitor, which
+   Halcyon's ME2 renderer can't use (no stereo, no UI treatment). **SDR is the stop gap**: LE2's `[Colour] hdrDisplay =
+   -1` answers the game's display query as SDR, the same 8-bit frame ME1 renders ("If it's cheap to do sdr, then we can do
+   that as a stop gap while you figure out HDR"). The owner wants native HDR ("it looks so much better for VR"): the study
+   and its plan are `research/le2-hdr.md`; the default goes back once HDR works on ME2 with stereo, the UI and at least the
+   SDR frame's quality.
