@@ -16,6 +16,12 @@ namespace ME2VR::MevrBridge
 // ship). Our controller actions must come from the same loader instance.
 void* StaticXrGetInstanceProcAddr() noexcept;
 
+// The session functions are resolved (me2_xr.cpp's ResolveFunctions; each argument is the address of a g_fn slot): we
+// may replace a slot with a wrapper that calls the real function (plugin/TestLoop: the snapshots' image copies, the
+// frame's layers, the head recorded or replayed). As LE1's MevrBridge::WrapSessionFunctions.
+void WrapSessionFunctions(void** acquireSwapchainImage, void** waitSwapchainImage, void** releaseSwapchainImage,
+    void** waitFrame, void** beginFrame, void** endFrame, void** locateViews) noexcept;
+
 // The session and its spaces exist (Present thread): create and attach our controller actions.
 void OnSessionCreated(void* instance, void* session) noexcept;
 

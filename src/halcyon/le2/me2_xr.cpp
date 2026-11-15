@@ -423,6 +423,14 @@ bool BringUp(ID3D11Device* device) noexcept
     XLog("xrCreateInstance: " + FmtXr(r));
     if (!XrSucceeded(r)) return false;
     if (!ResolveFunctions()) return false;
+#if defined(MEVR_ASI)
+    // [MEVR] our test loop (snapshots, pose recording and replay) and later our layers sit in these slots: every call
+    // below goes through g_fn, so the wrappers see each image release, each frame's layers and each located view.
+    ::ME2VR::MevrBridge::WrapSessionFunctions(reinterpret_cast<void**>(&g_fn.acquireSwapchainImage),
+        reinterpret_cast<void**>(&g_fn.waitSwapchainImage), reinterpret_cast<void**>(&g_fn.releaseSwapchainImage),
+        reinterpret_cast<void**>(&g_fn.waitFrame), reinterpret_cast<void**>(&g_fn.beginFrame),
+        reinterpret_cast<void**>(&g_fn.endFrame), reinterpret_cast<void**>(&g_fn.locateViews));
+#endif
     // [LINKFOV] Which runtime is the mod on? Meta's PC runtime (Quest Link / Air Link) composites
     // projection layers assuming ITS OWN per-eye frustum no matter what FOV the mod declares, which shows up
     // as a doubled image; SteamVR does the opposite and rejects any view declared wider than its

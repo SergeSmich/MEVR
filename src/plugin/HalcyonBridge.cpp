@@ -270,6 +270,16 @@ void* StaticXrGetInstanceProcAddr() noexcept {
     return reinterpret_cast<void*>(&xrGetInstanceProcAddr);
 }
 
+void WrapSessionFunctions(void** acquireSwapchainImage, void** waitSwapchainImage, void** releaseSwapchainImage,
+    void** waitFrame, void** beginFrame, void** endFrame, void** locateViews) noexcept {
+    mevr::host::testloop::WrapSessionFunctions(acquireSwapchainImage, releaseSwapchainImage, endFrame, locateViews);
+    // The probe's wrappers go outside ours (its xrEndFrame timing includes a snapshot's work).
+    mevr::host::perf::WrapFrameFunctions(waitSwapchainImage, waitFrame, beginFrame, endFrame);
+    mevr::log::Info("test loop: wrapped Halcyon's xrAcquireSwapchainImage, xrReleaseSwapchainImage, xrEndFrame and "
+                    "xrLocateViews (snapshots, recording, replay), and xrWaitSwapchainImage, xrWaitFrame, xrBeginFrame "
+                    "and xrEndFrame for the frame-breakdown probe");
+}
+
 void OnSessionCreated(void* instance, void* session) noexcept {
     if (gInput.Matches(gTarget)) {
         gInput.Release(gTarget);  // a new session (upstream creates one per process, but be safe)

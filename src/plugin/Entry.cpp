@@ -102,6 +102,9 @@ void GameEngineTickHook(void* self, float deltaSeconds) {
     mevr::host::render_levers::Tick();
     mevr::host::motion_blur_guard::Tick();
 #endif
+#if defined(MEVR_WITH_HALCYON_LE2)
+    mevr::host::halcyon_le2::AfterTick(deltaSeconds);
+#endif
     mevr::host::Tick(deltaSeconds);
     mevr::host::process_event::ReportOffThread();
 #if defined(MEVR_WITH_HALCYON)

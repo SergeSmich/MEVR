@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: MIT
-// The headset test loop: eye snapshots, pose recording and replay (plugin/TestLoop.hpp). Host side,
-// LE1 with Halcyon's renderer. Its one seam in Halcyon's code is MevrBridge::WrapSessionFunctions
-// (src/halcyon/le1/mevr_bridge.h), called from xr_session.cpp's ResolveSessionFunctions.
+// The headset test loop: eye snapshots, pose recording and replay (plugin/TestLoop.hpp). Host side, with Halcyon's
+// renderer: LE1's and ME2's. Its one seam in each renderer is MevrBridge::WrapSessionFunctions (LE1's
+// src/halcyon/le1/mevr_bridge.h, from xr_session.cpp's ResolveSessionFunctions; ME2's src/halcyon/le2/mevr_bridge.h,
+// from me2_xr.cpp's ResolveFunctions), which hands WrapSessionFunctions below the session's function slots.
+//
+// The LE1 host's modules the LE2 host doesn't link yet (the spectator, our swapchains' budget, the frame-breakdown probe,
+// the draw replay and each module's block of a snapshot's JSON) are compiled only with MEVR_WITH_HALCYON: their parts of
+// a snapshot are null on LE2 until they come over (docs/le2-continuation-plan.md M2).
 
 #include "plugin/TestLoop.hpp"
 #include "core/vr/CameraDiagnostic.hpp"
+#include "plugin/Renderer.hpp"
+#if defined(MEVR_WITH_HALCYON)
 #include "plugin/Calibration.hpp"
 #include "plugin/Colour.hpp"
 #include "plugin/DrawReplay.hpp"
@@ -25,9 +32,8 @@
 #include "plugin/Spectator.hpp"
 #include "plugin/Swapchains.hpp"
 #include "plugin/UiWorldFigure.hpp"
-
-#include "halcyon/le1/mevr_bridge.h"
-#include "halcyon/le1/vr_menu.h"
+#include "plugin/FloorLock.hpp"
+#endif
 
 #include "core/DevChannels.hpp"
 #include "core/DiskBudget.hpp"
@@ -36,7 +42,6 @@
 #include "core/PngFile.hpp"
 #include "core/vr/AimRay.hpp"
 #include "core/vr/HostView.hpp"
-#include "plugin/FloorLock.hpp"
 #include "core/vr/ImageConvert.hpp"
 #include "core/vr/LayerComposite.hpp"
 #include "core/vr/PoseRecording.hpp"
@@ -779,6 +784,39 @@ std::string LayersJson(std::vector<LayerShot> const& layers) {
     return out;
 }
 
+// The host modules' own blocks of a snapshot's JSON; "null" for a module this host doesn't link.
+struct ModuleBlocks {
+    std::string recenter = "null", sights = "null", calibration = "null", colour = "null", stereo = "null",
+        floorLock = "null", cineScreen = "null", mainMenu = "null", gamePointer = "null", galaxyHologram = "null",
+        voice = "null", spectator = "null", figure = "null", omniPad = "null", omniRail = "null", swapchains = "null",
+        questPacing = "null";
+};
+ModuleBlocks ModuleStatus() {
+    ModuleBlocks m;
+#if defined(MEVR_WITH_HALCYON)
+    m.recenter = recenter_tilt::StatusJson();
+    m.sights = sight_layers::StatusJson();
+    m.calibration = calibration::StatusJson();
+    m.colour = mevr::host::colour::StatusJson();
+    m.stereo = metric_stereo::StatusJson();
+    m.floorLock = floor_lock::StatusJson();
+    m.cineScreen = mevr::host::cine_screen::StatusJson();
+#if defined(MEVR_WITH_MAIN_MENU)
+    m.mainMenu = main_menu::StatusJson();
+    m.omniPad = omni_pad::StatusJson();
+    m.omniRail = omni_rail::StatusJson();
+#endif
+    m.gamePointer = game_pointer::StatusJson();
+    m.galaxyHologram = galaxy_hologram::StatusJson();
+    m.voice = voice::StatusJson();
+    m.spectator = spectator::StatusJson();
+    m.figure = ui_world_figure::StatusJson();
+    m.swapchains = swapchains::StatusJson();
+    m.questPacing = quest_pacing::StatusJson();
+#endif
+    return m;
+}
+
 std::string MetaJson(std::vector<LayerShot> const& layers, XrTime displayTime, std::string const& trigger) {
     vr::controllers::State const& c = gFrameState;
     auto const cameraSample = vr::camera_diagnostic::gCameraDiagnostic.Latest(GetTickCount64());
@@ -807,6 +845,7 @@ std::string MetaJson(std::vector<LayerShot> const& layers, XrTime displayTime, s
             JFov(gHead[1].fov));
     }
     head += "}";
+    ModuleBlocks const m = ModuleStatus();
     std::string replay = "null";
     if (gReplay != nullptr) {
         replay = std::format("{{\"path\": {}, \"timeS\": {}, \"durationS\": {}, \"loop\": {}, \"inputs\": {}}}",
@@ -824,26 +863,12 @@ std::string MetaJson(std::vector<LayerShot> const& layers, XrTime displayTime, s
         "  \"spectator\": {},\n  \"figure\": {},\n  \"omniPad\": {},\n  \"omniRail\": {},\n  \"swapchains\": {},\n  \"mod\": {},\n"
         "  \"cameraDiagnostic\": {},\n  \"questPacing\": {},\n  \"layers\": [{}\n  ]",
         req::JsonString(trigger), req::JsonString(tag), gFrame, static_cast<long long>(displayTime), UnixMs(), J(gFocused),
-        J(MELEVR::Menu::IsOpen()), J(gRecordingActive.load()), replay, head, J(c.active), JHand(c.left), JHand(c.right),
+        J(renderer::OwnMenuOpen()), J(gRecordingActive.load()), replay, head, J(c.active), JHand(c.left), JHand(c.right),
         J(ray.valid), JVec(ray.origin), JVec(ray.direction), ray.timeMs != 0 ? GetTickCount64() - ray.timeMs : 0,
         J(view.valid), J(view.headLook), J(view.headAim), view.lookYaw, view.lookPitch, J(view.offsetForward),
-        J(view.offsetRight), J(view.offsetUp), J(view.unitsPerMeter), recenter_tilt::StatusJson(), sight_layers::StatusJson(),
-        calibration::StatusJson(), mevr::host::colour::StatusJson(), metric_stereo::StatusJson(),
-        floor_lock::StatusJson(),
-        mevr::host::cine_screen::StatusJson(),
-#if defined(MEVR_WITH_MAIN_MENU)
-        main_menu::StatusJson(),
-#else
-        std::string("null"),
-#endif
-        game_pointer::StatusJson(), galaxy_hologram::StatusJson(), voice::StatusJson(), spectator::StatusJson(),
-        ui_world_figure::StatusJson(),
-#if defined(MEVR_WITH_MAIN_MENU)
-        omni_pad::StatusJson(), omni_rail::StatusJson(),
-#else
-        std::string("null"), std::string("null"),
-#endif
-        swapchains::StatusJson(), mod, cameraDiagnostic, quest_pacing::StatusJson(), LayersJson(layers));
+        J(view.offsetRight), J(view.offsetUp), J(view.unitsPerMeter), m.recenter, m.sights, m.calibration, m.colour, m.stereo,
+        m.floorLock, m.cineScreen, m.mainMenu, m.gamePointer, m.galaxyHologram, m.voice, m.spectator, m.figure, m.omniPad,
+        m.omniRail, m.swapchains, mod, cameraDiagnostic, m.questPacing, LayersJson(layers));
 }
 
 void LocateQuads(std::vector<LayerShot>& layers, XrSpace reference, XrTime displayTime);
@@ -956,6 +981,7 @@ XrSpace ReferenceOf(std::vector<LayerShot> const& layers) {
 // picture staged for a snapshot armed this frame.
 void SpectatorEndFrame(XrFrameEndInfo const& info) {
     gSpectatorStaged = false;
+#if defined(MEVR_WITH_HALCYON)
     std::vector<LayerShot> layers = ParseLayers(info);
     LocateQuads(layers, ReferenceOf(layers), info.displayTime);
     std::vector<XrSwapchain> projection;
@@ -972,6 +998,27 @@ void SpectatorEndFrame(XrFrameEndInfo const& info) {
         StageImage(kSpectatorSwapchain, picture);
         gSpectatorStaged = true;
     }
+#else
+    (void)info;
+#endif
+}
+
+// The spectator camera is wanted (LE1's host only so far).
+bool SpectatorWanted() {
+#if defined(MEVR_WITH_HALCYON)
+    return spectator::Wanted();
+#else
+    return false;
+#endif
+}
+
+void SpectatorImageReleased(XrSwapchain swapchain, ID3D11Texture2D* image) {
+#if defined(MEVR_WITH_HALCYON)
+    spectator::OnImageReleased(swapchain, image);  // research/49: its copy for the spectator's picture
+#else
+    (void)swapchain;
+    (void)image;
+#endif
 }
 
 void OnEndFrameArmed(XrFrameEndInfo const& info) {
@@ -1303,7 +1350,7 @@ XrResult XRAPI_CALL WrappedRelease(XrSwapchain swapchain, XrSwapchainImageReleas
     bool const armed = gArmed.load(std::memory_order_relaxed);
     bool const onPresent = OnPresentThread();
     bool const tapped = onPresent && gTap != nullptr && swapchain == gTapSwapchain;  // both written on that thread
-    bool const spectating = onPresent && spectator::Wanted();
+    bool const spectating = onPresent && SpectatorWanted();
     if ((armed || tapped || spectating) && onPresent) {
         ID3D11Texture2D* const image = ReleasingImage(swapchain);
         if (armed) {
@@ -1313,7 +1360,7 @@ XrResult XRAPI_CALL WrappedRelease(XrSwapchain swapchain, XrSwapchainImageReleas
             gTap(swapchain, image);
         }
         if (spectating) {
-            spectator::OnImageReleased(swapchain, image);  // research/49: its copy for the spectator's picture
+            SpectatorImageReleased(swapchain, image);
         }
     }
     return gRealRelease(swapchain, info);
@@ -1321,7 +1368,7 @@ XrResult XRAPI_CALL WrappedRelease(XrSwapchain swapchain, XrSwapchainImageReleas
 
 XrResult XRAPI_CALL WrappedEndFrame(XrSession session, XrFrameEndInfo const* info) {
     if (info != nullptr && OnPresentThread()) {
-        if (spectator::Wanted()) {
+        if (SpectatorWanted()) {
             SpectatorEndFrame(*info);  // before the snapshot's arming, which may take its picture
         } else {
             gSpectatorStaged = false;
@@ -1331,9 +1378,11 @@ XrResult XRAPI_CALL WrappedEndFrame(XrSession session, XrFrameEndInfo const* inf
         OnEndFrameArmed(*info);
     }
     XrResult const result = gRealEndFrame(session, info);
+#if defined(MEVR_WITH_HALCYON)
     if (info != nullptr && OnPresentThread()) {
         swapchains::AfterEndFrame(*info);  // which of ours were shown; room for refused creates (plugin/Swapchains)
     }
+#endif
     return result;
 }
 
@@ -1462,6 +1511,7 @@ void PollRequests() {
             }
         }
     }
+#if defined(MEVR_WITH_HALCYON)
     if (TakeRequest(BaseDir() / L"perf.request", text)) {
         req::Request const r = req::Parse(text);
         double const seconds = r.Number("seconds", 20.0);
@@ -1475,6 +1525,14 @@ void PollRequests() {
         log::Info("test loop: eyediff.request: the next paired scene render's streams compared (plugin/DrawReplay)");
         mevr::host::draw_replay::RequestDiff(r.Get("tag"));
     }
+#else
+    for (wchar_t const* name : {L"perf.request", L"eyediff.request"}) {
+        if (TakeRequest(BaseDir() / name, text)) {
+            log::Warn("test loop: {} ignored: the frame-breakdown probe and the draw replay are LE1's host only so far",
+                Narrow(name));
+        }
+    }
+#endif
 }
 
 std::string StatusJson(Status const& s) {
@@ -1585,8 +1643,8 @@ void OnImageWritten(XrSwapchain swapchain, ID3D11Texture2D* image) {
     if (gArmed.load(std::memory_order_relaxed) && OnPresentThread()) {
         StageImage(swapchain, image);
     }
-    if (spectator::Wanted() && OnPresentThread()) {
-        spectator::OnImageReleased(swapchain, image);  // research/49
+    if (SpectatorWanted() && OnPresentThread()) {
+        SpectatorImageReleased(swapchain, image);  // research/49
     }
 }
 
@@ -1766,13 +1824,8 @@ void SetModStatus(char const* json) {
     gModStatusMs = GetTickCount64();
 }
 
-} // namespace mevr::host::testloop
-
-namespace MELEVR::MevrBridge {
-
-void WrapSessionFunctions(void** acquireSwapchainImage, void** waitSwapchainImage, void** releaseSwapchainImage,
-    void** waitFrame, void** beginFrame, void** endFrame, void** locateViews) noexcept {
-    using namespace mevr::host::testloop;
+void WrapSessionFunctions(void** acquireSwapchainImage, void** releaseSwapchainImage, void** endFrame,
+    void** locateViews) noexcept {
     // Re-resolving hands us the real functions again; never wrap a wrapper.
     auto wrap = [](void** slot, auto& real, auto wrapper) {
         if (slot == nullptr || *slot == nullptr || *slot == reinterpret_cast<void*>(wrapper)) {
@@ -1785,11 +1838,6 @@ void WrapSessionFunctions(void** acquireSwapchainImage, void** waitSwapchainImag
     wrap(releaseSwapchainImage, gRealRelease, &WrappedRelease);
     wrap(endFrame, gRealEndFrame, &WrappedEndFrame);
     wrap(locateViews, gRealLocateViews, &WrappedLocateViews);
-    // The probe's wrappers go outside ours (its xrEndFrame timing includes a snapshot's work).
-    mevr::host::perf::WrapFrameFunctions(waitSwapchainImage, waitFrame, beginFrame, endFrame);
-    mevr::log::Info("test loop: wrapped Halcyon's xrAcquireSwapchainImage, xrReleaseSwapchainImage, xrEndFrame and "
-                    "xrLocateViews (snapshots, recording, replay), and xrWaitSwapchainImage, xrWaitFrame, xrBeginFrame "
-                    "and xrEndFrame for the frame-breakdown probe");
 }
 
-} // namespace MELEVR::MevrBridge
+} // namespace mevr::host::testloop

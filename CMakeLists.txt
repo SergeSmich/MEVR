@@ -784,6 +784,8 @@ set(MEVR_HALCYON_HOST_SOURCES
     src/game/GamepadMapping.cpp
     src/game/GamepadMapping.hpp
     src/halcyon/le1/mevr_bridge.h
+    src/plugin/Renderer.hpp
+    src/plugin/RendererLe1.cpp
     src/plugin/Calibration.cpp
     src/plugin/Calibration.hpp
     src/plugin/Colour.cpp
@@ -921,7 +923,14 @@ function(mevr_add_plugin game)
         set(with_halcyon_le2 ON)
         list(APPEND host_sources src/plugin/HalcyonLe2.cpp src/plugin/HalcyonLe2.hpp src/plugin/HalcyonLe2Bridge.cpp
             src/halcyon/le2/mevr_bridge.h src/core/CallQueue.hpp src/game/GamepadMapping.cpp src/game/GamepadMapping.hpp
-            src/core/vr/Controllers.cpp src/core/vr/Controllers.hpp src/core/xr/Input.cpp src/core/xr/Input.hpp)
+            src/core/vr/Controllers.cpp src/core/vr/Controllers.hpp src/core/xr/Input.cpp src/core/xr/Input.hpp
+            src/plugin/Renderer.hpp src/plugin/RendererLe2.cpp
+            # The test loop (plugin/TestLoop: snapshots, pose recording and replay) and what it needs.
+            src/plugin/TestLoop.cpp src/plugin/TestLoop.hpp src/core/vr/AimRay.cpp src/core/vr/AimRay.hpp
+            src/core/vr/HostView.cpp src/core/vr/HostView.hpp src/core/vr/ImageConvert.cpp src/core/vr/ImageConvert.hpp
+            src/core/vr/LayerComposite.cpp src/core/vr/LayerComposite.hpp src/core/vr/PoseRecording.cpp
+            src/core/vr/PoseRecording.hpp src/core/vr/TestRequest.cpp src/core/vr/TestRequest.hpp src/core/Hotkey.cpp
+            src/core/Hotkey.hpp src/core/PngFile.cpp src/core/PngFile.hpp)
     endif ()
     if (MEVR_HALCYON AND game STREQUAL "LE1")
         set(with_halcyon ON)
@@ -967,7 +976,8 @@ function(mevr_add_plugin game)
         target_compile_definitions(${host} PRIVATE MEVR_WITH_HALCYON)
     endif ()
     if (with_halcyon_le2)
-        target_link_libraries(${host} PRIVATE halcyon-le2 OpenXR::openxr_loader)
+        # windowscodecs: WIC, the test loop's PNG snapshots (plugin/TestLoop).
+        target_link_libraries(${host} PRIVATE halcyon-le2 OpenXR::openxr_loader windowscodecs)
         target_compile_definitions(${host} PRIVATE MEVR_WITH_HALCYON_LE2)
     endif ()
     if (MEVR_LE2_DIAGNOSTIC AND game STREQUAL "LE2")

@@ -10,6 +10,7 @@
 #include "core/vr/Controllers.hpp"
 #include "core/xr/Input.hpp"
 #include "game/GamepadMapping.hpp"
+#include "plugin/TestLoop.hpp"
 
 #include <openxr/openxr.h>
 
@@ -36,6 +37,16 @@ void* StaticXrGetInstanceProcAddr() noexcept {
     return reinterpret_cast<void*>(&xrGetInstanceProcAddr);
 }
 
+void WrapSessionFunctions(void** acquireSwapchainImage, void** waitSwapchainImage, void** releaseSwapchainImage,
+    void** waitFrame, void** beginFrame, void** endFrame, void** locateViews) noexcept {
+    (void)waitSwapchainImage;  // the frame-breakdown probe's (plugin/PerfProbe): LE1's host only so far
+    (void)waitFrame;
+    (void)beginFrame;
+    mevr::host::testloop::WrapSessionFunctions(acquireSwapchainImage, releaseSwapchainImage, endFrame, locateViews);
+    mevr::log::Info("test loop: wrapped Halcyon's ME2 xrAcquireSwapchainImage, xrReleaseSwapchainImage, xrEndFrame and "
+                    "xrLocateViews (snapshots, recording, replay)");
+}
+
 void OnSessionCreated(void* instance, void* session) noexcept {
     if (gInput.Matches(gTarget)) {
         gInput.Release(gTarget);  // a new session (upstream makes one per process, but be safe)
@@ -44,6 +55,7 @@ void OnSessionCreated(void* instance, void* session) noexcept {
     gTarget.session = static_cast<XrSession>(session);
     ++gTarget.instanceGeneration;
     ++gTarget.sessionGeneration;
+    mevr::host::testloop::OnSessionCreated(gTarget.session);
     gInputFailed = !gInput.Create(gTarget);
     if (gInputFailed) {
         mevr::log::Error("halcyon le2 bridge: controller actions failed; motion controllers unavailable");
@@ -53,14 +65,22 @@ void OnSessionCreated(void* instance, void* session) noexcept {
 }
 
 void OnFrameBegun(void* session, void* space, std::int64_t predictedDisplayTime) noexcept {
-    if (gInputFailed || session == nullptr || static_cast<XrSession>(session) != gTarget.session) {
+    if (session == nullptr || static_cast<XrSession>(session) != gTarget.session) {
         return;
     }
     gTarget.base = static_cast<XrSpace>(space);  // recentering replaces it
     mevr::vr::controllers::State state;
-    gInput.Sync(gTarget, static_cast<XrTime>(predictedDisplayTime), state);
+    if (!gInputFailed) {
+        gInput.Sync(gTarget, static_cast<XrTime>(predictedDisplayTime), state);
+    }
+    // The test loop records the live sample, or replaces it with a recording's (plugin/TestLoop), as on LE1.
+    mevr::host::testloop::OnFrameBegun(static_cast<XrSession>(session), static_cast<XrSpace>(space),
+        static_cast<XrTime>(predictedDisplayTime), !gInputFailed && gInput.Focused(), state);
+    if (gInputFailed && !state.active) {
+        return;  // no controllers, and no replay standing in for them
+    }
     mevr::vr::controllers::Publish(state);
-    if (!gToldFirstSync) {
+    if (!gInputFailed && !gToldFirstSync) {
         gToldFirstSync = true;
         mevr::log::Info("halcyon le2 bridge: first controller sync (session {}focused)", gInput.Focused() ? "" : "not ");
     }
