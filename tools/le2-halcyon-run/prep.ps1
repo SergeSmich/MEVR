@@ -22,7 +22,7 @@ $docs = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'BioWare\Mass Ef
 $current = Join-Path $env:LOCALAPPDATA 'MEVR\sessions\le2-current.json'
 
 if (Get-Process MassEffect1, MassEffect2, MassEffect3, MassEffectLauncher -ErrorAction SilentlyContinue) {
-    throw 'a game or its launcher runs: close it first (launch.ps1 -Kill closes ME2)'
+    throw 'a game or its launcher runs: close it first (launch.ps1 -Stop closes ME2)'
 }
 & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\run-lock.ps1" -Take -Holder $Holder -Note "ME2 Halcyon runs ($Tag)"
 if ($LASTEXITCODE -ne 0) { throw 'the run lock is not ours' }
