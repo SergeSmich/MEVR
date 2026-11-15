@@ -1573,6 +1573,12 @@ if (MEVR_BUILD_TESTS)
     # The loader too: mevr-tests installs the bink2w64.dll built next to it into its fake game.
     add_custom_target(mevr-test-programs)
     add_dependencies(mevr-test-programs mevr-tests mevr-colour-preview mevr-upscale-preview MEVR-Loader mevr-fake-game mevr-fake-mem)
+    # The LE2 tests' programs (above): CI and package-release build only this target, so a test whose program isn't
+    # listed here is "Not Run" there, and the Python tests that call one fail.
+    add_dependencies(mevr-test-programs
+        mevr-le2-string-output-tests mevr-le2-process-event-witness-tests mevr-le2-process-event-diagnostic-tests
+        mevr-le2-console-input-tests mevr-le2-console-lifetime-tests mevr-le2-control-codec-tests mevr-le2-control-host-tests
+        mevr-le2-diagnostic-tests le2-diagnostic-pad-tests le2-diagnostic-bridge-tests le2-input-control-tests)
     if (MEVR_MAIN_MENU)
         add_dependencies(mevr-test-programs MEVR-Setup)
     endif ()
