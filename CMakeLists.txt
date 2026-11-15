@@ -929,6 +929,10 @@ function(mevr_add_plugin game)
             src/plugin/Renderer.hpp src/plugin/RendererLe2.cpp
             # The game's float swap chain drawn into the eye images (plugin/EyeCopy over core/d3d11/Blit).
             src/plugin/EyeCopy.cpp src/plugin/EyeCopy.hpp src/core/d3d11/Blit.cpp src/core/d3d11/Blit.hpp
+            # Our layers at xrEndFrame (MevrBridge::OverlayLayers): the swapchain budget and the modules that run on LE2.
+            src/plugin/Swapchains.cpp src/plugin/Swapchains.hpp
+            src/core/vr/SwapchainBudget.hpp src/plugin/Vignette.cpp src/plugin/Vignette.hpp src/core/vr/Comfort.cpp
+            src/core/vr/Comfort.hpp
             # Our actions, vibration and the floor on Halcyon's session (plugin/XrHost, as LE1's).
             src/plugin/XrHost.cpp src/plugin/XrHost.hpp src/core/vr/Haptics.cpp src/core/vr/Haptics.hpp src/core/xr/Floor.cpp
             src/core/xr/Floor.hpp src/core/vr/Floor.hpp

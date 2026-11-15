@@ -2636,11 +2636,44 @@ void RunFrame() noexcept
         }
     }
 
-    const XrCompositionLayerBaseHeader* layers[4] = {};
+    const XrCompositionLayerBaseHeader* layers[4 + 12] = {};   // [MEVR] + our quads
     uint32_t layerCount = 0;
     if (rendered)   layers[layerCount++] = reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer);
     if (haveMono)   layers[layerCount++] = reinterpret_cast<XrCompositionLayerBaseHeader*>(&monoQuad);
     if (haveGameUi) layers[layerCount++] = reinterpret_cast<XrCompositionLayerBaseHeader*>(&gameUiQuad);
+#if defined(MEVR_ASI)
+    {
+        // [MEVR] our layers (LE1's OverlayLayers): over Halcyon's world and panels, under its Insert menu
+        ::ME2VR::MevrBridge::OverlayFrame mevrFrame;
+        mevrFrame.session = g_session;
+        mevrFrame.appSpace = g_localSpace;
+        mevrFrame.viewSpace = g_viewSpace;
+        mevrFrame.context = g_ctx;
+        mevrFrame.worldFrame = rendered && !flatPresentation;
+        mevrFrame.menuOpen = ME2VR::Menu::IsOpen();
+        mevrFrame.gameMode = gmRaw;
+        mevrFrame.projectionValid = rendered;
+        for (int e = 0; e < 2 && rendered; ++e)
+        {
+            const XrCompositionLayerProjectionView& pv = projViews[e];
+            mevrFrame.projectionSwapchain[e] = pv.subImage.swapchain;
+            mevrFrame.projectionRect[e][0] = pv.subImage.imageRect.offset.x;
+            mevrFrame.projectionRect[e][1] = pv.subImage.imageRect.offset.y;
+            mevrFrame.projectionRect[e][2] = pv.subImage.imageRect.extent.width;
+            mevrFrame.projectionRect[e][3] = pv.subImage.imageRect.extent.height;
+            mevrFrame.projectionOrientation[e][0] = pv.pose.orientation.x; mevrFrame.projectionOrientation[e][1] = pv.pose.orientation.y;
+            mevrFrame.projectionOrientation[e][2] = pv.pose.orientation.z; mevrFrame.projectionOrientation[e][3] = pv.pose.orientation.w;
+            mevrFrame.projectionPosition[e][0] = pv.pose.position.x; mevrFrame.projectionPosition[e][1] = pv.pose.position.y;
+            mevrFrame.projectionPosition[e][2] = pv.pose.position.z;
+            mevrFrame.projectionFov[e][0] = pv.fov.angleLeft; mevrFrame.projectionFov[e][1] = pv.fov.angleRight;
+            mevrFrame.projectionFov[e][2] = pv.fov.angleUp; mevrFrame.projectionFov[e][3] = pv.fov.angleDown;
+        }
+        const void* mevrQuads[12] = {};
+        const unsigned mevrQuadCount = ::ME2VR::MevrBridge::OverlayLayers(mevrFrame, mevrQuads, 12);
+        for (unsigned i = 0; i < mevrQuadCount && layerCount < 4 + 12 - 1; ++i)   // room for the menu
+            layers[layerCount++] = static_cast<const XrCompositionLayerBaseHeader*>(mevrQuads[i]);
+    }
+#endif
     if (haveUi)     layers[layerCount++] = reinterpret_cast<XrCompositionLayerBaseHeader*>(&uiQuad);
 
     XrFrameEndInfo fei = {};

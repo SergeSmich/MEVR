@@ -13,7 +13,9 @@
 #include "game/GamepadMapping.hpp"
 #include "plugin/EyeCopy.hpp"
 #include "plugin/Renderer.hpp"
+#include "plugin/Swapchains.hpp"
 #include "plugin/TestLoop.hpp"
+#include "plugin/Vignette.hpp"
 #include "plugin/XrHost.hpp"
 
 #include <openxr/openxr.h>
@@ -54,6 +56,7 @@ void WrapSessionFunctions(void** acquireSwapchainImage, void** waitSwapchainImag
 
 void OnSessionCreated(void* instance, void* session) noexcept {
     mevr::host::testloop::OnSessionCreated(static_cast<XrSession>(session));
+    mevr::host::swapchains::OnSessionCreated(static_cast<XrSession>(session));  // ours went with the old session
     mevr::host::eye_copy::Reset();
     if (mevr::host::xr_host::OnSessionCreated(static_cast<XrInstance>(instance), static_cast<XrSession>(session))) {
         mevr::log::Info("halcyon le2 bridge: our controller actions are attached to Halcyon's session");
@@ -247,6 +250,37 @@ void OnSwapChainPresent(void* swapChain, void* capturedSwapChain) noexcept {
         described ? static_cast<int>(desc.BufferDesc.Format) : 0, described ? desc.BufferCount : 0,
         described ? static_cast<int>(desc.SwapEffect) : -1,
         described ? reinterpret_cast<std::uintptr_t>(desc.OutputWindow) : 0, described ? "" : " (no description)");
+}
+
+// ---- Our layers (LE1's HalcyonOverlays::OverlayLayers) ------------------------------------------------------------------
+// The host modules that run on LE2 so far, each the same module LE1's host composes (no copies): the comfort vignette
+// (plugin/Vignette). The rest of LE1's list (the HUD panel, the reticle, the sights, the squad menu and wheel, labels, HUD
+// pieces, the calibration, our main menu, the omni-tool) comes over module by module (docs/le2-continuation-plan.md M2-M4).
+unsigned OverlayLayers(const OverlayFrame& frame, const void** layersOut, unsigned capacity) noexcept {
+    if (layersOut == nullptr || capacity == 0 || frame.session == nullptr || frame.context == nullptr) {
+        return 0;
+    }
+    unsigned count = 0;
+    ID3D11Device* device = nullptr;
+    frame.context->GetDevice(&device);
+    // The comfort vignette (research/31): head-locked, under all of ours.
+    {
+        mevr::host::vignette::Frame vignette;
+        vignette.session = static_cast<XrSession>(frame.session);
+        vignette.context = frame.context;
+        vignette.device = device;
+        vignette.worldFrame = frame.worldFrame;
+        vignette.menuOpen = frame.menuOpen;
+        vignette.fovValid = frame.projectionValid;
+        std::memcpy(vignette.fov, frame.projectionFov, sizeof vignette.fov);
+        if (XrCompositionLayerQuad const* layer = mevr::host::vignette::Layer(vignette)) {
+            layersOut[count++] = layer;
+        }
+    }
+    if (device != nullptr) {
+        device->Release();
+    }
+    return count;
 }
 
 // ---- The display's HDR answer (IDXGIOutput6::GetDesc1) ---------------------------------------------------------------

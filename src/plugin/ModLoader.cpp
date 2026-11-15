@@ -17,6 +17,7 @@
 #include "core/vr/Floor.hpp"
 #include "core/vr/HostView.hpp"
 #include "plugin/TestLoop.hpp"
+#include "plugin/Vignette.hpp"
 #include "plugin/XrHost.hpp"
 #endif
 #if defined(MEVR_WITH_HALCYON)
@@ -46,7 +47,6 @@
 #include "plugin/Halcyon.hpp"
 #include "plugin/MotionBlurGuard.hpp"
 #include "plugin/TestLoop.hpp"
-#include "plugin/Vignette.hpp"
 #include "plugin/Voice.hpp"
 #include "plugin/WorldUi.hpp"
 #include "plugin/VoiceModel.hpp"
@@ -171,12 +171,21 @@ HostServices WithRenderer(HostServices services) {
     services.floor = &HostFloor;
     return services;
 }
+// v17: the comfort vignette's darkness (plugin/Vignette, a quad of ours on either renderer).
+void HostSetVignette(float amount) {
+    vignette::SetTarget(amount);
+}
+HostServices WithVignette(HostServices services) {
+    services.setVignette = &HostSetVignette;
+    return services;
+}
 // Forgetting what the mod set in the renderer's services: hand aim off (the renderer's own aim back), no aim ray, no
-// vibration.
+// vibration, the vignette faded out.
 void ForgetRendererModState() {
     renderer::SetModHandAim(false);
     vr::aim_ray::Reset();
     xr_host::ForgetHaptics();
+    vignette::Forget();
 }
 #endif
 
@@ -222,9 +231,6 @@ std::uint32_t HostMainMenu() {
 #else
     return 0;
 #endif
-}
-void HostSetVignette(float amount) {
-    vignette::SetTarget(amount);
 }
 // v19: our main menu's Game menu and Holster buttons, done by the mod on the game thread (game/GameMenuRequest).
 std::uint32_t HostTakeGameMenuRequest() {
@@ -434,8 +440,8 @@ HostServices WithPowerWheel(HostServices services) {
 #endif
     return services;
 }
-// LE1's host modules' own services (the pad mapping's grips, the squad menu, the sights, the calibration, our main menu,
-// the vignette): LE1's host only until the modules come over to LE2 (M3, M4).
+// LE1's host modules' own services (the pad mapping's grips, the squad menu, the sights, the calibration, our main
+// menu): LE1's host only until the modules come over to LE2 (M3, M4).
 HostServices WithLe1Modules(HostServices services) {
     services.setSupportGrip = &HostSetSupportGrip;
     services.supportGripHeld = &HostSupportGripHeld;
@@ -451,7 +457,6 @@ HostServices WithLe1Modules(HostServices services) {
     services.calibrationStateSize = static_cast<std::uint32_t>(sizeof(vr::calibration::HostState));
     services.calibration = &HostCalibration;
     services.mainMenu = &HostMainMenu;
-    services.setVignette = &HostSetVignette;
     return services;
 }
 // A mod that's gone can't aim: the squad menu and the wheel panel settings go, the pad mapping forgets the two-handed grip
@@ -470,7 +475,6 @@ void ForgetLe1ModState() {
     vr::spectator::Reset();      // the desktop window gets Halcyon's mirror back
     world_ui::Forget();         // the game's screens and pending ownership go back to Halcyon's panel
     halcyon::ForgetSupportGrip();
-    vignette::Forget();
 }
 #endif
 
@@ -480,7 +484,7 @@ void ForgetLe1ModState() {
 HostServices BuildServices() {
     HostServices services = WithCrashBreadcrumbs(BaseServices());
 #if defined(MEVR_WITH_HALCYON) || defined(MEVR_WITH_HALCYON_LE2)
-    services = WithRenderer(services);
+    services = WithVignette(WithRenderer(services));  // the host modules both renderers have
 #endif
 #if defined(MEVR_WITH_HALCYON)
     services = WithVoice(WithPowerWheel(WithWorldUi(WithGalaxyHologram(WithGalaxyMap(WithSpectator(WithMakoControls(

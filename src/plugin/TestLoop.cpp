@@ -4,13 +4,14 @@
 // src/halcyon/le1/mevr_bridge.h, from xr_session.cpp's ResolveSessionFunctions; ME2's src/halcyon/le2/mevr_bridge.h,
 // from me2_xr.cpp's ResolveFunctions), which hands WrapSessionFunctions below the session's function slots.
 //
-// The LE1 host's modules the LE2 host doesn't link yet (the spectator, our swapchains' budget, the frame-breakdown probe,
-// the draw replay and each module's block of a snapshot's JSON) are compiled only with MEVR_WITH_HALCYON: their parts of
-// a snapshot are null on LE2 until they come over (docs/le2-continuation-plan.md M2).
+// The LE1 host's modules the LE2 host doesn't link yet (the spectator, the frame-breakdown probe, the draw replay and
+// each module's block of a snapshot's JSON) are compiled only with MEVR_WITH_HALCYON: their parts of a snapshot are null
+// on LE2 until they come over (docs/le2-continuation-plan.md M2). Our swapchains' budget (plugin/Swapchains) is in both.
 
 #include "plugin/TestLoop.hpp"
 #include "core/vr/CameraDiagnostic.hpp"
 #include "plugin/Renderer.hpp"
+#include "plugin/Swapchains.hpp"
 #if defined(MEVR_WITH_HALCYON)
 #include "plugin/Calibration.hpp"
 #include "plugin/Colour.hpp"
@@ -30,7 +31,6 @@
 #include "plugin/RecenterTilt.hpp"
 #include "plugin/SightLayers.hpp"
 #include "plugin/Spectator.hpp"
-#include "plugin/Swapchains.hpp"
 #include "plugin/UiWorldFigure.hpp"
 #include "plugin/FloorLock.hpp"
 #endif
@@ -811,9 +811,9 @@ ModuleBlocks ModuleStatus() {
     m.voice = voice::StatusJson();
     m.spectator = spectator::StatusJson();
     m.figure = ui_world_figure::StatusJson();
-    m.swapchains = swapchains::StatusJson();
     m.questPacing = quest_pacing::StatusJson();
 #endif
+    m.swapchains = swapchains::StatusJson();  // both Halcyon hosts
     return m;
 }
 
@@ -1401,11 +1401,9 @@ XrResult XRAPI_CALL WrappedEndFrame(XrSession session, XrFrameEndInfo const* inf
         OnEndFrameArmed(*info);
     }
     XrResult const result = gRealEndFrame(session, info);
-#if defined(MEVR_WITH_HALCYON)
     if (info != nullptr && OnPresentThread()) {
         swapchains::AfterEndFrame(*info);  // which of ours were shown; room for refused creates (plugin/Swapchains)
     }
-#endif
     return result;
 }
 
