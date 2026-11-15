@@ -82,13 +82,24 @@ guard, executes transition 2425 and reaches normal `SFXSeqAct_SaveGame`.
 The nearby conversation entry also toggles saving. Exact save placement and
 reload entry point still need native verification.
 
-Acquisition handoff, without changing existing story flags:
+### Acquisition from the owner's Freedom's Progress Save 4
 
-1. Use the existing protected session workflow with a separate normal new-game
-   progression. Preserve its ProCer reload checkpoint first.
-2. Continue normally through the opening and Freedom's Progress to the Veetor
-   encounter. Keep combat/traversal and conversation choices game-owned; do not
-   load the late Normandy save into this map.
+Use the untouched [Save 4 fixture](le2-validation-evidence.md#freedoms-progress-save-4-pistol-baseline-2026-11-14-utc)
+to start the normal route on Freedom's Progress. The pinned Trilogy Save Editor
+oracle checked the manual save, autosave and chapter save in the same career.
+All three decoded as `BioP_ProFre` near the same starting coordinates with valid
+CRCs and byte-identical round trips. Armor tutorial completion `1933`, heavy
+mech defeated `1981`, Veetor autosave guard `2431` and Renegade outcome `5021`
+are clear in all three. Save 4 records `BioD_ProFre_501Veetor` as unloaded and
+hidden. These are consistent with an early acquisition start. The loads and
+plot values supply no nearer, immediately replayable interrupt checkpoint.
+
+Acquisition handoff through normal progression:
+
+1. Prepare the existing byte-identical Save 4 plan in an exclusive protected
+   run. Keep the live owner's career untouched through verified restoration.
+2. From the closed door at Save 4's starting scene, advance normally through
+   Freedom's Progress to Veetor. Use game-owned combat, traversal and dialogue.
 3. Preserve the naturally written autosave when the authored route runs, plus
    a manual pre-conversation save if the normal Save menu allows it. Use the
    existing file collector, strict reader and TSE oracle to pin the actual

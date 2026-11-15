@@ -53,6 +53,52 @@ oracle verified all six save/recipe/receipt triples. The private batch is in
 is `76445c3926e4779018d7e4744b01be73047319e937dec0f8904e1c10fd99bbac`.
 Native starting-state and gameplay checks for the edited saves are pending.
 
+### Protected run plans for the next game window
+
+All six unique cases have private `native-plans/<case>.plan.json` files under
+`le2-freedoms-progress-save4`. Each pins its save, recipe, receipt and scenario.
+File preflight passed for all six with four protected roots. Start with partial,
+no reserve and exact reserve to cover a normal transfer, a refusal and a
+transfer that consumes the last reserve rounds.
+
+| Case | Expected at load, magazine / reserve | Expected after one normal reload |
+| --- | --- | --- |
+| `partial` | 10 / 60 | 12 / 58 |
+| `no-reserve` | 10 / 0 | 10 / 0 |
+| `exact-reserve` | 10 / 2 | 12 / 0 |
+| `insufficient-reserve` | 10 / 1 | 11 / 0 |
+| `empty` | 0 / 60 | 12 / 48 if no automatic reload occurred before sampling |
+| `full-magazine` | 12 / 60 | 12 / 60 |
+
+1. Follow the [protected session workflow](../tools/qa-le2/README.md) for one
+   isolated case at a time. Open Load Game with the diagnostic and record a
+   **fresh** `observe-save-menu` response and a run-bound menu capture while
+   the staged slot is visible. Select the ordinary menu row in the first run.
+   The previously archived run establishes the scene but lacks a matched
+   descriptor/capture pair. Have a reviewer bind that pair, target and exact
+   staged hash before adding `fixtureSelection` to a fresh plan. Follow the
+   [fixture-load contract](../tools/qa-le2/control.md#reviewed-frozen-fixture-loading)
+   for the subsequent scripted load. Confirm a unique candidate before dispatch
+   and verify the actual scene and weapon after loading.
+2. Export `observe-resources` as `start` and `observe-weapon` as `start-weapon`.
+   Use `scenario.py check-start … --observation start-weapon …` with both
+   correlated exports. This checks map, probes, the heavy pistol's class,
+   capacity, used and loaded count, stored and source-derived effective
+   reserve, and finite ammo. A weapon-only export can return exit 2 because
+   it has no map or resource observations. Its output is still usable in the
+   combined check when the fields required for its slot are available. The
+   combined check passed against the original run's archived resource and
+   first weapon exports using the full-magazine starting assertions. That check
+   did not exercise any prepared variant or create a new session.
+3. Attempt one normal reload after the before sample, then capture the settled
+   after sample. Record any automatic reload before the first sample, especially
+   with an empty magazine. Keep input, scene and state evidence, then close the
+   owned process and verify restoration before staging another case.
+
+The next scanning run can reuse the existing [one-probe and zero-probe plans](le2-scanning-readiness.md#immediate-acquisition-sequence).
+Both passed fresh file preflight. Follow normal travel from the Normandy Crew
+Deck to the CIC and Zanethu before sampling a probe action.
+
 ## Offline dialogue recorder, 2026-11-14 UTC
 
 Follow-up candidate `5190e3dd` adds the opt-in
