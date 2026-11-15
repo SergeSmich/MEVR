@@ -50,9 +50,16 @@ Waits for nothing. Runs beside M2 (different files: `src/engine`, `src/ue3`).
 3. `ue3::memory` for LE2 (GMalloc's alloc and free by pattern), so `OwnedString`, `FreeString` and the console work.
 4. LE2 rows in `engine/Addresses.hpp` (patterns from `tools/rva-patterns.py`) and in `engine/ReflectCheck`.
 5. Move `engine/Legacy`'s LE2 reads and the diagnostic observers onto `ue3` handles, one ReflectCheck row each.
+6. **A save loaded by script** (the owner, 2026-11-14: no computer use for driving the game), once the console works:
+   `tools/le2-halcyon-run/load.ps1` reaches a save's gameplay without the Load menu. Take LE1's route (the career's
+   quicksave rewritten, the console's `QuickLoad`) if ME2's console has it [verify], else the route `tools/qa-le2`'s
+   scripted `load-fixture` takes in the diagnostic host (research/le2-validation-evidence.md "Scripted loading"). Never
+   overwrite a save the owner made.
 
 **Check:** an LE2 development build logs `reflect: N of N checks agree`; `PlayerController.ConsoleCommand` through
-`ue3::runtime::Call` returns its text; ctest `mevr-rva-table` holds for LE2.
+`ue3::runtime::Call` returns its text (`tools/console.ps1` works on ME2); ctest `mevr-rva-table` holds for LE2;
+`load.ps1` reaches Freedom's Progress gameplay from the VR Shepard career's Save 4, and `restore.ps1` finds the owner's
+saves unchanged.
 
 ### M2. The host's services on ME2 (L)
 
@@ -168,8 +175,10 @@ coordinated by the session that wrote this plan.
 **One game run at a time on this machine** (every lane, the validation session, the owner): `tools/le2-halcyon-run`'s
 `run-lock.ps1` names who runs the game; its `prep.ps1` takes the lock and backs up saves and settings once at the start
 of a stretch of runs, its `restore.ps1` puts them back once at the end and releases it; take the lock by hand around an
-LE1 run. A game running with the lock free is someone else's: leave it and wait. Every milestone lands on main
-(`tools/land-on-main.py`) only after `build-trilogy`, `build`, `build-mono` and ctest pass; the owner pushes.
+LE1 run. A game running with the lock free is someone else's: leave it and wait. **Runs are driven by script only, no
+computer use** (the owner, 2026-11-14): launch, saves (`load.ps1`, M1.6), the console, the test loop's requests and
+replays with `-Inputs`; a check that needs what no script reaches yet waits for the script. Every milestone lands on
+main (`tools/land-on-main.py`) only after `build-trilogy`, `build`, `build-mono` and ctest pass; the owner pushes.
 
 ## The owner's answers (2026-11-14)
 
