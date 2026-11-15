@@ -8,8 +8,12 @@
 
 namespace mevr::ue3 {
 
+bool detail::Resolvable(Reach reach) {
+    return reach == Reach::EveryGame ? runtime::Up() : runtime::Ready();
+}
+
 Class* ClassRef::Get() {
-    if (!tried_ && runtime::Ready()) {
+    if (!tried_ && detail::Resolvable(reach_)) {
         tried_ = true;
         cls_ = runtime::Get().FindClass(path_);
         runtime::FlushNotes();
@@ -21,7 +25,7 @@ Class* ClassRef::Get() {
 }
 
 Function* FunctionRef::Get() {
-    if (!tried_ && runtime::Ready()) {
+    if (!tried_ && detail::Resolvable(reach_)) {
         tried_ = true;
         function_ = runtime::Get().FindFunction(path_);
         runtime::FlushNotes();
@@ -33,7 +37,7 @@ Function* FunctionRef::Get() {
 }
 
 PropertyInfo const* FieldRef::Get() {
-    if (!tried_ && runtime::Ready()) {
+    if (!tried_ && detail::Resolvable(Reaches())) {
         Reflection& r = runtime::Get();
         Struct const* owner = nullptr;
         if (outer_ != nullptr) {

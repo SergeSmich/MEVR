@@ -70,8 +70,8 @@ inline constexpr FrameOffsets kFrame{0x14, 0x1C, 0x24, 0x34, 0x2C};
 // ---- our reflection layer (ue3/, research/34) ----------------------------------------------------
 
 // Where the reflection fields are. LE1's come from our Ghidra reading of 2.0.0.48602 (research/34
-// section 2). LE2 and LE3 aren't analysed yet: the layer stays off there and the modules using it
-// stand down (they are LE1-only today).
+// section 2), LE2's from the same reading of ME2's exe (research/le2-engine-access-discovery.md "M1: what ME2's code
+// showed"). LE3 isn't analysed yet: the layer stays off there and the modules using it stand down.
 inline std::optional<ue3::Layout> ReflectionLayout() {
 #if defined(MEVR_GAME_LE1)
     ue3::Layout l;
@@ -109,10 +109,59 @@ inline std::optional<ue3::Layout> ReflectionLayout() {
     l.nameChars = 0x0C;
     l.nameWideFlag = 0x40000000;
     return l;
+#elif defined(MEVR_GAME_LE2)
+    // ME2 (MassEffect2.exe 2.0.0.48602): LE1's layout but for UFunction (8 bytes earlier: its UStruct is 8 bytes shorter)
+    // and ProcessEvent's vtable slot. Each from the native that uses it (RVAs of ME2's exe):
+    ue3::Layout l;
+    // UObject: index (~UObject 0x104F80 clears GObjects[index]; execIsA 0xC7860's "<uninitialized>" test), flags
+    // (IsPendingKill 0x9B080: bit 61 of the uint64 at +0xC), outer and name (GetPathName 0x10C3D0), class (execIsA).
+    l.objectIndex = 0x08;
+    l.objectFlags = 0x0C;
+    l.objectOuter = 0x40;
+    l.objectName = 0x48;
+    l.objectClass = 0x50;
+    l.pendingKillFlag = 1ull << 61;
+    l.processEventSlot = 0x240;  // ProcessEvent (0xD8D50) sits at +0x240 of UObject's vtable (0xFB6BF0) and its subclasses'
+    // UField: execIsA walks the class chain at +0x60; ProcessEvent walks a function's fields at +0x68.
+    l.fieldSuper = 0x60;
+    l.fieldNext = 0x68;
+    // UStruct: ProcessEvent's first field (+0x70) and frame size (+0x78).
+    l.structChildren = 0x70;
+    l.structPropertySize = 0x78;
+    // UProperty: ProcessEvent's parameter loops (ArrayDim, ElementSize, PropertyFlags, Offset).
+    l.propertyArrayDim = 0x70;
+    l.propertyElementSize = 0x74;
+    l.propertyFlags = 0x78;
+    l.propertyOffset = 0x94;
+    l.propertyTyped = 0xD0;  // execLetBool (0xCDA20): BoolProperty's mask and ArrayProperty's inner here
+    // UFunction: ProcessEvent tests the flags (0x400 native) and iNative (0, or it returns), copies ParmsSize bytes and
+    // calls Func with the return value's place at ReturnValueOffset.
+    l.functionFlags = 0xD0;
+    l.functionNative = 0xD4;
+    l.functionParmsSize = 0xE2;
+    l.functionReturnOffset = 0xE4;
+    l.functionFunc = 0xF0;
+    // Name entries: FName::AppendString (0x75820) and the entry's text (0x74620: at +0xC, UTF-16 when bit 30 is set).
+    l.namePoolShift = 29;
+    l.namePoolMask = 7;
+    l.nameOffsetMask = 0x1FFFFFFF;
+    l.nameChars = 0x0C;
+    l.nameWideFlag = 0x40000000;
+    return l;
 #else
     return std::nullopt;
 #endif
 }
+
+// Whether this game's ME1 modules use the reflection layer once it is up (ue3::runtime::Ready). LE1: all of them. LE2:
+// the layer is proven there (docs/le2-continuation-plan.md M1), but each ME1 module is ported to ME2 on its own (M3, M6),
+// so until it is, it stands down as it did before LE2 had a layout. Engine access (the self-check, the console, the
+// world's path, head tracking's reads) asks ue3::runtime::Up() and declares its handles ue3::kEveryGame.
+#if defined(MEVR_GAME_LE1)
+inline constexpr bool kModulesOnLayer = true;
+#else
+inline constexpr bool kModulesOnLayer = false;
+#endif
 
 // Where the layer finds the engine's globals: an RVA (fast; right for 2.0.0.48602) and a byte
 // pattern of code that references the global (survives a patch that moves it). Each pattern names
@@ -141,6 +190,17 @@ inline std::optional<ReflectionGlobals> ReflectionGlobalsForGame() {
     g.namePoolsRva = addresses::kNamePools;
     g.namePoolCount = 8;
     // FName::AppendString, where it loads the pool array before splitting the index (research/34).
+    g.namePoolsPattern = {"48 8D 15 ?? ?? ?? ?? 48 C1 F8 1D 81 E1 FF FF FF 1F 83 E0 07 48 03 0C C2", 0, 3, 7};
+    g.processEventRva = addresses::kProcessEvent;
+    return g;
+#elif defined(MEVR_GAME_LE2)
+    // LE1's two patterns match ME2's exe too: ~UObject's load of GObjects (one match, at 0x104FC3) and AppendString's load
+    // of the pools before the index split (33 matches, all naming 0x1668A10).
+    ReflectionGlobals g;
+    g.objectsRva = addresses::kGObjects;
+    g.objectsPattern = {"48 63 4B 08 48 8B 05 ?? ?? ?? ?? 48 C7 04 C8 00 00 00 00 48 8D 53 08 48 8D 0D", 4, 3, 7};
+    g.namePoolsRva = addresses::kNamePools;
+    g.namePoolCount = 8;
     g.namePoolsPattern = {"48 8D 15 ?? ?? ?? ?? 48 C1 F8 1D 81 E1 FF FF FF 1F 83 E0 07 48 03 0C C2", 0, 3, 7};
     g.processEventRva = addresses::kProcessEvent;
     return g;
@@ -184,6 +244,20 @@ inline std::optional<AllocatorGlobals> AllocatorGlobalsForGame() {
     g.free = {addresses::kAppFree,
         "48 89 5C 24 08 57 48 83 EC 20 48 8B F9 8B DA 48 8B 0D ?? ?? ?? ?? 48 85 C9 75 0C E8 ?? ?? ?? ?? "
         "48 8B 0D ?? ?? ?? ?? 48 8B 01 44 8B C3 48 8B D7 48 8B 5C 24 30 48 83 C4 20 5F 48 FF 60 20",
+        0x0F};
+    g.gmallocRva = addresses::kGMalloc;
+    return g;
+#elif defined(MEVR_GAME_LE2)
+    // ME2: appMalloc (0x9C900) is LE1's byte for byte; appFree (0x9C8C0) is LE1's but for its last instruction: GMalloc's
+    // Free is its vtable's +0x18 there (LE1's +0x20). Both take LE1's parameters (size, alignment, flags; pointer, flags).
+    AllocatorGlobals g;
+    g.malloc = {addresses::kAppMalloc,
+        "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 8B F1 41 8B D8 48 8B 0D ?? ?? ?? ?? 8B FA 48 85 C9 75 0C "
+        "E8 ?? ?? ?? ?? 48 8B 0D ?? ?? ?? ?? 48 8B 01 44 8B CB 44 8B C7 8B D6",
+        0x14};
+    g.free = {addresses::kAppFree,
+        "48 89 5C 24 08 57 48 83 EC 20 48 8B F9 8B DA 48 8B 0D ?? ?? ?? ?? 48 85 C9 75 0C E8 ?? ?? ?? ?? "
+        "48 8B 0D ?? ?? ?? ?? 48 8B 01 44 8B C3 48 8B D7 48 8B 5C 24 30 48 83 C4 20 5F 48 FF 60 18",
         0x0F};
     g.gmallocRva = addresses::kGMalloc;
     return g;

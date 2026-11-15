@@ -52,8 +52,6 @@ constexpr char const* kEnginePawnStartTrace = "Engine.Pawn.GetWeaponStartTraceLo
 // A shot whose start is within this of the muzzle started there (Unreal units).
 constexpr double kAtMuzzleUnits = 1.0;
 
-ue3::FunctionRef gAimForFn{kGetAdjustedAimFor};
-ue3::FieldRef gAimForReturn{gAimForFn, "ReturnValue"};
 ue3::FunctionRef gWeaponAimFn{kWeaponGetAdjustedAim};
 ue3::FieldRef gStartFireLoc{gWeaponAimFn, "StartFireLoc"};
 ue3::FunctionRef gPawnStartTraceFn{kPawnStartTrace};
@@ -61,20 +59,37 @@ ue3::FunctionRef gEnginePawnStartTraceFn{kEnginePawnStartTrace};
 // Both functions' ReturnValue (the self-check compares them: the same place in both blocks).
 ue3::FieldRef gPawnStartReturn{gPawnStartTraceFn, "ReturnValue"};
 ue3::FieldRef gEnginePawnStartReturn{gEnginePawnStartTraceFn, "ReturnValue"};
+#endif
 
+// The aim query: our reflection layer on LE1 and LE2 (research/34; LE2 since M1, docs/le2-continuation-plan.md), LExSDKv2
+// (engine/Legacy) on LE3 and on LE2 while its layer is off.
+#if defined(MEVR_GAME_LE1) || defined(MEVR_GAME_LE2)
+ue3::FunctionRef gAimForFn{kGetAdjustedAimFor, ue3::kEveryGame};
+ue3::FieldRef gAimForReturn{gAimForFn, "ReturnValue"};
+
+#if defined(MEVR_GAME_LE2)
+#define MEVR_OR_LEGACY(call)     if (!ue3::runtime::Up()) {         return engine::legacy::call;     }
+#else
+#define MEVR_OR_LEGACY(call)
+#endif
 ue3::Function* FindAimFor() {
+    MEVR_OR_LEGACY(FindFunction(kGetAdjustedAimFor))
     return gAimForFn.Get();
 }
 ue3::Object* LocalController() {
+    MEVR_OR_LEGACY(LocalPlayerController())
     return player::Controller();
 }
 std::optional<ue3::Vector> PawnLocation(ue3::Object const* controller) {
+    MEVR_OR_LEGACY(PawnLocation(controller))
     ue3::Object* const pawn = player::Pawn(controller);
     return pawn != nullptr ? player::Location(pawn) : std::nullopt;
 }
 ue3::Rotator* AimForReturn(void* parms) {
+    MEVR_OR_LEGACY(AdjustedAimReturn(parms))
     return gAimForReturn.In<ue3::Rotator>(parms);
 }
+#undef MEVR_OR_LEGACY
 #else
 ue3::Function* FindAimFor() {
     return engine::legacy::FindFunction(kGetAdjustedAimFor);

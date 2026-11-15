@@ -1,6 +1,10 @@
 <!-- SPDX-License-Identifier: MIT -->
 # LE2 engine access: bounded P1 discovery
 
+**Since 2026-11-14 (M1 of [the continuation plan](../docs/le2-continuation-plan.md)) the layout is read from ME2's code:
+[M1: what ME2's code showed](#m1-what-me2s-code-showed) at the end of this note.** The sections before it are the
+SDK-only discovery of 2026-11-13; its candidate offsets turned out right.
+
 Date: 2026-11-13. Owner: engine discovery worker. Base: `b5811bf52378a5d7d7e019821d1b538b5734b41c`. **Offline source inspection only; no LE2 runtime, call, travel or headset proof.** No game launch, deployment, profile/save edit, request file or lock change was performed. ME1 testing remains owned by its current operator; elapsed time does not authorize a native run.
 
 The smallest useful implementation is **P1a: validated, game-thread, read-only player/world/weapon observation**, followed by **P1b: one scalar getter call**. Do not turn on the entire LE1 feature set just because a new LE2 reflection layout resolves. LE2 already has an SDK-backed compatibility path, but the shared reflection layer and its checks are disabled. The SDK declares materially different UFunction offsets and a different ProcessEvent vtable slot. Copying LE1's layout would be unsafe.
@@ -118,3 +122,151 @@ First run order: start with observer disabled → enable only layout/name/object
 Stop conditions: unknown ProcessEvent target, incomplete class/field/parameter validation, off-thread script call, invalid pointer chain, stale context surviving a load, unexplained ammo values or exception. Preserve diagnostic evidence and restore through the session owner. Do not promote P1's completion until live checks, one legal call and unload/load behavior are recorded. This report is ready for implementation planning; native, VR, headset and release gates remain open.
 
 Discovery checks: five successful read-only package inspections and the negative selector noted above; SDK core-file hash comparison; all ten relative document links resolve; `git diff --check` clean. No new validator was added: the existing synthetic reflection tests are the right extension point, and a declaration-only checker would not close the runtime blocker.
+
+
+## M1: what ME2's code showed
+
+Date: 2026-11-14, lane A of [the continuation plan](../docs/le2-continuation-plan.md) (M1). Clean room as research/34
+section 2: every offset below is read from the ME2 native that uses it, in our Ghidra project over ME2's decrypted
+`.text`; LExSDKv2 is only the run-time reference the self-check compares with. ME2's exe: `MassEffect2.exe`
+2.0.0.48602, PE timestamp `0x60AEEFA5`, image base `0x140000000`. All RVAs are of that exe.
+
+### How to reproduce it (a weaker model can follow this)
+
+1. The dump: `%LOCALAPPDATA%\MEVR\dump\MassEffect-60AEEFA5.text.bin` (the host writes it at attach, `engine/CodeDump`;
+   `MassEffect-60AEEFA5.txt` says `text_rva=0x1000`, `text_size=0xFA6271`, one start another ASI patched: `0xAEF10`).
+2. In a worktree: the submodules are junctions to the main checkout's (`New-Item -ItemType Junction` for
+   `external\LExSDKv2`, `OpenXR-SDK`, `RmlUi`, `freetype`; `git submodule update` refuses the local `file` transport), and
+   `local-tools\splice_text.py` is copied from the main checkout (it is never published).
+3. `powershell -File tools\ghidra\setup.ps1 -Game LE2 [-Force]` (about 10 minutes: splice, import, analysis, seeding from
+   `tools/ghidra/symbols-le2.csv`). Project `%LOCALAPPDATA%\MEVR\ghidra\LE2.gpr`, program `/MassEffect2.exe`. One Ghidra
+   process per project at a time (the LE1 project is separate).
+4. `tools\ghidra\decompile.ps1 -Game LE2 <rva> ...` prints the C. To find ME2's copy of an LE1 function, take the LE1
+   function's first 16-40 bytes from `MassEffect-60AEEFA2.text.bin` (LE1's dump) and search ME2's dump for them: the
+   engine's core is the same compiled code, so most core functions match on their first 16-24 bytes (execIsA, IsPendingKill,
+   GetPathName, AppendString and execLetBool were found that way, then decompiled to confirm).
+5. Patterns for `engine/Addresses.hpp`: `python -I tools/rva-patterns.py <ME2 dump> --exe <MassEffect2.exe>
+   name=0xRVA:function|data|end ...` (prints a pattern unique in ME2's `.text`; takes a few minutes for a dozen).
+
+### The layout (engine/GameAdapter.hpp `ReflectionLayout()` for `MEVR_GAME_LE2`)
+
+| Field | ME2 | LE1 | Read in (ME2 RVA) |
+|---|---|---|---|
+| UObject index | +0x08 | same | `UObject::~UObject` 0x104F80 (clears `GObjects[index]`); `execIsA` 0xC7860 (`<uninitialized>` when -1) |
+| UObject flags, PendingKill | +0x0C (uint64), bit 61 | same | `UObject::IsPendingKill` 0x9B080: `(*(u64*)(this+0xC) >> 0x3D) & 1` |
+| Outer, Name | +0x40, +0x48 | same | `UObject::GetPathName` 0x10C3D0 |
+| Class | +0x50 | same | `execIsA` 0xC7860; ProcessEvent reads a property's class's ClassFlags at class +0x134 |
+| UField SuperField / Next | +0x60 / +0x68 | same | `execIsA` walks the class chain at +0x60; ProcessEvent walks parameters at +0x68 |
+| UStruct Children / PropertySize | +0x70 / +0x78 | same | `UObject::ProcessEvent` 0xD8D50: first field, the frame it allocas |
+| UStruct Script (TArray data) | +0x7C | same | ProcessEvent's frame Code (`*(u8**)(fn+0x7C)`): plugin/CrashBreadcrumbs' `structScript` holds for ME2 |
+| UProperty ArrayDim / ElementSize / PropertyFlags / Offset | +0x70 / +0x74 / +0x78 (u64) / +0x94 | same | ProcessEvent's two parameter loops (`& 0x480 == 0x80` Parm not Return; bit 8 OutParm; 0x10 OptionalParm) |
+| Typed property field | +0xD0 | same | `UObject::execLetBool` 0xCDA20: BoolProperty's mask and ArrayProperty's inner |
+| UFunction FunctionFlags | **+0xD0** | +0xD8 | ProcessEvent: `& 0x402`, `& 0x400` (native), `& 0x404000` |
+| UFunction iNative | **+0xD4** (u16) | +0xDC | ProcessEvent returns unless `*(short*)(fn+0xD4) == 0` |
+| UFunction ParmsSize / ReturnValueOffset | **+0xE2 / +0xE4** (u16) | +0xEA / +0xEC | ProcessEvent: copies ParmsSize bytes in, zeroes the rest; result at block + ReturnValueOffset |
+| UFunction Func | **+0xF0** | +0xF8 | ProcessEvent calls it |
+| ProcessEvent's vtable slot | **+0x240** | +0x250 | ProcessEvent 0xD8D50 is at +0x240 of 20 vtables (UObject's 0xFB6BF0 + 0x240, ...) |
+| Name index split | pool `(i >> 29) & 7`, offset `i & 0x1FFFFFFF` | same | `FName::AppendString` 0x75820, `FName ==` 0x744D0 |
+| Name entry text | +0xC, UTF-16 if header bit 30 (`0x40000000`) | same | entry compare 0x74620 (`puVar2 + 3`), entry text 0x75780 |
+| FFrame Object / Code | +0x1C / +0x24 | same | `execLetBool` and `execIsA` (engine/GameAdapter's `kFrame` for LE1 and LE2) |
+
+So ME2's UStruct is 8 bytes shorter than LE1's (UFunction's own fields start 8 bytes earlier); everything before it is
+LE1's. The SDK-only candidates in "Candidate layout facts" above were all right.
+
+### Globals and the allocator (engine/Addresses.hpp `le2`, engine/GameAdapter.hpp)
+
+| Global | RVA | How our code finds it | Pattern in `engine/Addresses.hpp` (unique in ME2's `.text`) |
+|---|---|---|---|
+| GObjects | 0x173CC48 | LE1's `~UObject` pattern (`ReflectionGlobalsForGame`) matches once, at 0x104FBF | data site 0x9B24B `C9 74 5B EB F0 4C 8B 05 ?? ?? ?? ?? 4B 8B 04 06` |
+| Name pools | 0x1668A10 | LE1's AppendString pattern matches 33 times, all naming 0x1668A10 | data site 0x7450B `74 2B 48 8B D8 48 8D 15 ?? ?? ?? ?? 48 C1 F8 1D` |
+| GMalloc | 0x1682378 | the loads in appMalloc (+0x14) and appFree (+0xF) | data site 0x96B03 `48 85 DB 74 2A 48 8B 0D ?? ?? ?? ?? 48 85 C9 75` (LE1's pattern) |
+| GNatives | 0x16A99B0 | the research diagnostics (`NativesTableRva`) | data site 0xAEF81 `74 13 0F B7 C0 48 8D 0D ?? ?? ?? ?? 48 8B 04 C1` (LE1's pattern) |
+| appMalloc | 0x9C900 | LE1's whole-function pattern, byte for byte; GMalloc vtable +0x8 (size, alignment, flags) | the same bytes |
+| appFree | 0x9C8C0 | LE1's pattern with its last instruction `48 FF 60 18`: **GMalloc's Free is vtable +0x18 in ME2** (LE1 +0x20) | the same bytes |
+
+The four data RVAs equal LExSDKv2's LE2 `BUILTIN_*_RVA` (the self-check's `rva` rows compare them at run time). The hook
+functions got patterns too (ProcessEvent 0xD8D50, CallFunction 0xD6770, UGameEngine::Tick 0x546980,
+ULocalPlayer::CalcSceneView 0x6CEB70, FViewportClient::Draw 0x6D0A00); `tests/ExeTests.cpp` `TestAgainstLe2Dump` checks
+every LE2 entry against the dump when it is on the machine.
+
+### What turned on, and what didn't (ue3/Runtime, ue3/Handles)
+
+- `ue3::runtime::Up()` (new): the layer is found and checked. `Ready()` is now `Up()` and
+  `engine::adapter::kModulesOnLayer` (LE1 true, LE2 false). **Every ME1 module keeps asking `Ready()`, so on ME2 it stands
+  down exactly as before** ("ME2 continues ME1" ports them one by one: lane C's M3 and M6, not this milestone). The log says
+  `reflect: engine access only on this game: the ME1 modules not yet ported to it stand down`.
+- Handles (`ClassRef`, `FunctionRef`, `FieldRef`) take a reach: by default they resolve only where `Ready()`; declared
+  `ue3::kEveryGame` they resolve wherever `Up()`. A struct member's or a parameter's handle reaches as far as its outer
+  field or its function. **To port a module to ME2:** make its `Ready()` checks `Up()` (or drop an `#if
+  defined(MEVR_GAME_LE1)`), declare its handles `kEveryGame`, add a ReflectCheck row per class, field, function and
+  parameter it resolves (the LE2 tables in `engine/ReflectCheck.cpp`), and check the row agrees in the game.
+- Moved off engine/Legacy onto the layer for LE2 (each with LExSDKv2 as the fallback while the layer is off, and Legacy
+  still LE3's): the script-package gate (`Mod.cpp ScriptPackagesLoaded`), `engine::World()`/`ObjectCount()`, the console
+  request (`PlayerController.ConsoleCommand` through `ue3::runtime::Call`, an `OwnedString` in, the returned FString freed
+  with `FreeString`), head tracking's reads (UpdateCamera, GetPlayerViewPoint, GetFOVAngle and their parameters, the
+  controller, its game mode, the camera's owner and FOV), hand aim's aim query (`GetAdjustedAimFor`'s ReturnValue, the
+  pawn's location) and the reflection fix (our renderer only). game/Player's handles behind them are `kEveryGame`:
+  `Engine.PlayerController`, `SFXGame.BioPlayerController`, `Controller.Pawn`, `BioPlayerController.GameModeManager2`,
+  `SFXGameModeManager.CurrentMode`, `Camera.PCOwner`, `Camera.CameraCache` (and its POV), `Actor.Location`.
+- engine/NativesDump works on ME2 (`[Debug] dumpNatives = 1` or `MEVR_DUMP_NATIVES=1`): its CSV seeds the LE2 Ghidra
+  project with every native's name (`seed.ps1 -Game LE2`).
+- The host's crash breadcrumbs (`plugin/CrashBreadcrumbs`) read `ReflectionLayout()` too: on ME2 they now name objects and
+  script frames.
+
+### The self-check on ME2 (engine/ReflectCheck, `reflect: N of M checks agree`)
+
+LE1's generic rows run unchanged (layout 22, globals 8, `rva` 7 and one `exe` row per LE2 table entry, types 5, samples:
+names, full names, IsA and IsAlive, engine strings); LE2's own tables replace LE1's: 30 classes (Core's reflection classes,
+the engine's actor/controller/camera/engine/world classes, BioPlayerController, SFXGameModeManager, the game modes, BioPawn,
+SFXPawn_Player, BioWorldInfo, SFXWeapon), 18 fields (everything above plus `Pawn.Weapon` and SFXWeapon's
+`AmmoUsedCount`, `CurrentSpareAmmo`, `MagSize`, `bEarlyReload`: the P1a observer's first reads for lane C), 8 paths
+(CameraCache.POV and its members, `SFXWeapon.MagSize.Value`, GamePlayers' element), 8 functions and their 18 parameter
+rows (ConsoleCommand, GetPlayerViewPoint, GetFOVAngle, GetAdjustedAimFor, SetFrameRate, SetRotation, GetMagazineSize).
+The skeleton rows stay LE1's (ME2's bones are M3's). Output: the log line and `%LOCALAPPDATA%\MEVR\reflect-check.json`.
+
+### In the game (fake headset, 2026-11-14 19:30, ME2's title screen)
+
+`tools/le2-halcyon-run` (`prep.ps1 -Holder me2-lane-a`, `launch.ps1`, `restore.ps1`; session
+`%LOCALAPPDATA%\MEVR\sessions\20261114-192935-m1-reflect`, the run's `LE2MEVR.log` moved aside there):
+
+- `exe (mod): 12 of 12 addresses at their RVAs (10 by their bytes, 1 hooked by another module, 1 by structure only)`.
+- `reflect: ready: 109336 objects (GObjects by rva, names by rva), ProcessEvent at RVA 0xD8D50`, the allocator by its RVAs,
+  then **`reflect: 140 of 140 checks agree (48 ms)`**: layout 22, globals 8, rva 7, exe 12, types 5, classes 30, fields 18,
+  paths 8, functions 8, params 11, parms 7, samples 4. The `GNatives` row reads entry 0x14 as 0xCDA20 (execLetBool, as
+  found in Ghidra); the local player controller is `SFXPlayerController entrymenu.TheWorld.PersistentLevel.
+  SFXPlayerController_0`, the engine `SFXEngine Transient.SFXEngine_0`, the world `World entrymenu.TheWorld` (WorldInfo's
+  outer World, equal to GWorld). A hot reload of the mod (a rebuild) ran the check again: 140 of 140.
+- Head tracking started through our layer (`head tracking ready (...UpdateCamera, ...GetPlayerViewPoint, ...GetFOVAngle)`);
+  the ME1 modules stood down as before M1 (`squad context: our reflection layer is off`, the world UI's and conversation
+  module's handles not found).
+- The console request through `ue3::runtime::Call`: `scale set FoliageDrawRadiusMultiplier 0.5` reached the engine (the game
+  rewrote `BIOEngine.ini` at the same millisecond, as it does after every `scale set`). **ME2's engine commands return no
+  text**: `getall`, `get`, `obj list`, `obj gc`, `help` and an unknown word all came back empty, as LE1's engine commands do
+  (only our own `mevr ...` lines print on LE1). ME2's native (`execConsoleCommand` 0x4B1470) copies whatever the actor's
+  virtual +0x2C0 returns into the FString ReturnValue; these commands write to the log, not to that string. The string
+  path itself (an `OwnedString` in, the returned FString freed through `FreeString`) is the self-check's `engine strings`
+  row, which agrees: one heap with LExSDKv2's GMalloc both ways.
+- `[Debug] dumpNatives = 1` wrote `%LOCALAPPDATA%\MEVR\dump\natives-LE2-60AEEFA5.csv` (4,453 natives, local research data);
+  `seed.ps1 -Game LE2` named 4,568 functions in the LE2 Ghidra project with it. Lanes B and C can ask for any native by
+  name now (`decompile.ps1 -Game LE2 -Search <name>`).
+
+### Addresses for the next lanes (candidates, [verify] before a hook)
+
+Found the same way (LE1's first bytes searched in ME2's dump, or a native that calls it), not yet hooked or checked in the
+game; `tools/ghidra/symbols-le2.csv` has them with a `_guess` suffix:
+
+| LE1 function (RVA) | ME2 candidate | Evidence |
+|---|---|---|
+| `USkeletalMeshComponent::UpdateSkelPose` (0x592440) | **0x79B8A0** | `execForceSkelUpdate` (0x77D750, from the natives dump) calls it as `(this, 0, 1)`, as LE1's does; the same prologue (`48 8B C4 44 89 40 18 55 56 57 41 54 41 55 41 56 41 57`), a smaller frame |
+| `USkeletalMeshComponent::UpdateBounds` (0x58EEC0) | 0x798350 | LE1's first 24 bytes, one match |
+| `FName::FName(const TCHAR*, EFindName)` (0xD1150) | 0x72BD0 | LE1's first 24 bytes, one match; ProcessEvent calls it with `L"<uninitialized>", 1` |
+| `AActor::MoveWithInterpMoveTrack` (0x4B75F0) | 0x6B9C50 | LE1's first 32 bytes, one match |
+| `FISACTSoundSource::Update` (0x7BA90) | not found | LE1's first 16 bytes match four functions |
+
+### Left after M1
+
+- The LE2 diagnostic observers (`engine/Le2DiagnosticObservation.cpp` and its `.inc` files, the `MEVR_LE2_DIAGNOSTIC`
+  build only, about 4,000 lines, the ME2 validation session's) still read through LExSDKv2. Each read they make needs a
+  `kEveryGame` handle and a ReflectCheck row (the weapon's are in the table already).
+- engine/Legacy stays: LE3's only path, LE2's fallback. M7.1 (the players' build without LExSDKv2 for LE2) removes the
+  fallback once the observers are moved.

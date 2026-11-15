@@ -16,16 +16,28 @@
 
 namespace mevr::ue3 {
 
+// Where a handle resolves. By default only where this game's ME1 modules use the layer (runtime::Ready(): LE1), so a
+// module not yet ported to LE2 finds nothing there and stands down; kEveryGame wherever the layer is up (runtime::Up()):
+// engine access and the modules ported to every game (docs/le2-continuation-plan.md M1). A struct member's or a
+// parameter's handle reaches as far as its outer field's or its function's.
+enum class Reach : std::uint8_t { Modules, EveryGame };
+inline constexpr Reach kEveryGame = Reach::EveryGame;
+
+namespace detail {
+bool Resolvable(Reach reach);
+}
+
 // A class by "Package.Name".
 class ClassRef {
 public:
-    explicit constexpr ClassRef(char const* path) : path_(path) {}
+    explicit constexpr ClassRef(char const* path, Reach reach = Reach::Modules) : path_(path), reach_(reach) {}
     Class* Get();
     char const* Path() const { return path_; }
     void Reset() { cls_ = nullptr, tried_ = false; }
 
 private:
     char const* path_;
+    Reach reach_;
     Class* cls_ = nullptr;
     bool tried_ = false;
 };
@@ -33,13 +45,15 @@ private:
 // A function declared on exactly that class: "Engine.Actor.SetRotation".
 class FunctionRef {
 public:
-    explicit constexpr FunctionRef(char const* path) : path_(path) {}
+    explicit constexpr FunctionRef(char const* path, Reach reach = Reach::Modules) : path_(path), reach_(reach) {}
     Function* Get();
     char const* Path() const { return path_; }
+    Reach Reaches() const { return reach_; }
     void Reset() { function_ = nullptr, tried_ = false; }
 
 private:
     char const* path_;
+    Reach reach_;
     Function* function_ = nullptr;
     bool tried_ = false;
 };
@@ -60,12 +74,15 @@ struct Elements {
 // a function (`FieldRef{gGetFovAngle, "ReturnValue"}`: In<float>(parms) inside a hook's block).
 class FieldRef {
 public:
-    constexpr FieldRef(char const* classPath, char const* name) : classPath_(classPath), name_(name) {}
+    constexpr FieldRef(char const* classPath, char const* name, Reach reach = Reach::Modules)
+        : classPath_(classPath), name_(name), reach_(reach) {}
     constexpr FieldRef(FieldRef& outer, char const* name) : outer_(&outer), name_(name) {}
     constexpr FieldRef(FunctionRef& function, char const* name) : function_(&function), name_(name) {}
 
     PropertyInfo const* Get();
     char const* Name() const { return name_; }
+    // How far it resolves: its own reach, or its outer field's or function's.
+    Reach Reaches() const { return outer_ != nullptr ? outer_->Reaches() : function_ != nullptr ? function_->Reaches() : reach_; }
     void Reset() { info_.reset(), inner_.reset(), tried_ = false; }
 
     // The field inside `object` (or inside a struct value at `base` for a struct member), or
@@ -114,6 +131,7 @@ private:
     FunctionRef* function_ = nullptr;
     char const* classPath_ = nullptr;
     char const* name_;
+    Reach reach_ = Reach::Modules;
     std::optional<PropertyInfo> info_;
     std::optional<PropertyInfo> inner_;  // Kind::Array: the element's property
     bool tried_ = false;

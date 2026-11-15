@@ -13,8 +13,10 @@
 #include "ue3/Runtime.hpp"
 
 // The reference side (LExSDKv2): development builds only. A players' build (MEVR_NO_LESDK, the release ASI) has no
-// LExSDKv2 in it at all (research/34 stage 6 for LE1): the cross-check is skipped, our layer runs on its own.
-#if defined(MEVR_GAME_LE1) && !defined(MEVR_NO_LESDK)
+// LExSDKv2 in it at all (research/34 stage 6 for LE1): the cross-check is skipped, our layer runs on its own. LE2 since
+// its layout (docs/le2-continuation-plan.md M1): the same check, over the classes, fields and functions LE2 reads.
+#if (defined(MEVR_GAME_LE1) || defined(MEVR_GAME_LE2)) && !defined(MEVR_NO_LESDK)
+#define MEVR_REFLECT_CHECK 1
 #include <LESDK/Headers.hpp>
 #include <LESDK/Init.hpp>
 #endif
@@ -43,7 +45,7 @@
 
 namespace mevr::engine::reflect_check {
 
-#if defined(MEVR_GAME_LE1) && !defined(MEVR_NO_LESDK)
+#if defined(MEVR_REFLECT_CHECK)
 namespace {
 
 struct Row {
@@ -513,6 +515,8 @@ void CheckTypes() {
         Add("type", "FString", sizeof(ue3::FString) == sizeof(FString), std::to_string(sizeof(ue3::FString)), std::to_string(sizeof(FString)));
     });
 }
+
+#if defined(MEVR_GAME_LE1)
 
 void CheckClasses() {
     CheckClass<UObject>("Core.Object");
@@ -2071,6 +2075,122 @@ void CheckParams() {
     PARMS(USFXGameModeWeaponWheel_execExitWeaponWheel_Parms, "SFXGame.SFXGameModeWeaponWheel.ExitWeaponWheel");
 }
 
+#else  // LE2 (M1, docs/le2-continuation-plan.md): what LE2 reads through our layer today
+
+// The classes behind the reads engine/Legacy made until M1 (the player controller, its pawn, the game mode, the camera, the
+// world), the console, the reflection fix's capture class, and the equipped weapon of the LE2 observers (lane C's first
+// reads, research/le2-engine-access-discovery.md "P1a").
+void CheckClasses() {
+    CheckClass<UObject>("Core.Object");
+    CheckClass<UFunction>("Core.Function");
+    CheckClass<UClass>("Core.Class");
+    CheckClass<UProperty>("Core.Property");
+    CheckClass<UBoolProperty>("Core.BoolProperty");
+    CheckClass<UStructProperty>("Core.StructProperty");
+    CheckClass<UObjectProperty>("Core.ObjectProperty");
+    CheckClass<UArrayProperty>("Core.ArrayProperty");
+    CheckClass<AActor>("Engine.Actor");
+    CheckClass<APawn>("Engine.Pawn");
+    CheckClass<AController>("Engine.Controller");
+    CheckClass<APlayerController>("Engine.PlayerController");
+    CheckClass<ACamera>("Engine.Camera");
+    CheckClass<UEngine>("Engine.Engine");
+    CheckClass<UGameEngine>("Engine.GameEngine");
+    CheckClass<UPlayer>("Engine.Player");
+    CheckClass<ULocalPlayer>("Engine.LocalPlayer");
+    CheckClass<AWorldInfo>("Engine.WorldInfo");
+    CheckClass<UWorld>("Engine.World");
+    CheckClass<UActorComponent>("Engine.ActorComponent");
+    CheckClass<USceneCaptureComponent>("Engine.SceneCaptureComponent");
+    CheckClass<USceneCaptureReflectComponent>("Engine.SceneCaptureReflectComponent");
+    CheckClass<ABioPlayerController>("SFXGame.BioPlayerController");
+    CheckClass<USFXGameModeManager>("SFXGame.SFXGameModeManager");
+    CheckClass<USFXGameModeBase>("SFXGame.SFXGameModeBase");
+    CheckClass<USFXGameModeDefault>("SFXGame.SFXGameModeDefault");
+    CheckClass<ABioPawn>("SFXGame.BioPawn");
+    CheckClass<ASFXPawn_Player>("SFXGame.SFXPawn_Player");
+    CheckClass<ABioWorldInfo>("SFXGame.BioWorldInfo");
+    CheckClass<ASFXWeapon>("SFXGame.SFXWeapon");
+}
+
+void CheckFields() {
+    // ue3::runtime (the local player controller) and engine::World()'s path
+    CheckField("Engine.Engine", "GamePlayers", SDK_FIELD(UEngine, GamePlayers));
+    CheckField("Engine.Player", "Actor", SDK_FIELD(UPlayer, Actor));
+    CheckField("Engine.Actor", "WorldInfo", SDK_FIELD(AActor, WorldInfo));
+    // game/Player's reads on every game (head tracking, hand aim's aim query)
+    CheckField("Engine.Controller", "Pawn", SDK_FIELD(AController, Pawn));
+    CheckField("Engine.Actor", "Location", SDK_FIELD(AActor, Location));
+    CheckField("Engine.Actor", "Rotation", SDK_FIELD(AActor, Rotation));
+    CheckField("Engine.PlayerController", "PlayerCamera", SDK_FIELD(APlayerController, PlayerCamera));
+    CheckField("Engine.Camera", "PCOwner", SDK_FIELD(ACamera, PCOwner));
+    CheckField("Engine.Camera", "CameraCache", SDK_FIELD(ACamera, CameraCache));
+    CheckField("SFXGame.BioPlayerController", "GameModeManager2", SDK_FIELD(ABioPlayerController, GameModeManager2));
+    CheckField("SFXGame.SFXGameModeManager", "CurrentMode", SDK_FIELD(USFXGameModeManager, CurrentMode));
+    CheckField("SFXGame.SFXGameModeManager", "GameModes", SDK_FIELD(USFXGameModeManager, GameModes));
+    // the reflection fix (game/Reflections, our renderer only)
+    CheckField("Engine.SceneCaptureComponent", "FrameRate", SDK_FIELD(USceneCaptureComponent, FrameRate));
+    // the equipped weapon and its ammunition (research/le2-engine-access-discovery.md "P1a": lane C's first reads)
+    CheckField("Engine.Pawn", "Weapon", SDK_FIELD(APawn, Weapon));
+    CheckField("SFXGame.SFXWeapon", "AmmoUsedCount", SDK_FIELD(ASFXWeapon, AmmoUsedCount));
+    CheckField("SFXGame.SFXWeapon", "CurrentSpareAmmo", SDK_FIELD(ASFXWeapon, CurrentSpareAmmo));
+    CheckField("SFXGame.SFXWeapon", "MagSize", SDK_FIELD(ASFXWeapon, MagSize));
+    CheckField("SFXGame.SFXWeapon", "bEarlyReload", SDK_BOOL(ASFXWeapon, bEarlyReload));
+}
+
+void CheckPaths() {
+    CheckPath("Engine.Camera", {"CameraCache", "POV"}, SDK_AT(offsetof(ACamera, CameraCache) + offsetof(FTCameraCache, POV), sizeof(FTPOV)));
+    CheckPath("Engine.Camera", {"CameraCache", "POV", "Location"},
+        SDK_AT(offsetof(ACamera, CameraCache) + offsetof(FTCameraCache, POV) + offsetof(FTPOV, Location), sizeof(FVector)));
+    CheckPath("Engine.Camera", {"CameraCache", "POV", "Rotation"},
+        SDK_AT(offsetof(ACamera, CameraCache) + offsetof(FTCameraCache, POV) + offsetof(FTPOV, Rotation), sizeof(FRotator)));
+    CheckPath("Engine.Camera", {"CameraCache", "POV", "FOV"},
+        SDK_AT(offsetof(ACamera, CameraCache) + offsetof(FTCameraCache, POV) + offsetof(FTPOV, FOV), sizeof(float)));
+    CheckPath("Engine.Actor", {"Location", "X"}, SDK_AT(offsetof(AActor, Location) + offsetof(FVector, X), 4));
+    CheckPath("Engine.Actor", {"Rotation", "Yaw"}, SDK_AT(offsetof(AActor, Rotation) + offsetof(FRotator, Yaw), 4));
+    CheckPath("SFXGame.SFXWeapon", {"MagSize", "Value"}, SDK_AT(offsetof(ASFXWeapon, MagSize) + offsetof(FScaledFloat, Value), 4));
+    CheckElement("Engine.Engine", "GamePlayers", static_cast<long long>(sizeof(ULocalPlayer*)));
+}
+
+void CheckFunctions() {
+    char const* const functions[] = {
+        "Engine.Camera.UpdateCamera",                     // the script-package gate, head tracking
+        "Engine.PlayerController.GetPlayerViewPoint",     // head tracking
+        "Engine.PlayerController.GetFOVAngle",            // head tracking
+        "SFXGame.BioPlayerController.GetAdjustedAimFor",  // hand aim's aim query
+        "Engine.PlayerController.ConsoleCommand",         // the console request
+        "Engine.SceneCaptureComponent.SetFrameRate",      // the reflection fix
+        "Engine.Actor.SetRotation",                       // ue3::runtime's own check of the layout
+        "SFXGame.SFXWeapon.GetMagazineSize",              // the LE2 observers' first call (P1b)
+    };
+    for (char const* function : functions) {
+        CheckFunction(function);
+    }
+}
+
+void CheckParams() {
+    PARAM(APlayerController_execConsoleCommand_Parms, "Engine.PlayerController.ConsoleCommand", Command);
+    PARAM(APlayerController_execConsoleCommand_Parms, "Engine.PlayerController.ConsoleCommand", bWriteToLog);
+    PARAM(APlayerController_execConsoleCommand_Parms, "Engine.PlayerController.ConsoleCommand", ReturnValue);
+    PARMS(APlayerController_execConsoleCommand_Parms, "Engine.PlayerController.ConsoleCommand");
+    PARAM(APlayerController_eventGetPlayerViewPoint_Parms, "Engine.PlayerController.GetPlayerViewPoint", out_Location);
+    PARAM(APlayerController_eventGetPlayerViewPoint_Parms, "Engine.PlayerController.GetPlayerViewPoint", out_Rotation);
+    PARMS(APlayerController_eventGetPlayerViewPoint_Parms, "Engine.PlayerController.GetPlayerViewPoint");
+    PARAM(APlayerController_eventGetFOVAngle_Parms, "Engine.PlayerController.GetFOVAngle", ReturnValue);
+    PARMS(APlayerController_eventGetFOVAngle_Parms, "Engine.PlayerController.GetFOVAngle");
+    PARAM(ABioPlayerController_execGetAdjustedAimFor_Parms, "SFXGame.BioPlayerController.GetAdjustedAimFor", ReturnValue);
+    PARMS(ABioPlayerController_execGetAdjustedAimFor_Parms, "SFXGame.BioPlayerController.GetAdjustedAimFor");
+    PARAM(USceneCaptureComponent_execSetFrameRate_Parms, "Engine.SceneCaptureComponent.SetFrameRate", NewFrameRate);
+    PARMS(USceneCaptureComponent_execSetFrameRate_Parms, "Engine.SceneCaptureComponent.SetFrameRate");
+    PARAM(AActor_execSetRotation_Parms, "Engine.Actor.SetRotation", NewRotation);
+    PARAM(AActor_execSetRotation_Parms, "Engine.Actor.SetRotation", ReturnValue);
+    PARMS(AActor_execSetRotation_Parms, "Engine.Actor.SetRotation");
+    PARAM(ASFXWeapon_execGetMagazineSize_Parms, "SFXGame.SFXWeapon.GetMagazineSize", ReturnValue);
+    PARMS(ASFXWeapon_execGetMagazineSize_Parms, "SFXGame.SFXWeapon.GetMagazineSize");
+}
+
+#endif  // LE1 / LE2 tables
+
 // Names, full names, IsA and IsAlive over a spread of GObjects, both ways.
 void CheckSamples() {
     Guard("sample", "names", [] {
@@ -2253,7 +2373,7 @@ void Run(hook::Context& context) {
         Write(0, 1, 0);
         return;
     }
-    if (!ue3::runtime::Ready()) {
+    if (!ue3::runtime::Up()) {
         log::Warn("reflect: self-check skipped: {}", ue3::runtime::Status());
         Add("global", "layer", false, ue3::runtime::Status(), "");
         Write(0, 1, 0);
@@ -2270,7 +2390,9 @@ void Run(hook::Context& context) {
     CheckClasses();
     CheckFields();
     CheckPaths();
+#if defined(MEVR_GAME_LE1)
     CheckSkeleton();
+#endif
     CheckFunctions();
     CheckParams();
     CheckSamples();
@@ -2308,7 +2430,7 @@ void Run(hook::Context& context) {
     Write(agree, mismatches, notReflected);
 }
 
-#elif defined(MEVR_GAME_LE1)
+#elif defined(MEVR_GAME_LE1) || defined(MEVR_GAME_LE2)
 
 void Run(hook::Context&) {
     log::Info("reflect: no LExSDKv2 cross-check in this build (a players' build has no LExSDKv2 in it); our reflection layer "

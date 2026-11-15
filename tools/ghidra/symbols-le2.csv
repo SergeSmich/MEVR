@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: MIT
+# Hand-curated LE2 (2.0.0.48602, timestamp 0x60AEEFA5) names for the Ghidra project, from our
+# source and research notes (research/le2-engine-access-discovery.md "M1: what ME2's code showed").
+# tools/ghidra/seed.ps1 merges this with LExSDKv2's RVA table. Columns: rva,name,kind,comment.
+rva,name,kind,comment
+0x0D8D50,UObject::ProcessEvent,func,M1: Function +0xD0 flags; +0xD4 iNative; +0xE2 ParmsSize; +0xE4 ReturnValueOffset; +0xF0 Func; Children +0x70; Next +0x68; PropertySize +0x78; Property ArrayDim +0x70 ElementSize +0x74 PropertyFlags +0x78 Offset +0x94; vtable slot +0x240
+0x0C7860,UObject::execIsA,func,M1: Class +0x50; the class chain at +0x60 (UField SuperField); Name +0x48 compared as 8 bytes; index +0x8
+0x0CDA20,UObject::execLetBool,func,M1: BoolProperty BitMask and ArrayProperty Inner at +0xD0; FFrame Object +0x1C Code +0x24
+0x104F80,UObject::~UObject,func,M1: clears GObjects[index] (index +0x8); the byte pattern of src/engine/GameAdapter.hpp
+0x10C3D0,UObject::GetPathName,func,M1: Outer +0x40; Name +0x48
+0x0D89E0,UObject::IsProbing,func,M1: the same bytes as LE1's 0x12D190
+0x09B080,UObject::IsPendingKill,func,M1: ObjectFlags +0xC bit 61
+0x075820,FName::AppendString,func,M1: pool (index >> 29) & 7 and offset index & 0x1FFFFFFF; number - 1 after '_'
+0x075780,FNameEntry::AppendText_guess,func,M1: the entry's text (the same bytes as LE1's 0xD6250)
+0x074620,FNameEntry::EqualsText_guess,func,M1: the text at entry +0xC; UTF-16 when the header's bit 30 (0x40000000) is set
+0x09C900,appMalloc,func,M1: GMalloc (0x1682378) vtable +0x8 (size; alignment; flags)
+0x09C8C0,appFree,func,M1: GMalloc vtable +0x18 (pointer; flags): LE1's is +0x20
+0x173CC48,GObjects,data,M1: TArray<UObject*> (data; count; max)
+0x1668A10,FName::NamePools,data,M1: 8 pool base pointers
+0x1682378,GMalloc,data,M1: FMalloc*; vtable +0x8 Malloc; +0x18 Free
+0x16A99B0,GNatives,data,M1: the bytecode handler table
+0x77D750,USkeletalMeshComponent::execForceSkelUpdate,func,M1: calls UpdateSkelPose(this; 0; 1) (natives dump)
+0x79B8A0,USkeletalMeshComponent::UpdateSkelPose_guess,func,M1: called by execForceSkelUpdate as LE1's 0x592440; the same prologue
+0x798350,USkeletalMeshComponent::UpdateBounds_guess,func,M1: LE1's 0x58EEC0 first 24 bytes; one match
+0x072BD0,FName::FName_guess,func,M1: FName(const TCHAR*; EFindName): LE1's 0xD1150 first 24 bytes; ProcessEvent calls it with L"<uninitialized>"; 1
+0x6B9C50,AActor::MoveWithInterpMoveTrack_guess,func,M1: LE1's 0x4B75F0 first 32 bytes; one match

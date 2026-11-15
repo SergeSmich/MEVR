@@ -150,9 +150,11 @@ The API:
 - **Hooks:** `engine::process_event::AddPostHandler` and `call_function::AddPostHandler` take
   `ue3::Function*` with handlers on `ue3::Object*` too.
 
-LE2 and LE3: `ReflectionLayout()` is empty for them, so the layer reports itself off there. Their
-layouts need their own Ghidra pass (stage 5); until then the all-game modules use `engine/Legacy` there
-(section 6.2).
+LE2 has its layout since 2026-11-14 (M1 of docs/le2-continuation-plan.md; the Ghidra pass is
+research/le2-engine-access-discovery.md "M1: what ME2's code showed"): engine access runs on it there (`runtime::Up()`,
+handles declared `ue3::kEveryGame`), while the ME1 modules, which ask `runtime::Ready()`, stand down until each is
+ported. LE3: `ReflectionLayout()` is empty, so the layer reports itself off there; its layout needs its own Ghidra pass
+(stage 5); until then the all-game modules use `engine/Legacy` there (section 6.2).
 
 Unit tests (`tests/ReflectTests.cpp`, run from `tests/Main.cpp`) build a synthetic engine with its
 own layout. They cover:

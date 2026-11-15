@@ -204,7 +204,8 @@ void TestTables() {
     }
     namespace a2 = engine::addresses::le2;
     for (std::uint32_t rva : {a2::kProcessEvent, a2::kCallFunction, a2::kGameEngineTick, a2::kCalcSceneView,
-             a2::kViewportDraw, a2::kViewportDrawEnd}) {
+             a2::kViewportDraw, a2::kViewportDrawEnd, a2::kGObjects, a2::kNamePools, a2::kGMalloc, a2::kAppMalloc, a2::kAppFree,
+             a2::kGNatives}) {
         CHECK(listed(a2::kTable, rva));
     }
     namespace a3 = engine::addresses::le3;
@@ -212,6 +213,44 @@ void TestTables() {
              a3::kViewportDraw, a3::kViewportDrawEnd}) {
         CHECK(listed(a3::kTable, rva));
     }
+}
+
+// The LE2 table against ME2's decrypted .text (M1, docs/le2-continuation-plan.md): every entry where the table says, every
+// pattern of a function or a code site unique (a data pattern may match several sites naming the same global).
+void TestAgainstLe2Dump() {
+    wchar_t local[MAX_PATH]{};
+    if (GetEnvironmentVariableW(L"LOCALAPPDATA", local, MAX_PATH) == 0) {
+        return;
+    }
+    std::filesystem::path const path = std::filesystem::path(local) / L"MEVR" / L"dump" / L"MassEffect-60AEEFA5.text.bin";
+    std::ifstream in(path, std::ios::binary);
+    if (!in) {
+        std::printf("exe tests: no LE2 .text dump at %s; the LE2 table is checked for its shape only\n", path.string().c_str());
+        return;
+    }
+    std::vector<std::uint8_t> const text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    CHECK(text.size() == 0xFA6271);  // MassEffect-60AEEFA5.txt: text_size
+    exe::Image image;
+    image.textRva = 0x1000;
+    image.text = text;
+    int patterned = 0;
+    for (exe::Entry const& e : engine::addresses::le2::kTable) {
+        exe::Result const r = exe::Check(image, e);
+        bool const ok = e.pattern != nullptr ? r.status == Status::AtRva : r.status == Status::AtRvaUnchecked;
+        if (!ok) {
+            std::printf("FAIL exe tests: LE2 %s 0x%X against the dump: %s (%s)\n", e.name, e.rva, exe::StatusText(r.status),
+                r.why.c_str());
+            ++gFailures;
+        }
+        if (e.pattern == nullptr) {
+            continue;
+        }
+        ++patterned;
+        auto const compiled = ue3::pattern::Compile(e.pattern);
+        auto const hits = ue3::pattern::FindAll(image.text, *compiled, 16);
+        CHECK(e.kind == Kind::Data ? !hits.empty() : hits.size() == 1);
+    }
+    std::printf("exe tests: %d LE2 patterns checked against the dump\n", patterned);
 }
 
 // The LE1 table against the real decrypted .text (no .pdata or sections in the dump: bytes only).
@@ -389,6 +428,7 @@ int RunExeTests() {
     TestSyntheticChecks();
     TestTables();
     TestAgainstDump();
+    TestAgainstLe2Dump();
     TestHookContext();
     return gFailures;
 }
