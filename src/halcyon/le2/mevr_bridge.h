@@ -29,6 +29,22 @@ void OnSessionCreated(void* instance, void* session) noexcept;
 // located in `space` (Halcyon's LOCAL app space, re-origined at recenter: the head pose's space).
 void OnFrameBegun(void* session, void* space, std::int64_t predictedDisplayTime) noexcept;
 
+// Present thread, each frame DriveHeadLook ran (stereo, AER, SFR): the view the next game frame is built with, so our mod
+// can map the controllers into the world, as LE1's MevrBridge::OnViewBuilt. `worldView`: a head-tracked 3D view (not the
+// menu). `lookYawUU`/`lookPitchUU`: CalcViewHook's head look (its own signs: yaw + when the view turns left).
+// `headQ` xyzw and `headP` metres: the head DriveHeadLook drove, in the LOCAL app space. Offsets: ApplyHeadPosition's
+// along the game camera's right/up/forward, in UE units; `unitsPerMeter` its scale (50 x HeadPosScale). `floorWorld`:
+// ordinary gameplay (game mode 0, no VR cine), where the floor lock may apply.
+void OnViewBuilt(bool worldView, bool headLook, bool headAim, int lookYawUU, int lookPitchUU, float const headQ[4],
+    float const headP[3], float offsetRightUU, float offsetUpUU, float offsetForwardUU, float unitsPerMeter,
+    bool floorWorld) noexcept;
+
+// The LOCAL app space was re-origined at the head (RecenterAppSpace): recenter counters, quads placed again.
+void OnRecentered() noexcept;
+
+// The session stopped (STOPPING, after xrEndSession): our quads' swapchains and the published view go.
+void OnSessionStopped() noexcept;
+
 // From Halcyon's XInput hooks, right after the real read: merges the motion controllers into pad 0 (Touch -> Xbox
 // mapping, game/GamepadMapping) before Halcyon's own pad handling (menu block, move-follows-head).
 DWORD MergeMotionControllers(DWORD index, XINPUT_STATE* state, DWORD result) noexcept;

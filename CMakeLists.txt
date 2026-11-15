@@ -786,6 +786,8 @@ set(MEVR_HALCYON_HOST_SOURCES
     src/halcyon/le1/mevr_bridge.h
     src/plugin/Renderer.hpp
     src/plugin/RendererLe1.cpp
+    src/plugin/XrHost.cpp
+    src/plugin/XrHost.hpp
     src/plugin/Calibration.cpp
     src/plugin/Calibration.hpp
     src/plugin/Colour.cpp
@@ -925,6 +927,9 @@ function(mevr_add_plugin game)
             src/halcyon/le2/mevr_bridge.h src/core/CallQueue.hpp src/game/GamepadMapping.cpp src/game/GamepadMapping.hpp
             src/core/vr/Controllers.cpp src/core/vr/Controllers.hpp src/core/xr/Input.cpp src/core/xr/Input.hpp
             src/plugin/Renderer.hpp src/plugin/RendererLe2.cpp
+            # Our actions, vibration and the floor on Halcyon's session (plugin/XrHost, as LE1's).
+            src/plugin/XrHost.cpp src/plugin/XrHost.hpp src/core/vr/Haptics.cpp src/core/vr/Haptics.hpp src/core/xr/Floor.cpp
+            src/core/xr/Floor.hpp src/core/vr/Floor.hpp
             # The test loop (plugin/TestLoop: snapshots, pose recording and replay) and what it needs.
             src/plugin/TestLoop.cpp src/plugin/TestLoop.hpp src/core/vr/AimRay.cpp src/core/vr/AimRay.hpp
             src/core/vr/HostView.cpp src/core/vr/HostView.hpp src/core/vr/ImageConvert.cpp src/core/vr/ImageConvert.hpp

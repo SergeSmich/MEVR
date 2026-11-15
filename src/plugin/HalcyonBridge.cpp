@@ -44,6 +44,7 @@
 #include "plugin/Swapchains.hpp"
 #include "plugin/TestLoop.hpp"
 #include "plugin/WorldPanels.hpp"
+#include "plugin/XrHost.hpp"
 
 #include <dxgi1_6.h>   // [MEVR] research/27 7c: the HDR-display answer
 #include <openxr/openxr.h>
@@ -64,9 +65,7 @@
 namespace MELEVR::MevrBridge {
 namespace {
 
-mevr::xr::Input gInput;
-mevr::xr::Input::Target gTarget;  // set on Halcyon's XR thread before frames start, then Present thread
-bool gInputFailed = false;
+XrSession gSession = XR_NULL_HANDLE;  // Halcyon's, from OnSessionCreated (our actions on it: plugin/XrHost)
 std::atomic<HWND> gGameWindow{nullptr};
 bool gWasFocused = false;  // Present thread
 // After the headset gains focus, keep trying (once a second, for a while) until the game window is
@@ -146,20 +145,7 @@ void WalkTowardHand(XINPUT_GAMEPAD& pad, mevr::vr::controllers::State const& con
     int const headLook = MELEVR::Config::Get().moveFollowsHead ? MELEVR::RenderHook::HeadLookYawUU() : 0;
     mevr::game::gamepad::RotateStick(pad.sThumbLX, pad.sThumbLY, cf::HandWalkUnits(*gHandYaw, headLook));
 }
-std::mutex gHapticMutex;  // gHaptics
-std::array<mevr::vr::haptics::Channel, 2> gHaptics;
-bool gLoggedHaptic = false;            // frame thread
-unsigned gHapticFailures = 0;          // frame thread: in a row
-constexpr unsigned kHapticFailuresToGiveUp = 5;
-bool gHapticGaveUp = false;            // frame thread: for this session
-
-// The head above the floor (core/xr/Floor): measured each frame, read by the mod (HostServices::floor).
-mevr::xr::FloorSpace gFloor;  // XR thread at creation, then frame thread
-std::mutex gFloorMutex;       // gFloorState
-mevr::vr::floor::State gFloorState;
-std::atomic<std::uint32_t> gRecenters{0};
-std::atomic<std::uint32_t> gSessions{0};
-bool gLoggedFloor = false;  // frame thread
+// Vibration and the floor: plugin/XrHost (shared with ME2's bridge).
 // The bound interaction profile, asked for about once a second (frame thread): the guided calibration is kept
 // per controller type (plugin/Calibration).
 unsigned gProfileCheckFrames = 0;
@@ -172,59 +158,6 @@ bool gLoggedMenuButton[2] = {false, false};
 // What was down when our main menu or the calibration gave the pad back: kept from the game until let go (gPadMutex).
 mevr::game::gamepad::CloseLatch gCloseLatch;
 bool gCloseLatchKept = false;  // for the log: something is being kept
-
-void ApplyPendingHaptics() {
-    std::uint64_t const now = GetTickCount64();
-    for (int hand : {0, 1}) {
-        mevr::vr::haptics::Command command;
-        {
-            std::lock_guard lock(gHapticMutex);
-            command = gHaptics[hand].Step(now);
-        }
-        using Kind = mevr::vr::haptics::Command::Kind;
-        if (command.kind == Kind::None || gHapticGaveUp) {
-            continue;
-        }
-        bool const ok = command.kind == Kind::Play
-            ? gInput.Vibrate(gTarget, hand, command.seconds, command.amplitude, command.frequency)
-            : gInput.StopVibration(gTarget, hand);
-        if (command.kind == Kind::Play && !gLoggedHaptic) {
-            gLoggedHaptic = true;
-            mevr::log::Info("halcyon bridge: first controller vibration ({} hand, {:.0f} ms at {:.2f}, {}): {}",
-                hand == 0 ? "left" : "right", command.seconds * 1000.0f, command.amplitude,
-                command.frequency > 0.0f ? std::format("{:.0f} Hz", command.frequency) : std::string("the runtime's frequency"),
-                ok ? "applied" : "refused (no vibration action, or the runtime said no)");
-        }
-        gHapticFailures = ok ? 0 : gHapticFailures + 1;
-        if (gHapticFailures >= kHapticFailuresToGiveUp) {
-            gHapticGaveUp = true;
-            mevr::log::Warn("halcyon bridge: {} controller vibrations in a row failed: no more vibration this session",
-                gHapticFailures);
-        }
-    }
-}
-
-// The floor height for this frame (render thread, after the sync).
-void MeasureFloor(XrTime time) {
-    std::optional<float> const height = gFloor.EyeHeight(time);
-    {
-        std::lock_guard lock(gFloorMutex);
-        gFloorState.valid = height.has_value();
-        if (height) {
-            gFloorState.eyeHeight = *height;
-        }
-        gFloorState.source = gFloor.Source();
-        gFloorState.recenters = gRecenters.load(std::memory_order_relaxed);
-        gFloorState.sessions = gSessions.load(std::memory_order_relaxed);
-        ++gFloorState.sequence;
-        gFloorState.timeMs = GetTickCount64();
-    }
-    if (height && !gLoggedFloor) {
-        gLoggedFloor = true;
-        mevr::log::Info("floor: first sample: the head is {:.2f} m above the floor ({})", *height,
-            mevr::vr::floor::Name(gFloor.Source()));
-    }
-}
 
 // The pad options from the mod's latest input; defaults (no grip, LT from the trigger) when stale.
 mevr::game::gamepad::Options PadOptions() {
@@ -281,32 +214,24 @@ void WrapSessionFunctions(void** acquireSwapchainImage, void** waitSwapchainImag
 }
 
 void OnSessionCreated(void* instance, void* session) noexcept {
-    if (gInput.Matches(gTarget)) {
-        gInput.Release(gTarget);  // a new session (upstream creates one per process, but be safe)
-    }
-    gTarget.instance = static_cast<XrInstance>(instance);
-    gTarget.session = static_cast<XrSession>(session);
-    ++gTarget.instanceGeneration;
-    ++gTarget.sessionGeneration;
-    mevr::host::testloop::OnSessionCreated(gTarget.session);
-    mevr::host::swapchains::OnSessionCreated(gTarget.session);  // our swapchains went with the old session
+    gSession = static_cast<XrSession>(session);
+    mevr::host::testloop::OnSessionCreated(gSession);
+    mevr::host::swapchains::OnSessionCreated(gSession);  // our swapchains went with the old session
     mevr::host::spectator::OnSessionCreated();  // its swapchain copies went with the old session
-    gInputFailed = !gInput.Create(gTarget);
-    if (gInputFailed) {
-        mevr::log::Error("halcyon bridge: controller actions failed; motion controllers unavailable");
-    }
+    // Our actions on it, its own floor space, vibration from scratch (plugin/XrHost).
+    mevr::host::xr_host::OnSessionCreated(static_cast<XrInstance>(instance), gSession);
     // The headset's name, for the guided calibration's per-controller-type sections (plugin/Calibration).
     {
         XrSystemGetInfo systemInfo{XR_TYPE_SYSTEM_GET_INFO};
         systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
         XrSystemId system = XR_NULL_SYSTEM_ID;
         XrSystemProperties properties{XR_TYPE_SYSTEM_PROPERTIES};
-        if (XR_SUCCEEDED(xrGetSystem(gTarget.instance, &systemInfo, &system)) &&
-            XR_SUCCEEDED(xrGetSystemProperties(gTarget.instance, system, &properties))) {
+        if (XR_SUCCEEDED(xrGetSystem(static_cast<XrInstance>(instance), &systemInfo, &system)) &&
+            XR_SUCCEEDED(xrGetSystemProperties(static_cast<XrInstance>(instance), system, &properties))) {
             mevr::host::calibration::SetSystem(properties.systemName);
             // The colour correction's per-headset settings and automatic profile (plugin/Colour, research/27).
             XrInstanceProperties runtime{XR_TYPE_INSTANCE_PROPERTIES};
-            xrGetInstanceProperties(gTarget.instance, &runtime);
+            xrGetInstanceProperties(static_cast<XrInstance>(instance), &runtime);
             mevr::host::colour::SetHeadset(runtime.runtimeName, properties.systemName, properties.vendorId);
         }
     }
@@ -314,46 +239,33 @@ void OnSessionCreated(void* instance, void* session) noexcept {
     gHandProfile[0].clear();
     gHandProfile[1].clear();
     gLoggedMenuButton[0] = gLoggedMenuButton[1] = false;
-    // A new session: its own floor space, vibration from scratch.
-    gFloor.Create(gTarget.session);
-    gSessions.fetch_add(1, std::memory_order_relaxed);
-    gLoggedFloor = false;
-    gHapticGaveUp = false;
-    gHapticFailures = 0;
-    std::lock_guard lock(gHapticMutex);
-    for (auto& channel : gHaptics) {
-        channel = {};
-    }
 }
 
 void OnFrameBegun(void* session, void* space, std::int64_t predictedDisplayTime) noexcept {
     NoteWorldPanelFrame();  // every frame, whatever else happens below
-    if (session == nullptr || static_cast<XrSession>(session) != gTarget.session) {
+    if (session == nullptr || static_cast<XrSession>(session) != gSession) {
         return;
     }
-    gTarget.base = static_cast<XrSpace>(space);  // recentering replaces it
     namespace probe = mevr::vr::frame_probe;
     struct Done {  // the frame-breakdown probe: the end of this function, whichever return
         ~Done() { mevr::host::perf::Mark(probe::kFrameBegunEnd); }
     } const done;
     mevr::host::perf::Mark(probe::kInputBegin);
     mevr::vr::controllers::State state;
-    if (!gInputFailed) {
-        gInput.Sync(gTarget, static_cast<XrTime>(predictedDisplayTime), state);
-        ApplyPendingHaptics();  // the mod's holster pulses and contact buzz (HostServices v9/v10)
-    }
-    MeasureFloor(static_cast<XrTime>(predictedDisplayTime));
+    // Our actions synced in Halcyon's app space (recentering replaces it), the mod's vibrations, the floor (plugin/XrHost).
+    mevr::host::xr_host::OnFrameBegun(gSession, static_cast<XrSpace>(space), static_cast<XrTime>(predictedDisplayTime), state);
+    bool const inputFailed = !mevr::host::xr_host::InputReady();
     mevr::host::perf::Mark(probe::kInputEnd);
-    bool const inputFocused = !gInputFailed && gInput.Focused();
+    bool const inputFocused = mevr::host::xr_host::InputFocused();
     mevr::vr::controllers::State const live = state;
     // The test loop records the live sample, or replaces it with a recording's (plugin/TestLoop).
     mevr::host::testloop::OnFrameBegun(static_cast<XrSession>(session), static_cast<XrSpace>(space),
         static_cast<XrTime>(predictedDisplayTime), inputFocused, state);
-    if (gInputFailed && !state.active) {
+    if (inputFailed && !state.active) {
         return;  // no controllers, and no replay standing in for them
     }
-    if (!gInputFailed && gProfileCheckFrames++ % kProfileCheckEvery == 0) {
-        std::string const hands[2] = {gInput.InteractionProfile(gTarget, 0), gInput.InteractionProfile(gTarget, 1)};
+    if (!inputFailed && gProfileCheckFrames++ % kProfileCheckEvery == 0) {
+        std::string const hands[2] = {mevr::host::xr_host::InteractionProfile(0), mevr::host::xr_host::InteractionProfile(1)};
         if (hands[0] != gHandProfile[0] || hands[1] != gHandProfile[1]) {
             gHandProfile[0] = hands[0];
             gHandProfile[1] = hands[1];
@@ -1234,26 +1146,15 @@ bool SupportGripHeld() {
 }
 
 void RequestHaptic(int hand, float seconds, float amplitude, float frequencyHz) {
-    if ((hand != 0 && hand != 1) || !(seconds > 0.0f) || !(amplitude > 0.0f)) {
-        return;
-    }
-    std::lock_guard lock(MELEVR::MevrBridge::gHapticMutex);
-    MELEVR::MevrBridge::gHaptics[hand].Pulse(seconds, amplitude, frequencyHz);
+    xr_host::RequestHaptic(hand, seconds, amplitude, frequencyHz);
 }
 
 void RequestContinuousHaptic(int hand, float amplitude, float frequencyHz, float seconds) {
-    if (hand != 0 && hand != 1) {
-        return;
-    }
-    std::lock_guard lock(MELEVR::MevrBridge::gHapticMutex);
-    MELEVR::MevrBridge::gHaptics[hand].Continuous(amplitude, frequencyHz, seconds, GetTickCount64());
+    xr_host::RequestContinuousHaptic(hand, amplitude, frequencyHz, seconds);
 }
 
 void ForgetHaptics() {
-    std::lock_guard lock(MELEVR::MevrBridge::gHapticMutex);
-    for (auto& channel : MELEVR::MevrBridge::gHaptics) {
-        channel.Clear();
-    }
+    xr_host::ForgetHaptics();
 }
 
 std::uint32_t RightGripFree() {
@@ -1265,15 +1166,11 @@ std::uint32_t LeftGripAway() {
 }
 
 void Floor(vr::floor::State* out) {
-    if (out == nullptr) {
-        return;
-    }
-    std::lock_guard lock(MELEVR::MevrBridge::gFloorMutex);
-    *out = MELEVR::MevrBridge::gFloorState;
+    xr_host::Floor(out);
 }
 
 void NoteRecentered() {
-    MELEVR::MevrBridge::gRecenters.fetch_add(1, std::memory_order_relaxed);
+    xr_host::NoteRecentered();
 }
 
 } // namespace mevr::host::halcyon

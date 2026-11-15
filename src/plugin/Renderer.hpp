@@ -92,6 +92,14 @@ PanelSettings Panels() noexcept;
 // A recenter the player asks for also removes a tilt past this many degrees (plugin/RecenterTilt).
 float RecenterTiltDeg() noexcept;
 
+// ---- Our hand aim -------------------------------------------------------------------------------------------------------
+
+// The mod aims weapons with the right controller (HostServices::setHandAim). LE1: Halcyon's head aim stands down and the
+// hand reticle shows (plugin/HalcyonBridge's SetModHandAim). ME2: noted (its head aim is off by the MEVR baseline; the
+// reticle comes with M3).
+void SetModHandAim(bool on) noexcept;
+bool ModHandAim() noexcept;
+
 // ---- The game's own HUD, as the renderer handles it -------------------------------------------------------------------
 
 // The game's screen-centre crosshair hidden (the hand reticle replaces it in gameplay). LE1: Halcyon's PcHud. ME2: not yet

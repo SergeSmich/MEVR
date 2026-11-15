@@ -12,6 +12,7 @@
 #include "halcyon/le1/render_hook.h"
 #include "halcyon/le1/vr_config.h"
 #include "halcyon/le1/vr_menu.h"
+#include "plugin/Halcyon.hpp"
 #include "plugin/MevrMenu.hpp"
 
 namespace mevr::host {
@@ -90,6 +91,14 @@ bool ScreenReticleHidden() noexcept {
 
 void SetAuthoredHudLayout(bool on) noexcept {
     MELEVR::Pchud::SetAuthoredLayout(on);
+}
+
+void SetModHandAim(bool on) noexcept {
+    halcyon::SetModHandAim(on);
+}
+
+bool ModHandAim() noexcept {
+    return MELEVR::MevrBridge::ControllerAimActive();
 }
 
 } // namespace mevr::host::renderer

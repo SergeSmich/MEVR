@@ -583,6 +583,68 @@ launches (Shepard's idle hands and the gun, Anoleis, the console's flicker, the 
 the same run differ by 0.26% over 8/255. The comparison is a script over the two snapshots' PNGs and JSON (PIL
 `ImageChops.difference`).
 
+### Step 3 (first part) and step 5 (first part): the view, our session on ME2's, one services builder
+
+**What landed:**
+1. **`plugin/XrHost`** (new, both hosts): our controller actions on the renderer's session (`core/xr/Input`), their
+   vibration (`core/vr/Haptics`) and the STAGE floor (`core/xr/Floor`), moved unchanged out of `plugin/HalcyonBridge.cpp`.
+   API: `xr_host::OnSessionCreated(instance, session)`, `OnFrameBegun(session, base, time, state&)` (sync, vibrations, the
+   floor), `InputReady`, `InputFocused`, `InteractionProfile(hand)`, `NoteRecentered`, and for any thread `RequestHaptic`,
+   `RequestContinuousHaptic`, `ForgetHaptics`, `Floor(out)`. LE1's bridge calls it in place of its own copy (its
+   `mevr::host::halcyon::RequestHaptic`, `Floor`, `NoteRecentered` forward there); ME2's bridge calls the same, so ME2's copy
+   of the input code is gone. Log lines unchanged (`halcyon bridge: first controller vibration`, `floor: first sample`).
+2. **ME2's view seam:** `src/halcyon/le2/me2_xr.cpp`, `[MEVR] MevrPublishView` at every return of `DriveHeadLook` (a scope
+   guard; DriveHeadLook runs each frame of the stereo, AER and SFR paths, not the flat menu panel), calling
+   `ME2VR::MevrBridge::OnViewBuilt(worldView, headLook, headAim, lookYawUU, lookPitchUU, headQ, headP, offsetRightUU,
+   offsetUpUU, offsetForwardUU, unitsPerMeter, floorWorld)`: the head DriveHeadLook drove (ME2 drives `SetHeadPos` with
+   `views[0]`, the LEFT eye's position: upstream's, kept), the smoothed roll-free orientation, CalcViewHook's head look, and
+   `ApplyHeadPosition`'s offset by its own formula (50 uu/m x `HeadPosScale`, the forward 3x, each axis clamped to 2 m, none
+   while a VR cine locks tracking). `plugin/HalcyonLe2Bridge.cpp` turns it into `vr::host_view::State` and publishes it (no
+   floor lock on LE2 yet: `floorWorld` unused). Yaw sign as LE1's: Halcyon's + is a left turn, ours + right, so it's negated.
+3. **Recenter and stop seams:** `RecenterAppSpace` calls `MevrBridge::OnRecentered()` after a new app space (the floor's
+   recenter count), `PumpEvents` calls `OnSessionStopped()` after `xrEndSession` (the published view reset).
+4. **One builder** (`plugin/ModLoader.cpp`): `BuildServices()` = `BaseServices()` (version, log, the ProcessEvent callback,
+   exit, keep loaded) + `WithCrashBreadcrumbs` + `WithRenderer` (either Halcyon host: controllers, view, setHandAim, both
+   sizes, the aim ray, the snapshots' status, the three vibrations, the floor) + LE1's module list (`WithLe1Modules`: the
+   pad mapping's grips, the squad menu and wheel panel, sights, calibration, our main menu, the vignette; then
+   `WithGameMenuRequest` ... `WithVoice`) where `MEVR_WITH_HALCYON`. The LE1 values are field for field the old aggregate's.
+   `renderer::SetModHandAim` / `ModHandAim` joined the interface (LE1: `halcyon::SetModHandAim`, `ControllerAimActive`; LE2:
+   a flag, logged `halcyon le2: the mod aims weapons with the right controller`).
+
+**Checked on the fake headset** (session `%LOCALAPPDATA%\MEVR\sessions\20261114-195511-lane-b-view`, its logs and snapshots
+kept there): the mod's start logs no `no view to aim with` and no `host state sizes differ` (both were there before);
+`halcyon le2 bridge: first world view: ... 100.0 units per meter`; in gameplay (the main menu's Resume: the career's most
+recent save) the snapshot JSON has
+`head.valid` and `hostView.valid` true; with a replayed head turned 30 degrees right
+(`make-walk-recording.py --plan stand:600 --hands view --yaw 30`) `hostView.lookYawUU` is +5461 (+30 degrees, UE's right)
+and the offset forward +4.8, right -2.77 uu: exactly the left eye's lean at 100 uu/m with the 3x forward. The STAGE floor on
+the fake headset reads 0.00 m (its floor is at the head, as on LE1). The game was brought from the title into gameplay with
+two posted Enters (`PostMessageW(WM_KEYDOWN, VK_RETURN)` to the game window: the title, then the main menu's Resume); the
+owner's rule since is that runs are driven only by script (launch.ps1, the request files, replays), so the next gameplay
+check waits for lane A's `tools/le2-halcyon-run/load.ps1`.
+
+**Found: in gameplay the eye images are the main menu's backdrop.** Every gameplay snapshot (19:57:57, 19:58:06, 20:00:52,
+30 s to 3.5 min after `[VRSTATE] gm 0 -> VR`) shows, in both eyes, ME2's animated main-menu picture (the Normandy
+wireframe, its counter changing between snapshots), while the desktop window showed gameplay (the HUD's squad icons, a
+"Door Open" prompt). The projection layer's views are `g_aerSwap[eye]` (4096x2304, the whole backbuffer), filled by
+`CopyTextureToEyeFullFrame` from `ME2VR::D3DCapture::GetGameSwapChain()->GetBuffer(0)` (the right eye) and the SFR pass-0
+capture (the left). `GetGameSwapChain()` is the FIRST swap chain `CaptureSwapChainInfoOnce` (d3d_capture.cpp) saw present,
+kept for the process. **[verify]** whether the game presents gameplay through another swap chain than the one captured
+(the borderless window of `vr-game-settings.ps1 -Game LE2` may make it make a second one), which would freeze or misroute
+the eyes in a real headset too: run with `prep.ps1 -Diagnostics` (its `[ME2DISC] game swapchain <ptr>` line) and log each
+Present's swap chain against it; compare with a run without the borderless window. The test loop copies the image the
+renderer releases (the same texture the runtime composites), so the snapshot is what the headset gets unless that copy is
+wrong, which LE1's identical path argues against. Until this is settled, an ME2 eye snapshot doesn't show the world.
+
+**What the mod on LE2 still says** (each line a module the LE2 host doesn't serve yet, all LE1 host modules that come over
+with steps 4-5): holsters (v9: `rightGripFree`, keeping the squeeze from the game; v10 `gripHolds`), throwables, vent, squad
+orders and squad (v11: the grips and the squad menu), calibration (v15), comfort (v17: the vignette and turn flags), main
+menu requests (v19), interact (v21), hud pieces (v22), voice (v31), support grip and sights (v39 messages: `setSupportGrip`,
+`setSight`). They come from the pad mapping with the mod's flags (`HalcyonBridge::MergeMotionControllers`: LE2's bridge has
+the plain mapping), `plugin/Calibration`, `plugin/Vignette`, `plugin/HalcyonOverlays` (HUD panel, labels, HUD pieces, the
+squad panel, reticle), `plugin/SightLayers`, `plugin/MainMenu` and `plugin/Voice`. Two of them repeat in every status block
+(`squad: the host is older than v11`, `comfort: ... older than v17`).
+
 ## Native verification after explicit handoff
 
 Use the protected LE2 session workflow and recheck shared ownership, profiles,
