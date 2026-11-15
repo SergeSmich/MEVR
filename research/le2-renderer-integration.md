@@ -623,6 +623,11 @@ two posted Enters (`PostMessageW(WM_KEYDOWN, VK_RETURN)` to the game window: the
 owner's rule since is that runs are driven only by script (launch.ps1, the request files, replays), so the next gameplay
 check waits for lane A's `tools/le2-halcyon-run/load.ps1`.
 
+**LE1 after the move** (the same pose run as step 2's, session `2026-11-14_20-07-12-laneb-pose-xrhost`, against step 2's
+"before"): the same six layers at the same places, `hostView` identical, the HUD panel identical, the eyes 0.2% of pixels
+apart by more than 32/255 (what animates), and the floor still sampled (`floorLock.floorSequence` advancing,
+`finalEyeM` 1.5989 both times).
+
 **Found: in gameplay the eye images are the main menu's backdrop.** Every gameplay snapshot (19:57:57, 19:58:06, 20:00:52,
 30 s to 3.5 min after `[VRSTATE] gm 0 -> VR`) shows, in both eyes, ME2's animated main-menu picture (the Normandy
 wireframe, its counter changing between snapshots), while the desktop window showed gameplay (the HUD's squad icons, a
