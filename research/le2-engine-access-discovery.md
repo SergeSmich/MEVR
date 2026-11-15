@@ -250,6 +250,19 @@ The skeleton rows stay LE1's (ME2's bones are M3's). Output: the log line and `%
   `seed.ps1 -Game LE2` named 4,568 functions in the LE2 Ghidra project with it. Lanes B and C can ask for any native by
   name now (`decompile.ps1 -Game LE2 -Search <name>`).
 
+### Addresses for the next lanes (candidates, [verify] before a hook)
+
+Found the same way (LE1's first bytes searched in ME2's dump, or a native that calls it), not yet hooked or checked in the
+game; `tools/ghidra/symbols-le2.csv` has them with a `_guess` suffix:
+
+| LE1 function (RVA) | ME2 candidate | Evidence |
+|---|---|---|
+| `USkeletalMeshComponent::UpdateSkelPose` (0x592440) | **0x79B8A0** | `execForceSkelUpdate` (0x77D750, from the natives dump) calls it as `(this, 0, 1)`, as LE1's does; the same prologue (`48 8B C4 44 89 40 18 55 56 57 41 54 41 55 41 56 41 57`), a smaller frame |
+| `USkeletalMeshComponent::UpdateBounds` (0x58EEC0) | 0x798350 | LE1's first 24 bytes, one match |
+| `FName::FName(const TCHAR*, EFindName)` (0xD1150) | 0x72BD0 | LE1's first 24 bytes, one match; ProcessEvent calls it with `L"<uninitialized>", 1` |
+| `AActor::MoveWithInterpMoveTrack` (0x4B75F0) | 0x6B9C50 | LE1's first 32 bytes, one match |
+| `FISACTSoundSource::Update` (0x7BA90) | not found | LE1's first 16 bytes match four functions |
+
 ### Left after M1
 
 - The LE2 diagnostic observers (`engine/Le2DiagnosticObservation.cpp` and its `.inc` files, the `MEVR_LE2_DIAGNOSTIC`

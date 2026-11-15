@@ -19,3 +19,8 @@ rva,name,kind,comment
 0x1668A10,FName::NamePools,data,M1: 8 pool base pointers
 0x1682378,GMalloc,data,M1: FMalloc*; vtable +0x8 Malloc; +0x18 Free
 0x16A99B0,GNatives,data,M1: the bytecode handler table
+0x77D750,USkeletalMeshComponent::execForceSkelUpdate,func,M1: calls UpdateSkelPose(this; 0; 1) (natives dump)
+0x79B8A0,USkeletalMeshComponent::UpdateSkelPose_guess,func,M1: called by execForceSkelUpdate as LE1's 0x592440; the same prologue
+0x798350,USkeletalMeshComponent::UpdateBounds_guess,func,M1: LE1's 0x58EEC0 first 24 bytes; one match
+0x072BD0,FName::FName_guess,func,M1: FName(const TCHAR*; EFindName): LE1's 0xD1150 first 24 bytes; ProcessEvent calls it with L"<uninitialized>"; 1
+0x6B9C50,AActor::MoveWithInterpMoveTrack_guess,func,M1: LE1's 0x4B75F0 first 32 bytes; one match
