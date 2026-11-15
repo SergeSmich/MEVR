@@ -545,6 +545,9 @@ void PumpEvents() noexcept
             {
                 g_fn.endSession(g_session);
                 g_begun = false;
+#if defined(MEVR_ASI)
+                ::ME2VR::MevrBridge::OnSessionStopped();   // [MEVR] as LE1's: our quads and the view go
+#endif
             }
         }
     }
@@ -726,13 +729,49 @@ void RecenterAppSpace(XrTime displayTime) noexcept
         if (g_localSpace != nullptr) g_fn.destroySpace(g_localSpace);
         g_localSpace = ns;
         XLog("Recentred view. Head yaw was " + std::to_string(static_cast<int>(yawDeg)));
+#if defined(MEVR_ASI)
+        ::ME2VR::MevrBridge::OnRecentered();   // [MEVR] our quads and the floor's recenter count
+#endif
     }
 }
+
+#if defined(MEVR_ASI)
+// [MEVR] The view the next game frame is built with, as LE1's xr_session.cpp publishes it (MevrBridge::OnViewBuilt):
+// the head DriveHeadLook drove (its position is what SetHeadPos got; the smoothed, roll-free orientation the render
+// turns by), the head look CalcViewHook now holds, and the 6DOF offset ApplyHeadPosition adds along the game camera's
+// axes (the same formula: 50 uu/m times HeadPosScale, the forward 3x, clamped to 2 m; none while the cine locks tracking).
+void MevrPublishView(const XrView& view) noexcept
+{
+    const bool cineLocked = ME2VR::CalcViewHook::GetVrCineActive() && !ME2VR::CalcViewHook::GetCineVrHeadTracking();
+    const float w2m = 50.0f * ME2VR::CalcViewHook::GetHeadPosScale();
+    float right = 0.0f, up = 0.0f, fwd = 0.0f;
+    if (ME2VR::CalcViewHook::GetHeadPosEnabled() && !cineLocked)
+    {
+        auto clamp2 = [](float v) { return v < -2.0f ? -2.0f : (v > 2.0f ? 2.0f : v); };
+        const float fwdSign = ME2VR::CalcViewHook::GetLeanInvertFwd() ? 1.0f : -1.0f;
+        right = w2m * clamp2(view.pose.position.x);
+        up = w2m * clamp2(view.pose.position.y);
+        fwd = w2m * fwdSign * clamp2(view.pose.position.z) * 3.0f;
+    }
+    const XrQuaternionf q = g_smoothQuatInit ? RemoveRoll(g_smoothQuat) : RemoveRoll(view.pose.orientation);
+    const float headQ[4] = {q.x, q.y, q.z, q.w};
+    const float headP[3] = {view.pose.position.x, view.pose.position.y, view.pose.position.z};
+    const bool headLook = ME2VR::CalcViewHook::GetHeadLookUserEnabled() && !cineLocked;
+    const int gameMode = ME2VR::EngineProbe::ReadGameModeSEH();
+    ::ME2VR::MevrBridge::OnViewBuilt(!ME2VR::Menu::IsOpen(), headLook, false, ME2VR::CalcViewHook::HeadLookYawUU(),
+                                     ME2VR::CalcViewHook::HeadLookPitchUU(), headQ, headP, right, up, fwd, w2m,
+                                     gameMode == 0 && !ME2VR::CalcViewHook::GetVrCineActive());
+}
+#endif
 
 // Located head (already relative to the recentered localSpace) -> drive the render-side head-look +
 // positional 6DOF. pose.position is the head's translation from recenter, in meters (XR axes).
 void DriveHeadLook(const XrView& centerView) noexcept
 {
+#if defined(MEVR_ASI)
+    // [MEVR] publish the view once DriveHeadLook has decided it, whichever way it returns.
+    struct MevrPublishOnReturn { const XrView& v; ~MevrPublishOnReturn() { MevrPublishView(v); } } mevrPublish{centerView};
+#endif
     float yawDeg = 0.0f, pitchDeg = 0.0f;
     ME2VR::CalcViewHook::SetHeadPos(centerView.pose.position.x, centerView.pose.position.y, centerView.pose.position.z);
 

@@ -6,6 +6,7 @@
 
 #include "plugin/Renderer.hpp"
 
+#include "core/Log.hpp"
 #include "engine/SettingsFile.hpp"
 #include "halcyon/le2/d3d_capture.h"
 #include "halcyon/le2/engine_probe.h"
@@ -29,6 +30,7 @@ std::wstring const& SettingsPath() noexcept {
 namespace mevr::host::renderer {
 namespace {
 std::atomic<HWND> gGameWindow{nullptr};
+std::atomic<bool> gModHandAim{false};
 }
 
 bool OwnMenuOpen() noexcept {
@@ -91,6 +93,16 @@ bool ScreenReticleHidden() noexcept {
 
 void SetAuthoredHudLayout(bool) noexcept {
     // Until the HUD panel (M2 step 4), ME2's renderer lays the HUD out for each eye itself (UiDupEnabled, PcHud).
+}
+
+void SetModHandAim(bool on) noexcept {
+    if (gModHandAim.exchange(on, std::memory_order_relaxed) != on) {
+        log::Info("halcyon le2: the mod {} weapons with the right controller", on ? "aims" : "no longer aims");
+    }
+}
+
+bool ModHandAim() noexcept {
+    return gModHandAim.load(std::memory_order_relaxed);
 }
 
 } // namespace mevr::host::renderer

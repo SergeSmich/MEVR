@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
-// Our side of the OpenXR and pad seams in Halcyon's ME2 renderer (src/halcyon/le2/mevr_bridge.h): the OpenXR loader,
-// controller actions on Halcyon's session, and the motion controllers as Xbox pad 0. As LE1's first integration
-// (2026-10-08, plugin/HalcyonBridge.cpp at 9074cea8). The game-thread queue and the runtime test are in
-// plugin/HalcyonLe2.cpp. Separate from that file: the OpenXR SDK's headers and Halcyon's xr_types.h define the same names.
+// Our side of the seams in Halcyon's ME2 renderer (src/halcyon/le2/mevr_bridge.h): the OpenXR loader, the session's
+// functions for the test loop, our controller actions, their vibration and the floor on Halcyon's session (plugin/XrHost,
+// shared with LE1's bridge), the view each frame for the mod (core/vr/HostView), and the motion controllers as Xbox pad 0.
+// As LE1's (plugin/HalcyonBridge.cpp). The game-thread queue and the runtime test are in plugin/HalcyonLe2.cpp. Separate
+// from that file: the OpenXR SDK's headers and Halcyon's xr_types.h define the same names.
 
 #include "halcyon/le2/mevr_bridge.h"
 
 #include "core/Log.hpp"
 #include "core/vr/Controllers.hpp"
-#include "core/xr/Input.hpp"
+#include "core/vr/HostView.hpp"
 #include "game/GamepadMapping.hpp"
 #include "plugin/TestLoop.hpp"
+#include "plugin/XrHost.hpp"
 
 #include <openxr/openxr.h>
 
@@ -21,10 +23,8 @@
 namespace ME2VR::MevrBridge {
 namespace {
 
-mevr::xr::Input gInput;
-mevr::xr::Input::Target gTarget;  // Present thread
-bool gInputFailed = false;
-bool gToldFirstSync = false;
+bool gToldFirstSync = false;  // Present thread
+bool gLoggedView = false;     // Present thread
 
 std::mutex gPadMutex;  // the latches and packet numbering below (XInput is polled from any thread)
 mevr::game::gamepad::Latches gLatches;
@@ -48,42 +48,71 @@ void WrapSessionFunctions(void** acquireSwapchainImage, void** waitSwapchainImag
 }
 
 void OnSessionCreated(void* instance, void* session) noexcept {
-    if (gInput.Matches(gTarget)) {
-        gInput.Release(gTarget);  // a new session (upstream makes one per process, but be safe)
-    }
-    gTarget.instance = static_cast<XrInstance>(instance);
-    gTarget.session = static_cast<XrSession>(session);
-    ++gTarget.instanceGeneration;
-    ++gTarget.sessionGeneration;
-    mevr::host::testloop::OnSessionCreated(gTarget.session);
-    gInputFailed = !gInput.Create(gTarget);
-    if (gInputFailed) {
-        mevr::log::Error("halcyon le2 bridge: controller actions failed; motion controllers unavailable");
-    } else {
+    mevr::host::testloop::OnSessionCreated(static_cast<XrSession>(session));
+    if (mevr::host::xr_host::OnSessionCreated(static_cast<XrInstance>(instance), static_cast<XrSession>(session))) {
         mevr::log::Info("halcyon le2 bridge: our controller actions are attached to Halcyon's session");
     }
+    gToldFirstSync = false;
 }
 
 void OnFrameBegun(void* session, void* space, std::int64_t predictedDisplayTime) noexcept {
-    if (session == nullptr || static_cast<XrSession>(session) != gTarget.session) {
+    if (session == nullptr) {
         return;
     }
-    gTarget.base = static_cast<XrSpace>(space);  // recentering replaces it
     mevr::vr::controllers::State state;
-    if (!gInputFailed) {
-        gInput.Sync(gTarget, static_cast<XrTime>(predictedDisplayTime), state);
-    }
+    mevr::host::xr_host::OnFrameBegun(static_cast<XrSession>(session), static_cast<XrSpace>(space),
+        static_cast<XrTime>(predictedDisplayTime), state);
+    bool const inputReady = mevr::host::xr_host::InputReady();
     // The test loop records the live sample, or replaces it with a recording's (plugin/TestLoop), as on LE1.
     mevr::host::testloop::OnFrameBegun(static_cast<XrSession>(session), static_cast<XrSpace>(space),
-        static_cast<XrTime>(predictedDisplayTime), !gInputFailed && gInput.Focused(), state);
-    if (gInputFailed && !state.active) {
+        static_cast<XrTime>(predictedDisplayTime), mevr::host::xr_host::InputFocused(), state);
+    if (!inputReady && !state.active) {
         return;  // no controllers, and no replay standing in for them
     }
     mevr::vr::controllers::Publish(state);
-    if (!gInputFailed && !gToldFirstSync) {
+    if (inputReady && !gToldFirstSync) {
         gToldFirstSync = true;
-        mevr::log::Info("halcyon le2 bridge: first controller sync (session {}focused)", gInput.Focused() ? "" : "not ");
+        mevr::log::Info("halcyon le2 bridge: first controller sync (session {}focused)",
+            mevr::host::xr_host::InputFocused() ? "" : "not ");
     }
+}
+
+void OnViewBuilt(bool worldView, bool headLook, bool headAim, int lookYawUU, int lookPitchUU, float const headQ[4],
+    float const headP[3], float offsetRightUU, float offsetUpUU, float offsetForwardUU, float unitsPerMeter,
+    bool floorWorld) noexcept {
+    (void)floorWorld;  // the floor lock (plugin/FloorLock) isn't in the LE2 host yet: the view goes out uncorrected
+    mevr::vr::host_view::State view;
+    view.valid = worldView;
+    view.headLook = headLook;
+    view.headAim = headAim;
+    view.head.orientation = {headQ[0], headQ[1], headQ[2], headQ[3]};
+    view.head.position = {headP[0], headP[1], headP[2]};
+    // As LE1's: Halcyon's head look yaw is + when the view turns left (its DriveHeadLook takes yawSign -1 of the head's
+    // left-positive yaw); ours (UE rotators) + right. Pitch is + up in both. [verify] on ME2 with a replayed turn.
+    view.lookYaw = -lookYawUU;
+    view.lookPitch = lookPitchUU;
+    view.offsetForward = offsetForwardUU;
+    view.offsetRight = offsetRightUU;
+    view.offsetUp = offsetUpUU;
+    view.unitsPerMeter = unitsPerMeter;
+    mevr::vr::host_view::Publish(view);
+    if (worldView && !gLoggedView) {
+        gLoggedView = true;
+        mevr::log::Info("halcyon le2 bridge: first world view: head look yaw {} pitch {} (head aim {}), view offset "
+                        "fwd {:.1f} right {:.1f} up {:.1f}, {:.1f} units per meter, head at ({:.2f}, {:.2f}, {:.2f}) m",
+            view.lookYaw, view.lookPitch, headAim ? "on" : "off", offsetForwardUU, offsetRightUU, offsetUpUU, unitsPerMeter,
+            headP[0], headP[1], headP[2]);
+    }
+}
+
+void OnRecentered() noexcept {
+    mevr::host::xr_host::NoteRecentered();
+    mevr::log::Info("halcyon le2 bridge: recentered");
+}
+
+void OnSessionStopped() noexcept {
+    mevr::vr::host_view::Reset();
+    mevr::log::Info("halcyon le2 bridge: the session stopped");
 }
 
 DWORD MergeMotionControllers(DWORD index, XINPUT_STATE* state, DWORD result) noexcept {

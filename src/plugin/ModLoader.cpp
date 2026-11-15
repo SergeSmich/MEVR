@@ -11,12 +11,15 @@
 #include "plugin/PresentHook.hpp"
 #include "plugin/ProcessEventHook.hpp"
 
-#if defined(MEVR_WITH_HALCYON_LE2)
+#if defined(MEVR_WITH_HALCYON) || defined(MEVR_WITH_HALCYON_LE2)
+#include "core/vr/AimRay.hpp"
 #include "core/vr/Controllers.hpp"
+#include "core/vr/Floor.hpp"
+#include "core/vr/HostView.hpp"
+#include "plugin/TestLoop.hpp"
+#include "plugin/XrHost.hpp"
 #endif
 #if defined(MEVR_WITH_HALCYON)
-#include "core/vr/Controllers.hpp"
-#include "core/vr/AimRay.hpp"
 #include "core/vr/Calibration.hpp"
 #include "core/vr/Floor.hpp"
 #include "core/vr/HostView.hpp"
@@ -105,7 +108,22 @@ HostServices WithCrashBreadcrumbs(HostServices services) {
     return services;
 }
 
-#if defined(MEVR_WITH_HALCYON)
+// The base every host gives (every game): its version, its log, the ProcessEvent callback, the exit flag, staying loaded.
+HostServices BaseServices() {
+    HostServices services;
+    services.version = kHostServicesVersion;
+    services.log = kHostLog;
+    services.setProcessEventCallback = &HostSetProcessEventCallback;
+    services.processExiting = &HostProcessExiting;
+    services.keepLoaded = &HostKeepLoaded;
+    services.servicesSize = static_cast<std::uint32_t>(sizeof(HostServices));
+    return services;
+}
+
+#if defined(MEVR_WITH_HALCYON) || defined(MEVR_WITH_HALCYON_LE2)
+// What a host with Halcyon's renderer gives, either game's (docs/le2-continuation-plan.md M2.5): the controllers, the view
+// each frame (core/vr/HostView, published by the renderer's bridge), hand aim and the aim ray, the snapshots' status, the
+// controllers' vibration and the floor (plugin/XrHost). The renderer owns VR: a mod given `controllers` stands its own down.
 void HostControllers(vr::controllers::State* out) {
     *out = vr::controllers::Latest(UINT64_MAX);  // raw sample: the mod ages it itself
 }
@@ -113,16 +131,10 @@ void HostView(vr::host_view::State* out) {
     *out = vr::host_view::Latest(UINT64_MAX);  // raw sample: the mod ages it itself
 }
 void HostSetHandAim(bool on) {
-    halcyon::SetModHandAim(on);
+    renderer::SetModHandAim(on);
 }
 void HostSetAimRay(vr::aim_ray::Ray const* ray) {
     vr::aim_ray::Publish(ray != nullptr ? *ray : vr::aim_ray::Ray{});
-}
-void HostSetSupportGrip(float distanceMeters, float acquireMeters, float releaseMeters, std::uint32_t flags) {
-    halcyon::SetSupportGrip(distanceMeters, acquireMeters, releaseMeters, flags);
-}
-bool HostSupportGripHeld() {
-    return halcyon::SupportGripHeld();
 }
 bool HostStatusWanted() {
     return testloop::ModStatusWanted();
@@ -131,19 +143,52 @@ void HostSetStatus(char const* json) {
     testloop::SetModStatus(json);
 }
 void HostHapticPulse(int hand, float seconds, float amplitude) {
-    halcyon::RequestHaptic(hand, seconds, amplitude);
+    xr_host::RequestHaptic(hand, seconds, amplitude);
+}
+void HostHapticPulseHz(int hand, float seconds, float amplitude, float frequencyHz) {
+    xr_host::RequestHaptic(hand, seconds, amplitude, frequencyHz);
+}
+void HostHapticContinuous(int hand, float amplitude, float frequencyHz, float seconds) {
+    xr_host::RequestContinuousHaptic(hand, amplitude, frequencyHz, seconds);
+}
+void HostFloor(vr::floor::State* out) {
+    xr_host::Floor(out);
+}
+HostServices WithRenderer(HostServices services) {
+    services.controllers = &HostControllers;
+    services.view = &HostView;
+    services.setHandAim = &HostSetHandAim;
+    services.controllerStateSize = static_cast<std::uint32_t>(sizeof(vr::controllers::State));
+    services.viewStateSize = static_cast<std::uint32_t>(sizeof(vr::host_view::State));
+    services.aimRaySize = static_cast<std::uint32_t>(sizeof(vr::aim_ray::Ray));
+    services.setAimRay = &HostSetAimRay;
+    services.statusWanted = &HostStatusWanted;
+    services.setStatus = &HostSetStatus;
+    services.hapticPulse = &HostHapticPulse;
+    services.hapticPulseHz = &HostHapticPulseHz;
+    services.hapticContinuous = &HostHapticContinuous;
+    services.floorStateSize = static_cast<std::uint32_t>(sizeof(vr::floor::State));
+    services.floor = &HostFloor;
+    return services;
+}
+// Forgetting what the mod set in the renderer's services: hand aim off (the renderer's own aim back), no aim ray, no
+// vibration.
+void ForgetRendererModState() {
+    renderer::SetModHandAim(false);
+    vr::aim_ray::Reset();
+    xr_host::ForgetHaptics();
+}
+#endif
+
+#if defined(MEVR_WITH_HALCYON)
+void HostSetSupportGrip(float distanceMeters, float acquireMeters, float releaseMeters, std::uint32_t flags) {
+    halcyon::SetSupportGrip(distanceMeters, acquireMeters, releaseMeters, flags);
+}
+bool HostSupportGripHeld() {
+    return halcyon::SupportGripHeld();
 }
 std::uint32_t HostRightGripFree() {
     return halcyon::RightGripFree();
-}
-void HostHapticPulseHz(int hand, float seconds, float amplitude, float frequencyHz) {
-    halcyon::RequestHaptic(hand, seconds, amplitude, frequencyHz);
-}
-void HostHapticContinuous(int hand, float amplitude, float frequencyHz, float seconds) {
-    halcyon::RequestContinuousHaptic(hand, amplitude, frequencyHz, seconds);
-}
-void HostFloor(vr::floor::State* out) {
-    halcyon::Floor(out);
 }
 void HostSetSquadMenu(vr::squad_menu::View const* view) {
     vr::squad_menu::Publish(view != nullptr ? *view : vr::squad_menu::View{});
@@ -389,25 +434,32 @@ HostServices WithPowerWheel(HostServices services) {
 #endif
     return services;
 }
-HostServices const gServices = WithVoice(WithPowerWheel(WithWorldUi(WithGalaxyHologram(WithGalaxyMap(WithSpectator(WithMakoControls(WithHudPieces(WithInteractLabel(WithScopeCapture(WithGameMenuRequest(WithCrashBreadcrumbs({kHostServicesVersion, kHostLog, &HostControllers, &HostView, &HostSetHandAim,
-    static_cast<std::uint32_t>(sizeof(vr::controllers::State)), static_cast<std::uint32_t>(sizeof(vr::host_view::State)),
-    &HostSetProcessEventCallback, &HostProcessExiting, &HostKeepLoaded,
-    static_cast<std::uint32_t>(sizeof(vr::aim_ray::Ray)), &HostSetAimRay, &HostSetSupportGrip, &HostSupportGripHeld,
-    &HostStatusWanted, &HostSetStatus, &HostHapticPulse, &HostRightGripFree,
-    static_cast<std::uint32_t>(sizeof(HostServices)), &HostHapticPulseHz, &HostHapticContinuous,
-    static_cast<std::uint32_t>(sizeof(vr::floor::State)), &HostFloor,
-    static_cast<std::uint32_t>(sizeof(vr::squad_menu::View)), &HostSetSquadMenu, &HostLeftGripAway,
-    static_cast<std::uint32_t>(sizeof(vr::squad_menu::wheel::Panel)), &HostSetWheelPanel,
-    static_cast<std::uint32_t>(sizeof(vr::sights::Sight)), &HostSetSight, &HostSightView,
-    static_cast<std::uint32_t>(sizeof(vr::calibration::HostState)), &HostCalibration, &HostMainMenu, &HostSetVignette}))))))))))));
-// A mod that's gone can't aim: Halcyon's head aim must come back, the reticle go, the pad mapping
-// forget the two-handed grip (the grip holding the gun, the squad menu's controls), the squad menu and the
-// wheel panel settings go, and the controllers stop vibrating.
-void ForgetModState() {
+// LE1's host modules' own services (the pad mapping's grips, the squad menu, the sights, the calibration, our main menu,
+// the vignette): LE1's host only until the modules come over to LE2 (M3, M4).
+HostServices WithLe1Modules(HostServices services) {
+    services.setSupportGrip = &HostSetSupportGrip;
+    services.supportGripHeld = &HostSupportGripHeld;
+    services.rightGripFree = &HostRightGripFree;
+    services.squadMenuSize = static_cast<std::uint32_t>(sizeof(vr::squad_menu::View));
+    services.setSquadMenu = &HostSetSquadMenu;
+    services.leftGripAway = &HostLeftGripAway;
+    services.wheelPanelSize = static_cast<std::uint32_t>(sizeof(vr::squad_menu::wheel::Panel));
+    services.setWheelPanel = &HostSetWheelPanel;
+    services.sightSize = static_cast<std::uint32_t>(sizeof(vr::sights::Sight));
+    services.setSight = &HostSetSight;
+    services.sightView = &HostSightView;
+    services.calibrationStateSize = static_cast<std::uint32_t>(sizeof(vr::calibration::HostState));
+    services.calibration = &HostCalibration;
+    services.mainMenu = &HostMainMenu;
+    services.setVignette = &HostSetVignette;
+    return services;
+}
+// A mod that's gone can't aim: the squad menu and the wheel panel settings go, the pad mapping forgets the two-handed grip
+// (the grip holding the gun, the squad menu's controls), the scope, prompt, HUD pieces, Mako controls, spectator and the
+// game's screens go back to the renderer's own (ForgetRendererModState: Halcyon's head aim back, no reticle, no vibration).
+void ForgetLe1ModState() {
     vr::camera_diagnostic::gCameraDiagnostic.Reset();
     floor_lock::SetPawn(nullptr);
-    halcyon::SetModHandAim(false);
-    vr::aim_ray::Reset();
     vr::squad_menu::Reset();
     vr::squad_menu::wheel::ResetPanel();
     vr::sights::Reset();
@@ -418,25 +470,34 @@ void ForgetModState() {
     vr::spectator::Reset();      // the desktop window gets Halcyon's mirror back
     world_ui::Forget();         // the game's screens and pending ownership go back to Halcyon's panel
     halcyon::ForgetSupportGrip();
-    halcyon::ForgetHaptics();
     vignette::Forget();
 }
-#elif defined(MEVR_WITH_HALCYON_LE2)
-// LE2 with Halcyon's ME2 renderer (plugin/HalcyonLe2): the host owns VR and has the motion controllers, so the mod does no
-// VR output, scene view hook or XInput hook of its own (game/GamepadBridge). No view, aim ray or other service yet.
-void HostControllersLe2(vr::controllers::State* out) {
-    *out = vr::controllers::Latest(UINT64_MAX);  // raw sample: the mod ages it itself
-}
-HostServices const gServices = WithCrashBreadcrumbs({kHostServicesVersion, kHostLog, &HostControllersLe2, nullptr, nullptr,
-    static_cast<std::uint32_t>(sizeof(vr::controllers::State)), 0, &HostSetProcessEventCallback, &HostProcessExiting,
-    &HostKeepLoaded, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, static_cast<std::uint32_t>(sizeof(HostServices))});
-void ForgetModState() {}
-#else
-HostServices const gServices = WithCrashBreadcrumbs({kHostServicesVersion, kHostLog, nullptr, nullptr, nullptr, 0, 0,
-    &HostSetProcessEventCallback, &HostProcessExiting, &HostKeepLoaded, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-    nullptr, static_cast<std::uint32_t>(sizeof(HostServices))});
-void ForgetModState() {}
 #endif
+
+// One builder for every game's host (docs/le2-continuation-plan.md M2.5): the base, the crash breadcrumbs, the renderer's
+// services where Halcyon's renderer (either game's) is in the host, and LE1's host modules' where they are linked. A module
+// that comes over to LE2 moves its With* out of the LE1-only list.
+HostServices BuildServices() {
+    HostServices services = WithCrashBreadcrumbs(BaseServices());
+#if defined(MEVR_WITH_HALCYON) || defined(MEVR_WITH_HALCYON_LE2)
+    services = WithRenderer(services);
+#endif
+#if defined(MEVR_WITH_HALCYON)
+    services = WithVoice(WithPowerWheel(WithWorldUi(WithGalaxyHologram(WithGalaxyMap(WithSpectator(WithMakoControls(
+        WithHudPieces(WithInteractLabel(WithScopeCapture(WithGameMenuRequest(WithLe1Modules(services))))))))))));
+#endif
+    return services;
+}
+HostServices const gServices = BuildServices();
+
+void ForgetModState() {
+#if defined(MEVR_WITH_HALCYON) || defined(MEVR_WITH_HALCYON_LE2)
+    ForgetRendererModState();
+#endif
+#if defined(MEVR_WITH_HALCYON)
+    ForgetLe1ModState();
+#endif
+}
 loader::spi::Interface* gSpi = nullptr;
 
 } // namespace
